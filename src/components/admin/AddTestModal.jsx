@@ -172,7 +172,7 @@ export default function AddTestModal({ isOpen, onClose, onTestAdded }) {
               {['Live', 'Practice'].map(t => (
                 <label key={t} className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl border-2 cursor-pointer transition-all ${
                   form.type === t 
-                    ? 'border-primary-500/50 bg-primary-500/10 text-primary-400 font-black' 
+                    ? 'border-primary-500 bg-primary-500/20 text-white font-black shadow-lg shadow-primary-500/20' 
                     : 'border-white/10 bg-white/[0.02] text-slate-400 hover:text-white hover:bg-white/5'
                 }`}>
                   <input
@@ -195,7 +195,7 @@ export default function AddTestModal({ isOpen, onClose, onTestAdded }) {
                   <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-primary-400 transition-colors" />
                   <input
                     type="date" name="date" required value={form.date} onChange={handleChange}
-                    className="w-full pl-12 pr-6 py-4 bg-white/[0.02] border border-white/10 rounded-2xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary-500/30 transition-all [color-scheme:dark]"
+                    className="w-full pl-12 pr-6 py-4 bg-white/[0.02] border border-white/10 rounded-2xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary-500/30 transition-all [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full"
                   />
                 </div>
               </div>
@@ -205,7 +205,7 @@ export default function AddTestModal({ isOpen, onClose, onTestAdded }) {
                   <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-primary-400 transition-colors" />
                   <input
                     type="time" name="time" required value={form.time} onChange={handleChange}
-                    className="w-full pl-12 pr-6 py-4 bg-white/[0.02] border border-white/10 rounded-2xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary-500/30 transition-all [color-scheme:dark]"
+                    className="w-full pl-12 pr-6 py-4 bg-white/[0.02] border border-white/10 rounded-2xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary-500/30 transition-all [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full"
                   />
                 </div>
               </div>
@@ -288,15 +288,15 @@ export default function AddTestModal({ isOpen, onClose, onTestAdded }) {
           <div className="p-6 bg-white/[0.02] rounded-[2rem] border border-dashed border-white/10 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Upload className="w-4 h-4 text-primary-400" />
+                <Upload className="w-4 h-4 text-emerald-400" />
                 <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Question CSV File</span>
               </div>
               <button 
                 type="button"
                 onClick={handleDownloadSample}
-                className="text-[10px] font-black text-primary-400 flex items-center gap-2 hover:text-white transition-colors"
+                className="text-[10px] font-black text-white bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-lg flex items-center gap-2 transition-colors border border-white/10"
               >
-                <Download className="w-3 h-3" /> SAMPLE_CSV
+                <Download className="w-3 h-3 text-emerald-400" /> SAMPLE_CSV
               </button>
             </div>
             

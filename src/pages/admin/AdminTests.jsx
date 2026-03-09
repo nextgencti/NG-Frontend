@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, ClipboardList, Clock, CheckCircle2, Trash2, MoreHorizontal, BookOpen, BarChart2, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Search, ClipboardList, Clock, CheckCircle2, Trash2, Edit2, BookOpen, BarChart2, Loader2, Trophy } from 'lucide-react';
 import AddTestModal from '../../components/admin/AddTestModal';
 import api from '../../lib/axios';
 import toast from 'react-hot-toast';
@@ -17,6 +18,7 @@ const statusStyle = {
 };
 
 export default function AdminTests() {
+  const navigate = useNavigate();
   const [tests, setTests] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -25,6 +27,9 @@ export default function AdminTests() {
 
   useEffect(() => {
     fetchTests();
+    // Auto-refresh every 60s to pick up auto-launched tests
+    const interval = setInterval(fetchTests, 60 * 1000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchTests = async () => {
@@ -76,6 +81,13 @@ export default function AdminTests() {
 
   const upcomingCount = tests.filter(t => t.status === 'upcoming').length;
   const completedCount = tests.filter(t => t.status === 'completed').length;
+
+  // Returns true if the test's scheduled date+time is already past
+  const isScheduledTimePassed = (test) => {
+    if (!test.date || !test.time) return false;
+    const scheduled = new Date(`${test.date}T${test.time}:00`);
+    return !isNaN(scheduled.getTime()) && new Date() >= scheduled;
+  };
 
   return (
     <div className="space-y-8">
@@ -176,8 +188,8 @@ export default function AdminTests() {
                   <tr key={test.id} className="hover:bg-white/[0.02] transition-colors group">
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-4">
-                        <div className="w-11 h-11 bg-primary-500/10 rounded-xl border border-primary-500/20 flex items-center justify-center flex-shrink-0">
-                          <ClipboardList className="w-5 h-5 text-primary-400" />
+                        <div className="w-11 h-11 bg-primary-500/20 rounded-xl border border-primary-500/30 flex items-center justify-center flex-shrink-0 shadow-lg shadow-primary-500/10">
+                          <ClipboardList className="w-5 h-5 text-primary-300" />
                         </div>
                         <p className="text-sm font-bold text-white group-hover:text-primary-400 transition-colors max-w-[180px] truncate" title={test.title}>{test.title}</p>
                       </div>
@@ -191,12 +203,14 @@ export default function AdminTests() {
                     <td className="px-8 py-6">
                       {test.type === 'Practice' ? (
                         <div className="flex flex-col gap-1">
-                          <span className="inline-flex w-fit items-center px-3 py-1 rounded-lg text-[10px] font-black bg-primary-500/10 text-primary-400 uppercase tracking-widest border border-primary-500/20">Practice Mode</span>
+                          <span className="inline-flex w-fit items-center px-3 py-1 rounded-lg text-[10px] font-black bg-blue-500/10 text-blue-400 uppercase tracking-widest border border-blue-500/20">Practice Mode</span>
                           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter mt-1">{test.duration} limit</span>
                         </div>
                       ) : (
                         <div>
-                          <p className="text-xs font-black text-white uppercase tracking-tighter">{test.date}</p>
+                          <p className="text-xs font-black text-white uppercase tracking-tighter">
+                            {test.date ? test.date.split('-').reverse().join('/') : '—'}
+                          </p>
                           <p className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter mt-1">{test.time} · {test.duration}</p>
                         </div>
                       )}
@@ -231,7 +245,7 @@ export default function AdminTests() {
                     </td>
                     <td className="px-8 py-6 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        {test.status === 'upcoming' && (
+                        {test.status === 'upcoming' && !isScheduledTimePassed(test) && (
                           <button
                             onClick={() => handleUpdateStatus(test.id, 'published')}
                             className="mr-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-emerald-500/20 active:scale-95"
@@ -240,14 +254,26 @@ export default function AdminTests() {
                           </button>
                         )}
                         <button
+                          onClick={() => navigate(`/admin/tests/${test.id}/results`)}
+                          className="px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500 hover:text-white text-amber-500 text-[10px] font-black uppercase tracking-widest border border-amber-500/20 rounded-xl transition-all active:scale-95 flex items-center gap-1.5"
+                          title="View Results"
+                        >
+                          <Trophy className="w-3.5 h-3.5" />
+                          Results
+                        </button>
+                        <button
                           onClick={() => handleDelete(test.id)}
                           className="p-2.5 text-slate-600 hover:text-rose-400 hover:bg-rose-400/10 rounded-xl transition-all"
                           title="Purge Test"
                         >
                           <Trash2 className="w-5 h-5" />
                         </button>
-                        <button className="p-2.5 text-slate-600 hover:text-white hover:bg-white/5 rounded-xl transition-all">
-                          <MoreHorizontal className="w-5 h-5" />
+                        <button
+                          onClick={() => navigate(`/admin/tests/${test.id}/edit`)}
+                          className="p-2.5 text-slate-500 hover:text-primary-400 hover:bg-primary-400/10 rounded-xl transition-all"
+                          title="Edit Settings & Questions"
+                        >
+                          <Edit2 className="w-5 h-5" />
                         </button>
                       </div>
                     </td>

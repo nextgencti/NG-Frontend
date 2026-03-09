@@ -30,6 +30,8 @@ import AdminStudents from './pages/admin/AdminStudents';
 import AdminCourses from './pages/admin/AdminCourses';
 import AdminFinance from './pages/admin/AdminFinance';
 import AdminTests from './pages/admin/AdminTests';
+import AdminTestResults from './pages/admin/AdminTestResults';
+import AdminEditTest from './pages/admin/AdminEditTest';
 
 function App() {
   return (
@@ -66,6 +68,8 @@ function App() {
                 <Route path="courses" element={<AdminCourses />} />
                 <Route path="finance" element={<AdminFinance />} />
                 <Route path="tests" element={<AdminTests />} />
+                <Route path="tests/:testId/results" element={<AdminTestResults />} />
+                <Route path="tests/:testId/edit" element={<AdminEditTest />} />
               </Route>
             </Route>
 

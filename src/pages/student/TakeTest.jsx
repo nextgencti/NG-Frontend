@@ -76,7 +76,14 @@ export default function TakeTest() {
       const response = await api.get(`/student/tests/${testId}`);
       if (response.data.success) {
         setTest(response.data.test);
-        setQuestions(response.data.questions);
+        
+        // Shuffle questions using Fisher-Yates algorithm
+        const shuffledQuestions = [...response.data.questions];
+        for (let i = shuffledQuestions.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffledQuestions[i], shuffledQuestions[j]] = [shuffledQuestions[j], shuffledQuestions[i]];
+        }
+        setQuestions(shuffledQuestions);
         
         // Parse duration (e.g., "45 min" or "60") to seconds
         const durationStr = response.data.test.duration;
@@ -395,7 +402,7 @@ export default function TakeTest() {
                       <button
                         key={optKey}
                         onClick={() => handleSelectOption(currentQuestion.id, optKey)}
-                        className={`w-full text-left p-6 rounded-[1.5rem] border-2 transition-all group flex items-start gap-5 ${
+                        className={`w-full text-left p-4 sm:p-6 rounded-[1.5rem] border-2 transition-all group flex items-center sm:items-start gap-4 sm:gap-5 ${
                           isSelected 
                             ? (isDarkMode ? 'border-primary-500 bg-primary-500/10 shadow-[0_0_50px_rgba(79,70,229,0.1)] ring-1 ring-primary-500/20' : 'border-primary-500 bg-primary-50 shadow-sm ring-1 ring-primary-500/20') 
                             : (isDarkMode ? 'border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/10' : 'border-slate-100 hover:border-slate-200 bg-white hover:bg-slate-50')
@@ -408,7 +415,7 @@ export default function TakeTest() {
                         }`}>
                           {optKey}
                         </div>
-                        <span className={`text-base font-bold pt-2 ${isSelected ? (isDarkMode ? 'text-white' : 'text-primary-900') : (isDarkMode ? 'text-slate-300' : 'text-slate-700')}`}>
+                        <span className={`text-sm sm:text-base font-bold flex-1 pt-0 sm:pt-2 ${isSelected ? (isDarkMode ? 'text-white' : 'text-primary-900') : (isDarkMode ? 'text-slate-300' : 'text-slate-700')}`}>
                           {optionText}
                         </span>
                       </button>
@@ -418,29 +425,29 @@ export default function TakeTest() {
               </div>
 
               {/* Prev / Next Controls */}
-              <div className={`p-8 border-t flex items-center justify-between transition-colors duration-500 ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-slate-50 border-slate-100'}`}>
+              <div className={`p-4 sm:p-8 border-t flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 transition-colors duration-500 ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-slate-50 border-slate-100'}`}>
                 <button
                   onClick={() => setCurrentQuestionIndex(prev => Math.max(0, prev - 1))}
                   disabled={currentQuestionIndex === 0}
-                  className={`px-8 py-4 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center gap-2 transition-all ${isDarkMode ? 'text-slate-500 hover:bg-white/5' : 'text-slate-600 hover:bg-slate-200'} disabled:opacity-20`}
+                  className={`px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all ${isDarkMode ? 'text-slate-500 hover:bg-white/5' : 'text-slate-600 hover:bg-slate-200'} disabled:opacity-20`}
                 >
-                  <ChevronLeft className="w-5 h-5" /> Previous Question
+                  <ChevronLeft className="w-5 h-5" /> Previous<span className="hidden sm:inline"> Question</span>
                 </button>
                 
                 {currentQuestionIndex === questions.length - 1 ? (
                   <button
                     onClick={handleManualSubmit}
                     disabled={isSubmitting}
-                    className="px-10 py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center gap-3 transition-all shadow-xl shadow-emerald-500/20 active:scale-95 disabled:opacity-50"
+                    className="px-6 sm:px-10 py-3 sm:py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl sm:rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-2 sm:gap-3 transition-all shadow-xl shadow-emerald-500/20 active:scale-95 disabled:opacity-50"
                   >
                     Submit Test <CheckCircle2 className="w-5 h-5" />
                   </button>
                 ) : (
                   <button
                     onClick={() => setCurrentQuestionIndex(prev => Math.min(questions.length - 1, prev + 1))}
-                    className={`px-10 py-4 ${isDarkMode ? 'bg-primary-600 hover:bg-primary-500' : 'bg-slate-900 hover:bg-slate-800'} text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center gap-3 transition-all shadow-xl active:scale-95 disabled:opacity-30`}
+                    className={`px-6 sm:px-10 py-3 sm:py-4 ${isDarkMode ? 'bg-primary-600 hover:bg-primary-500' : 'bg-slate-900 hover:bg-slate-800'} text-white rounded-xl sm:rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-2 sm:gap-3 transition-all shadow-xl active:scale-95 disabled:opacity-30`}
                   >
-                    Next Question <ChevronRight className="w-5 h-5" />
+                    Next<span className="hidden sm:inline"> Question</span> <ChevronRight className="w-5 h-5" />
                   </button>
                 )}
               </div>
