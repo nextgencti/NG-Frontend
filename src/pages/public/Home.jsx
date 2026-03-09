@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, ArrowRight, ShieldCheck, Zap, Users } from 'lucide-react';
+import Footer from '../../components/Footer';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -87,6 +88,7 @@ export default function Home() {
         </div>
 
       </main>
+      <Footer />
     </div>
   );
 }
