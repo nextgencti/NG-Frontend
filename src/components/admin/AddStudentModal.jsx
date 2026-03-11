@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { X, Upload, User, Mail, Phone, BookOpen } from 'lucide-react';
+import { X, Upload, User, Mail, Phone, BookOpen, MapPin } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../../lib/axios';
 
 export default function AddStudentModal({ isOpen, onClose, onStudentAdded }) {
-  const [formData, setFormData] = useState({ name: '', email: '', phone: '', courseId: '' });
+  const [formData, setFormData] = useState({ name: '', email: '', phone: '', courseId: '', address: '' });
   const [profilePic, setProfilePic] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -46,6 +46,7 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded }) {
     submitData.append('email', formData.email);
     submitData.append('phone', formData.phone);
     submitData.append('courseId', formData.courseId);
+    submitData.append('address', formData.address);
     if (profilePic) {
       submitData.append('profilePic', profilePic);
     }
@@ -108,6 +109,10 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded }) {
             <div className="relative group">
               <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-accent-400 transition-colors" />
               <input type="tel" name="phone" required placeholder="Phone Number" value={formData.phone} onChange={handleChange} className="w-full pl-12 pr-6 py-4 bg-white/[0.02] border border-white/10 rounded-2xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-accent-500/30 transition-all placeholder:text-slate-500 placeholder:uppercase placeholder:font-black" />
+            </div>
+            <div className="relative group">
+              <MapPin className="absolute left-4 top-4 w-5 h-5 text-slate-400 group-focus-within:text-accent-400 transition-colors" />
+              <textarea name="address" required placeholder="Student Address" value={formData.address} onChange={handleChange} rows="2" className="w-full pl-12 pr-6 py-4 bg-white/[0.02] border border-white/10 rounded-2xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-accent-500/30 transition-all placeholder:text-slate-500 placeholder:uppercase placeholder:font-black resize-none" />
             </div>
             <div className="relative group">
               <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-accent-400 transition-colors" />

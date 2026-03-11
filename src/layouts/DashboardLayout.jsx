@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import UpdateProfileModal from '../components/student/UpdateProfileModal';
+import Logo from '../components/Logo';
 
 export default function DashboardLayout() {
   const { currentUser, logout } = useAuth();
@@ -72,12 +73,11 @@ export default function DashboardLayout() {
       >
         <div className={`h-20 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} px-6 border-b border-white/5 transition-all`}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-accent-500 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/20 shrink-0">
-              <BookOpen className="text-white w-6 h-6" />
-            </div>
-            {!isCollapsed && (
-              <span className="text-xl font-bold text-white tracking-tight animate-in fade-in duration-300">NextGen</span>
-            )}
+            <Logo 
+              className={isCollapsed ? "w-10 h-10" : "w-10 h-10"} 
+              showText={!isCollapsed} 
+              textClassName="text-xl font-bold text-white tracking-tight animate-in fade-in duration-300"
+            />
           </div>
           <div className="flex items-center gap-2">
             <button 

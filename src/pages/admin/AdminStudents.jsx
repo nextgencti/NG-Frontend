@@ -3,6 +3,8 @@ import { Search, Filter, Plus, MoreHorizontal, UserCheck, UserX, CheckCircle2, C
 import api from '../../lib/axios';
 import toast from 'react-hot-toast';
 import AddStudentModal from '../../components/admin/AddStudentModal';
+import IDCard from '../../components/shared/IDCard';
+import { CreditCard } from 'lucide-react';
 
 export default function AdminStudents() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -10,6 +12,7 @@ export default function AdminStudents() {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [selectedStudentForID, setSelectedStudentForID] = useState(null);
 
   useEffect(() => {
     const fetchStudents = async () => {
@@ -234,6 +237,13 @@ export default function AdminStudents() {
                             <UserCheck className="w-5 h-5" />
                           </button>
                         )}
+                        <button 
+                          onClick={() => setSelectedStudentForID(student)}
+                          className="p-2 text-slate-400 hover:text-primary-400 hover:bg-primary-400/10 rounded-xl transition-all"
+                          title="Generate ID Card"
+                        >
+                          <CreditCard className="w-5 h-5" />
+                        </button>
                         <button className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">
                           <MoreHorizontal className="w-5 h-5" />
                         </button>
@@ -263,7 +273,13 @@ export default function AdminStudents() {
 
 
       </div>
-    </div>
 
+      {selectedStudentForID && (
+        <IDCard 
+          student={selectedStudentForID} 
+          onClose={() => setSelectedStudentForID(null)} 
+        />
+      )}
+    </div>
   );
 }

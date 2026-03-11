@@ -4,6 +4,7 @@ import { Mail, ArrowRight, BookOpen } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import api from '../lib/axios';
+import Logo from '../components/Logo';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -56,9 +57,7 @@ export default function Login() {
 
       <div className="z-10 w-full max-w-md p-8 sm:p-10 glass-dark rounded-3xl text-left border border-white/10 m-4">
         <div className="flex justify-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-accent-500 rounded-2xl flex items-center justify-center shadow-lg shadow-primary-500/20">
-            <BookOpen className="text-white w-8 h-8" />
-          </div>
+          <Logo className="w-32 h-32" />
         </div>
         
         <h2 className="text-3xl font-bold text-white text-center mb-2">Welcome Back</h2>

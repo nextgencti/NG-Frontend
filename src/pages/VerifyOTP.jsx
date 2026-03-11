@@ -4,16 +4,38 @@ import { ShieldCheck, ArrowRight, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../lib/axios';
 import { useAuth } from '../context/AuthContext';
+import Logo from '../components/Logo';
 
 export default function VerifyOTP() {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [isLoading, setIsLoading] = useState(false);
+  const [timer, setTimer] = useState(300); // 5 minutes in seconds
+  const [canResend, setCanResend] = useState(false);
   const inputRefs = useRef([]);
   const location = useLocation();
   const navigate = useNavigate();
   const { setCurrentUser } = useAuth();
   
   const email = location.state?.email || 'user@example.com';
+
+  useEffect(() => {
+    let interval;
+    if (timer > 0) {
+      interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+    } else {
+      setCanResend(true);
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [timer]);
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   useEffect(() => {
     if (!location.state?.email) {
@@ -89,6 +111,25 @@ export default function VerifyOTP() {
     }
   };
 
+  const handleResend = async () => {
+    if (!canResend) return;
+    
+    setIsLoading(true);
+    try {
+      const response = await api.post('/auth/send-otp', { email });
+      toast.success(response.data.message || 'New OTP sent to your email!');
+      setTimer(300); // Reset to 5 minutes
+      setCanResend(false);
+      setOtp(['', '', '', '', '', '']);
+      inputRefs.current[0].focus();
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.message || 'Failed to resend OTP. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-slate-900">
       {/* Dynamic Background Elements */}
@@ -105,9 +146,7 @@ export default function VerifyOTP() {
         </button>
 
         <div className="flex justify-center mb-6">
-          <div className="w-16 h-16 bg-gradient-to-br from-accent-500 to-primary-500 rounded-2xl flex items-center justify-center shadow-lg shadow-accent-500/20">
-            <ShieldCheck className="text-white w-8 h-8" />
-          </div>
+          <Logo className="w-20 h-20" />
         </div>
         
         <h2 className="text-3xl font-bold text-white text-center mb-2">Check your Email</h2>
@@ -150,10 +189,20 @@ export default function VerifyOTP() {
 
         <div className="mt-8 text-center">
           <p className="text-sm text-slate-400">
-            Didn't receive the code?{' '}
-            <button className="text-accent-400 hover:text-accent-300 font-medium transition-colors">
-              Resend Code
-            </button>
+            {canResend ? (
+              <>
+                Didn't receive the code?{' '}
+                <button 
+                  onClick={handleResend}
+                  disabled={isLoading}
+                  className="text-accent-400 hover:text-accent-300 font-medium transition-colors disabled:opacity-50"
+                >
+                  Resend Code
+                </button>
+              </>
+            ) : (
+              <span>Resend code in <span className="text-white font-medium">{formatTime(timer)}</span></span>
+            )}
           </p>
         </div>
       </div>

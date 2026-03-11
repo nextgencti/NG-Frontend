@@ -4,6 +4,7 @@ import { User, MapPin, Phone, BookOpen, Lock, CheckCircle, ArrowRight, Camera } 
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import api from '../lib/axios';
+import Logo from '../components/Logo';
 
 export default function CompleteProfile() {
   const navigate = useNavigate();
@@ -107,6 +108,9 @@ export default function CompleteProfile() {
 
       <div className="z-10 w-full max-w-lg p-8 sm:p-10 glass-dark rounded-3xl border border-white/10 m-4">
         
+        <div className="flex justify-center mb-6">
+          <Logo className="w-20 h-20" />
+        </div>
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-white mb-2">Complete Profile</h2>
           <p className="text-slate-400">Just a few more details to get you started.</p>

@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, ArrowRight, ShieldCheck, Zap, Users } from 'lucide-react';
 import Footer from '../../components/Footer';
+import Logo from '../../components/Logo';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -15,12 +16,11 @@ export default function Home() {
 
       {/* Navbar */}
       <nav className="relative z-50 flex items-center justify-between px-6 py-6 max-w-7xl mx-auto">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-accent-500 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/20">
-            <BookOpen className="text-white w-6 h-6" />
-          </div>
-          <span className="text-2xl font-bold text-white tracking-tight">NextGen</span>
-        </div>
+          <Logo 
+            className="w-16 h-16" 
+            showText={true} 
+            textClassName="text-2xl font-bold text-white tracking-tight" 
+          />
         <div className="flex items-center gap-4">
           <button 
             onClick={() => navigate('/login')}

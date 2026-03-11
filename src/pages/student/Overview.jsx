@@ -1,9 +1,12 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { BookOpen, CalendarCheck, Clock, CheckCircle2, Zap } from 'lucide-react';
+import { BookOpen, CalendarCheck, Clock, CheckCircle2, Zap, CreditCard } from 'lucide-react';
+import IDCard from '../../components/shared/IDCard';
+import { useState } from 'react';
 
 export default function StudentOverview() {
   const { currentUser } = useAuth();
+  const [showIDCard, setShowIDCard] = useState(false);
   
   const stats = [
     { label: 'Attendance', value: '85%', icon: CalendarCheck, color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
@@ -25,7 +28,14 @@ export default function StudentOverview() {
             You have a Web Development class coming up in 2 hours. Keep up the great work! Your attendance is looking solid this week.
           </p>
         </div>
-        <div className="relative z-10 w-full sm:w-auto">
+        <div className="relative z-10 w-full sm:w-auto flex flex-col sm:flex-row gap-4">
+          <button 
+            onClick={() => setShowIDCard(true)}
+            className="w-full sm:w-auto px-8 py-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-bold border border-white/10 transition-all hover:-translate-y-1 flex items-center justify-center gap-2"
+          >
+            <CreditCard className="w-5 h-5 text-primary-400" />
+            My ID Card
+          </button>
           <button className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white rounded-2xl font-bold shadow-xl shadow-primary-500/20 transition-all hover:-translate-y-1 flex items-center justify-center gap-2">
             <Zap className="w-5 h-5 text-accent-300" />
             Join Class
@@ -118,6 +128,13 @@ export default function StudentOverview() {
         </div>
 
       </div>
+
+      {showIDCard && (
+        <IDCard 
+          student={currentUser} 
+          onClose={() => setShowIDCard(false)} 
+        />
+      )}
     </div>
   );
 }
