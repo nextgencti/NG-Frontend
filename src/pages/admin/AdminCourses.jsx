@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit3, Users, Clock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Edit3, Users, Clock, BookOpen } from 'lucide-react';
 import api from '../../lib/axios';
 import toast from 'react-hot-toast';
 import AddCourseModal from '../../components/admin/AddCourseModal';
 
 export default function AdminCourses() {
+  const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -52,11 +54,11 @@ export default function AdminCourses() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
         <div>
-          <h2 className="text-3xl font-black text-white tracking-tight">Manage Courses</h2>
-          <p className="text-slate-400 font-medium">Create and manage your institutional course catalog.</p>
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Manage Courses</h2>
+          <p className="text-slate-500 text-sm font-medium">Create and manage your institutional course catalog.</p>
         </div>
         <div className="flex items-center gap-4">
-          <button onClick={() => setIsAddModalOpen(true)} className="px-6 py-4 bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-primary-500/20 transition-all flex items-center gap-3 active:scale-95">
+          <button onClick={() => setIsAddModalOpen(true)} className="px-5 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-bold text-[10px] uppercase tracking-widest shadow-lg shadow-primary-500/10 transition-all flex items-center gap-3 active:scale-95">
             <Plus className="w-4 h-4" /> Add Course
           </button>
         </div>
@@ -69,28 +71,28 @@ export default function AdminCourses() {
       />
 
       {/* Tabs */}
-      <div className="flex gap-8 border-b border-white/5">
+      <div className="flex gap-8 border-b border-slate-200">
         <button
           onClick={() => setActiveTab('courses')}
-          className={`pb-4 px-2 text-[10px] font-black uppercase tracking-[0.2em] border-b-2 transition-all ${
+          className={`pb-3 px-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${
             activeTab === 'courses' 
-              ? 'border-primary-500 text-primary-400' 
-              : 'border-transparent text-slate-400 hover:text-white'
+              ? 'border-primary-600 text-primary-600' 
+              : 'border-transparent text-slate-400 hover:text-slate-900'
           }`}
         >
           Course Catalog
         </button>
         <button
           onClick={() => setActiveTab('pending')}
-          className={`pb-4 px-2 text-[10px] font-black uppercase tracking-[0.2em] border-b-2 transition-all flex items-center gap-3 ${
+          className={`pb-3 px-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all flex items-center gap-3 ${
             activeTab === 'pending' 
-              ? 'border-amber-500 text-amber-400' 
-              : 'border-transparent text-slate-400 hover:text-white'
+              ? 'border-primary-600 text-primary-600' 
+              : 'border-transparent text-slate-400 hover:text-slate-900'
           }`}
         >
           Active Enrollments
           {pendingRequests.length > 0 && (
-            <span className="bg-amber-500 text-black px-2 py-0.5 rounded-full text-[10px] font-black animate-pulse">
+            <span className="bg-primary-600 text-white px-2 py-0.5 rounded-full text-[10px] font-black animate-pulse">
               {pendingRequests.length}
             </span>
           )}
@@ -99,91 +101,97 @@ export default function AdminCourses() {
 
       {loading ? (
         <div className="flex flex-col items-center justify-center h-80 gap-4">
-           <div className="w-12 h-12 rounded-full border-4 border-white/5 border-t-primary-500 animate-spin"></div>
-           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Synchronizing Data...</p>
+           <div className="w-10 h-10 rounded-full border-4 border-slate-200 border-t-primary-600 animate-spin"></div>
+           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Synchronizing Data...</p>
         </div>
       ) : activeTab === 'courses' ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {courses.map((course) => (
-          <div key={course.id} className="glass-dark rounded-[2.5rem] border border-white/5 flex flex-col group hover:border-white/10 hover:-translate-y-2 transition-all duration-500 shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-primary-500/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
+          <div key={course.id} className="glass-dark rounded-2xl border border-slate-100 flex flex-col group hover:shadow-xl hover:-translate-y-1.5 transition-all duration-500 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-primary-500/5 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-primary-500/10 transition-colors"></div>
             
-            <div className="p-8 border-b border-white/5 flex-1 relative z-10">
-              <div className="flex justify-between items-start mb-6">
-                <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-xl border ${
+            <div className="p-6 border-b border-slate-50 flex-1 relative z-10">
+              <div className="flex justify-between items-start mb-5">
+                <span className={`px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest rounded-lg border ${
                   course.status === 'active' 
-                    ? 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20' 
-                    : 'bg-amber-400/10 text-amber-400 border-amber-400/20'
+                    ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
+                    : 'bg-amber-50 text-amber-600 border-amber-100'
                 }`}>
                   {course.status}
                 </span>
-                <span className="text-xl font-black text-white tracking-widest">₹{course.fees}</span>
+                <span className="text-lg font-bold text-slate-900 tracking-tight">₹{course.fees}</span>
               </div>
-              <h3 className="text-2xl font-black text-white mb-3 leading-tight group-hover:text-primary-400 transition-colors">
+              <h3 className="text-xl font-bold text-slate-900 mb-2 leading-tight group-hover:text-primary-600 transition-colors">
                 {course.name}
               </h3>
               
-              <div className="grid grid-cols-2 gap-6 mt-8">
-                <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-slate-500">
-                  <Clock className="w-4 h-4 text-primary-400" />
+              <div className="grid grid-cols-2 gap-4 mt-6">
+                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                  <Clock className="w-3.5 h-3.5 text-primary-500" />
                   {course.duration}
                 </div>
-                <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-slate-500">
-                  <Users className="w-4 h-4 text-primary-400" />
+                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                  <Users className="w-3.5 h-3.5 text-primary-500" />
                   {course.students} Enrolled
                 </div>
               </div>
             </div>
             
-            <div className="p-6 bg-white/[0.02] border-t border-white/5 flex justify-end relative z-10">
-              <button className="flex items-center gap-2 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">
-                <Edit3 className="w-4 h-4" /> Edit Course
+            <div className="p-4 bg-slate-50/50 border-t border-slate-100 flex justify-end gap-2 relative z-10">
+              <button 
+                onClick={() => navigate(`/admin/courses/${course.id}/content`)}
+                className="flex items-center gap-2 px-4 py-2 text-[10px] font-bold uppercase tracking-widest bg-white text-[#4F46E5] border border-[#E5E7EB] hover:bg-[#EEF2FF] rounded-lg transition-all shadow-sm active:scale-95"
+              >
+                <BookOpen className="w-3.5 h-3.5" /> Manage Content
+              </button>
+              <button className="flex items-center gap-2 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-primary-600 hover:bg-white rounded-lg transition-all shadow-sm active:scale-95 border border-transparent hover:border-slate-100">
+                <Edit3 className="w-3.5 h-3.5" /> Edit Details
               </button>
             </div>
           </div>
         ))}
       </div>
       ) : (
-        <div className="glass-dark rounded-[2.5rem] border border-white/5 overflow-hidden shadow-2xl">
+        <div className="glass-dark rounded-2xl border border-slate-100 overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-white/[0.02] text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] border-b border-white/5">
-                  <th className="p-6">Student</th>
-                  <th className="p-6">Course</th>
-                  <th className="p-6">Enrolled At</th>
-                  <th className="p-6 text-center">Actions</th>
+                <tr className="bg-slate-50 text-slate-400 text-[10px] font-bold uppercase tracking-widest border-b border-slate-100">
+                  <th className="p-5">Student</th>
+                  <th className="p-5">Course</th>
+                  <th className="p-5">Enrolled At</th>
+                  <th className="p-5 text-center">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-slate-100">
                 {pendingRequests.length === 0 ? (
                   <tr>
-                    <td colSpan="4" className="p-20 text-center text-slate-600 font-bold uppercase tracking-widest text-xs">
+                    <td colSpan="4" className="p-20 text-center text-slate-400 font-bold uppercase tracking-widest text-xs">
                       Pipeline clear. No pending enrollment signals.
                     </td>
                   </tr>
                 ) : (
                   pendingRequests.map(req => (
-                    <tr key={req.enrollmentId} className="hover:bg-white/[0.02] transition-colors group">
-                      <td className="p-6">
-                        <p className="text-sm font-bold text-white group-hover:text-primary-400 transition-colors">{req.studentName}</p>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">{req.studentEmail}</p>
+                    <tr key={req.enrollmentId} className="hover:bg-slate-50 transition-colors group">
+                      <td className="p-5">
+                        <p className="text-sm font-bold text-slate-900 group-hover:text-primary-600 transition-colors">{req.studentName}</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{req.studentEmail}</p>
                       </td>
-                      <td className="p-6 text-xs font-black text-slate-400 uppercase tracking-widest">{req.courseName}</td>
-                      <td className="p-6 text-xs font-bold text-slate-500 uppercase tracking-tighter">{req.enrolledAt}</td>
-                      <td className="p-6 text-center">
-                        <div className="flex items-center justify-center gap-3">
+                      <td className="p-5 text-xs font-bold text-slate-500 uppercase tracking-widest">{req.courseName}</td>
+                      <td className="p-5 text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{req.enrolledAt}</td>
+                      <td className="p-5 text-center">
+                        <div className="flex items-center justify-center gap-2">
                           <button 
                             disabled={processingId === req.enrollmentId}
                             onClick={() => handleStatusUpdate(req.enrollmentId, 'active')}
-                            className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-20 active:scale-95"
+                            className="px-5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] uppercase tracking-widest rounded-lg transition-all shadow-lg shadow-emerald-500/10 disabled:opacity-20 active:scale-95"
                           >
                             Authorize
                           </button>
                           <button 
                             disabled={processingId === req.enrollmentId}
                             onClick={() => handleStatusUpdate(req.enrollmentId, 'rejected')}
-                            className="px-6 py-2 bg-white/5 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 font-black text-[10px] uppercase tracking-widest rounded-xl border border-white/5 transition-all disabled:opacity-20 active:scale-95"
+                            className="px-5 py-1.5 bg-white hover:bg-rose-50 text-slate-400 hover:text-rose-600 font-bold text-[10px] uppercase tracking-widest rounded-lg border border-slate-200 transition-all shadow-sm disabled:opacity-20 active:scale-95"
                           >
                             Reject
                           </button>

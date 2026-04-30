@@ -19,6 +19,9 @@ export const initFirebase = async () => {
     const app = initializeApp(config);
     auth = getAuth(app);
     googleProvider = new GoogleAuthProvider();
+    googleProvider.setCustomParameters({
+      prompt: 'select_account'
+    });
 
     console.log('[FIREBASE] Initialized with config from backend');
     return { auth, googleProvider };
@@ -36,6 +39,9 @@ export const initFirebase = async () => {
     const app = initializeApp(fallbackConfig);
     auth = getAuth(app);
     googleProvider = new GoogleAuthProvider();
+    googleProvider.setCustomParameters({
+      prompt: 'select_account'
+    });
     return { auth, googleProvider };
   }
 };

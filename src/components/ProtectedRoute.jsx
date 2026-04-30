@@ -7,7 +7,7 @@ export default function ProtectedRoute({ requiredRole = null }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900">
+      <div className="min-h-screen flex items-center justify-center bg-slate-800">
         <div className="w-16 h-16 border-4 border-primary-500/30 border-t-primary-500 rounded-full animate-spin"></div>
       </div>
     );
@@ -34,9 +34,11 @@ export default function ProtectedRoute({ requiredRole = null }) {
     }
   }
 
-  if (requiredRole && currentUser?.role !== requiredRole) {
-    // If user is not the required role (e.g., student trying to access admin)
-    return <Navigate to="/dashboard" replace />;
+  if (requiredRole) {
+    const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+    if (!roles.includes(currentUser?.role)) {
+      return <Navigate to="/dashboard" replace />;
+    }
   }
 
   return <Outlet />;

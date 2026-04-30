@@ -18,7 +18,7 @@ export default function Fees() {
 
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Next Payment Card */}
-        <div className="lg:col-span-2 bg-slate-900 border border-white/5 rounded-[2.5rem] p-8 sm:p-10 text-white relative overflow-hidden flex flex-col justify-between group">
+        <div className="lg:col-span-2 bg-slate-800 border border-white/5 rounded-[2.5rem] p-8 sm:p-10 text-white relative overflow-hidden flex flex-col justify-between group">
           <div className="absolute top-0 right-0 w-80 h-80 bg-primary-600/20 rounded-full blur-[100px] translate-x-1/2 -translate-y-1/2 group-hover:scale-110 transition-transform duration-700"></div>
           
           <div className="relative z-10 flex items-start justify-between mb-10">

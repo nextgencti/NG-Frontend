@@ -174,11 +174,11 @@ export default function TakeTest() {
             
             <div className={`${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-slate-50 border-slate-100'} rounded-2xl border p-6 space-y-4 max-w-lg mx-auto`}>
               <div className="grid grid-cols-2 gap-4">
-                <div className={`${isDarkMode ? 'bg-slate-900 shadow-xl border border-white/5' : 'bg-white shadow-sm border border-slate-100'} rounded-xl p-4 text-center`}>
+                <div className={`${isDarkMode ? 'bg-slate-800 shadow-xl border border-white/5' : 'bg-white shadow-sm border border-slate-100'} rounded-xl p-4 text-center`}>
                   <p className={`text-sm font-bold ${isDarkMode ? 'text-slate-400' : 'text-slate-400'} uppercase tracking-wider mb-1`}>Score</p>
                   <p className={`text-3xl font-black ${isDarkMode ? 'text-white' : 'text-primary-600'}`}>{result.score} <span className={`text-base ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>/ {result.totalMarks}</span></p>
                 </div>
-                <div className={`${isDarkMode ? 'bg-slate-900 shadow-xl border border-white/5' : 'bg-white shadow-sm border border-slate-100'} rounded-xl p-4 text-center`}>
+                <div className={`${isDarkMode ? 'bg-slate-800 shadow-xl border border-white/5' : 'bg-white shadow-sm border border-slate-100'} rounded-xl p-4 text-center`}>
                   <p className={`text-sm font-bold ${isDarkMode ? 'text-slate-400' : 'text-slate-400'} uppercase tracking-wider mb-1`}>Grade</p>
                   <p className={`text-3xl font-black ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>{result.grade}</p>
                 </div>
@@ -218,7 +218,7 @@ export default function TakeTest() {
                     const isSelected = item.studentAnswer === opt;
                     const isCorrectOption = item.correctAnswer === opt;
                     
-                    let bgClass = isDarkMode ? "bg-slate-900 border-white/5" : "bg-white border-slate-200";
+                    let bgClass = isDarkMode ? "bg-slate-800 border-white/5" : "bg-white border-slate-200";
                     let textClass = isDarkMode ? "text-slate-400" : "text-slate-600";
                     let icon = null;
 
@@ -258,7 +258,7 @@ export default function TakeTest() {
           <div className="pt-6 border-t border-white/5">
             <button
               onClick={() => navigate('/dashboard/tests')}
-              className={`w-full py-4 ${isDarkMode ? 'bg-primary-600 hover:bg-primary-500' : 'bg-slate-900 hover:bg-slate-800'} text-white rounded-xl font-bold shadow-lg transition-all active:scale-95`}
+              className={`w-full py-4 ${isDarkMode ? 'bg-primary-600 hover:bg-primary-500' : 'bg-slate-800 hover:bg-slate-800'} text-white rounded-xl font-bold shadow-lg transition-all active:scale-95`}
             >
               Go Back to Dashboard
             </button>
@@ -277,7 +277,7 @@ export default function TakeTest() {
       className={`min-h-screen transition-colors duration-500 flex flex-col ${isDarkMode ? 'bg-slate-950' : 'bg-slate-50'} ${isFullscreen ? 'h-screen overflow-y-auto' : ''}`}
     >
       {/* Test Header */}
-      <header className={`border-b sticky top-0 z-10 shadow-sm transition-colors duration-500 ${isFullscreen ? 'py-2' : ''} ${isDarkMode ? 'bg-slate-900/80 backdrop-blur-md border-white/5' : 'bg-white border-slate-200'}`}>
+      <header className={`border-b sticky top-0 z-10 shadow-sm transition-colors duration-500 ${isFullscreen ? 'py-2' : ''} ${isDarkMode ? 'bg-slate-800/80 backdrop-blur-md border-white/5' : 'bg-white border-slate-200'}`}>
         <div className={`${isFullscreen ? 'max-w-full px-6' : 'max-w-7xl px-4 lg:px-8'} mx-auto h-20 flex items-center justify-between`}>
           <div className="flex items-center gap-6">
             <div className="hidden sm:block">
@@ -373,26 +373,26 @@ export default function TakeTest() {
             </div>
           ) : (
             <>
-              <div className={`rounded-3xl border shadow-sm overflow-hidden flex flex-col h-full min-h-[500px] transition-colors duration-500 ${isDarkMode ? 'glass-dark border-white/5' : 'bg-white border-slate-200'}`}>
+              <div className={`rounded-3xl border shadow-sm overflow-hidden flex flex-col transition-colors duration-500 ${isDarkMode ? 'glass-dark border-white/5' : 'bg-white border-slate-200'}`}>
               
               {/* Question Meta */}
-              <div className={`px-8 py-6 border-b flex justify-between items-center ${isDarkMode ? 'border-white/5 bg-white/5' : 'border-slate-100 bg-slate-50/50'}`}>
-                <span className={`text-[10px] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-xl border ${isDarkMode ? 'bg-primary-600/30 text-white border-primary-500/40 shadow-lg shadow-primary-500/10' : 'bg-primary-50 text-primary-600 border-primary-100'}`}>
+              <div className={`px-6 py-4 border-b flex justify-between items-center ${isDarkMode ? 'border-white/5 bg-white/5' : 'border-slate-100 bg-slate-50/50'}`}>
+                <span className={`text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1.5 rounded-lg border ${isDarkMode ? 'bg-primary-600/30 text-white border-primary-500/40 shadow-lg shadow-primary-500/10' : 'bg-primary-50 text-primary-600 border-primary-100'}`}>
                   Question {currentQuestionIndex + 1} of {questions.length}
                 </span>
-                <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                <span className={`text-[9px] font-black uppercase tracking-[0.2em] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                   Marks: <span className={isDarkMode ? 'text-white' : 'text-slate-900'}>{currentQuestion.marks} Marks</span>
                 </span>
               </div>
 
               {/* Question Text */}
-              <div className="p-8 pb-4 flex-1">
-                <h2 className={`text-xl sm:text-3xl font-bold leading-tight mb-10 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
+              <div className="p-6 pb-2 flex-1">
+                <h2 className={`text-lg sm:text-2xl font-bold leading-tight mb-6 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
                   {currentQuestion.question}
                 </h2>
 
                 {/* Options */}
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {['A', 'B', 'C', 'D'].map((optKey) => {
                     const optionText = currentQuestion.options[optKey];
                     if (!optionText) return null;
@@ -402,20 +402,20 @@ export default function TakeTest() {
                       <button
                         key={optKey}
                         onClick={() => handleSelectOption(currentQuestion.id, optKey)}
-                        className={`w-full text-left p-4 sm:p-6 rounded-[1.5rem] border-2 transition-all group flex items-center sm:items-start gap-4 sm:gap-5 ${
+                        className={`w-full text-left p-3 sm:p-4 rounded-[1.25rem] border-2 transition-all group flex items-center sm:items-start gap-4 ${
                           isSelected 
                             ? (isDarkMode ? 'border-primary-500 bg-primary-500/10 shadow-[0_0_50px_rgba(79,70,229,0.1)] ring-1 ring-primary-500/20' : 'border-primary-500 bg-primary-50 shadow-sm ring-1 ring-primary-500/20') 
                             : (isDarkMode ? 'border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/10' : 'border-slate-100 hover:border-slate-200 bg-white hover:bg-slate-50')
                         }`}
                       >
-                        <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center font-black text-sm transition-all ${
+                        <div className={`w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center font-black text-xs transition-all ${
                           isSelected 
                             ? 'bg-primary-500 text-white shadow-xl shadow-primary-500/40' 
                             : (isDarkMode ? 'bg-white/5 text-slate-500 group-hover:bg-white/10' : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200')
                         }`}>
                           {optKey}
                         </div>
-                        <span className={`text-sm sm:text-base font-bold flex-1 pt-0 sm:pt-2 ${isSelected ? (isDarkMode ? 'text-white' : 'text-primary-900') : (isDarkMode ? 'text-slate-300' : 'text-slate-700')}`}>
+                        <span className={`text-sm font-bold flex-1 pt-1 ${isSelected ? (isDarkMode ? 'text-white' : 'text-primary-900') : (isDarkMode ? 'text-slate-300' : 'text-slate-700')}`}>
                           {optionText}
                         </span>
                       </button>
@@ -425,7 +425,7 @@ export default function TakeTest() {
               </div>
 
               {/* Prev / Next Controls */}
-              <div className={`p-4 sm:p-8 border-t flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 transition-colors duration-500 ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-slate-50 border-slate-100'}`}>
+              <div className={`p-3 sm:p-5 border-t flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 transition-colors duration-500 ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-slate-50 border-slate-100'}`}>
                 <button
                   onClick={() => setCurrentQuestionIndex(prev => Math.max(0, prev - 1))}
                   disabled={currentQuestionIndex === 0}
@@ -445,7 +445,7 @@ export default function TakeTest() {
                 ) : (
                   <button
                     onClick={() => setCurrentQuestionIndex(prev => Math.min(questions.length - 1, prev + 1))}
-                    className={`px-6 sm:px-10 py-3 sm:py-4 ${isDarkMode ? 'bg-primary-600 hover:bg-primary-500' : 'bg-slate-900 hover:bg-slate-800'} text-white rounded-xl sm:rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-2 sm:gap-3 transition-all shadow-xl active:scale-95 disabled:opacity-30`}
+                    className={`px-6 sm:px-10 py-3 sm:py-4 ${isDarkMode ? 'bg-primary-600 hover:bg-primary-500' : 'bg-slate-800 hover:bg-slate-800'} text-white rounded-xl sm:rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-2 sm:gap-3 transition-all shadow-xl active:scale-95 disabled:opacity-30`}
                   >
                     Next<span className="hidden sm:inline"> Question</span> <ChevronRight className="w-5 h-5" />
                   </button>

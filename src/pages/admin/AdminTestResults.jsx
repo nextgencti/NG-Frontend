@@ -41,13 +41,13 @@ export default function AdminTestResults() {
         <div className="flex items-center gap-4">
           <button 
             onClick={() => navigate('/admin/tests')}
-            className="p-3 bg-white/[0.02] hover:bg-white/10 text-slate-400 hover:text-white rounded-2xl border border-white/5 transition-all"
+            className="p-3 bg-white hover:bg-slate-50 text-slate-400 hover:text-slate-900 rounded-2xl border border-slate-100 transition-all shadow-sm"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h2 className="text-3xl font-black text-white tracking-tight">Test Results</h2>
-            <p className="text-slate-400 font-medium">{testTitle || 'Loading...'}</p>
+            <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Test Results</h2>
+            <p className="text-slate-500 font-medium">{testTitle || 'Loading...'}</p>
           </div>
         </div>
       </div>
@@ -58,17 +58,17 @@ export default function AdminTestResults() {
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 animate-pulse">Computing Rankings...</p>
         </div>
       ) : results.length === 0 ? (
-        <div className="glass-dark border border-white/5 rounded-[2.5rem] shadow-2xl p-20 text-center">
-            <User className="w-16 h-16 text-slate-600 mx-auto mb-6 opacity-50" />
-            <h3 className="text-xl font-black text-white mb-2">No Submissions Yet</h3>
+        <div className="bg-white border border-slate-100 rounded-3xl shadow-sm p-20 text-center">
+            <User className="w-16 h-16 text-slate-200 mx-auto mb-6" />
+            <h3 className="text-xl font-bold text-slate-900 mb-2">No Submissions Yet</h3>
             <p className="text-slate-500 font-medium">No students have completed this test.</p>
         </div>
       ) : (
-        <div className="glass-dark border border-white/5 rounded-[2.5rem] shadow-2xl overflow-hidden">
+        <div className="bg-white border border-slate-100 rounded-3xl shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left min-w-[900px]">
               <thead>
-                <tr className="bg-white/[0.02] text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">
+                <tr className="bg-slate-50 text-slate-500 text-[10px] font-bold uppercase tracking-widest border-b border-slate-100">
                   <th className="px-8 py-4">Rank</th>
                   <th className="px-8 py-4">Student</th>
                   <th className="px-8 py-4 text-center">Score</th>
@@ -77,49 +77,49 @@ export default function AdminTestResults() {
                   <th className="px-8 py-4 text-right">Attempt</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-slate-100">
                 {results.map((result, index) => {
                   const isTopper = index === 0;
                   const isRunnerUp = index === 1;
                   const isSecondRunnerUp = index === 2;
                   
                   return (
-                    <tr key={result.id} className={`hover:bg-white/[0.02] transition-colors group ${isTopper ? 'bg-amber-500/5' : ''}`}>
+                    <tr key={result.id} className={`hover:bg-slate-50 transition-colors group ${isTopper ? 'bg-amber-50/30' : ''}`}>
                       <td className="px-8 py-6">
                         {isTopper ? (
-                           <div className="flex flex-col items-center justify-center w-12 h-12 bg-amber-500/20 border border-amber-500/30 rounded-2xl relative">
-                               <Trophy className="w-6 h-6 text-amber-400" />
-                               <div className="absolute -top-2 -right-2 bg-amber-500 text-black text-[10px] font-black px-1.5 rounded-md shadow-lg">1st</div>
+                           <div className="flex flex-col items-center justify-center w-12 h-12 bg-amber-100 border border-amber-200 rounded-2xl relative shadow-sm">
+                               <Trophy className="w-6 h-6 text-amber-600" />
+                               <div className="absolute -top-2 -right-2 bg-amber-500 text-white text-[10px] font-bold px-1.5 rounded-md shadow-sm">1st</div>
                            </div>
                         ) : isRunnerUp ? (
-                           <div className="w-12 h-12 bg-slate-400/20 border border-slate-400/30 rounded-2xl flex items-center justify-center relative">
-                               <Medal className="w-6 h-6 text-white" />
-                                <div className="absolute -top-2 -right-2 bg-slate-100 text-black text-[10px] font-black px-1.5 rounded-md shadow-lg">2nd</div>
+                           <div className="w-12 h-12 bg-slate-100 border border-slate-200 rounded-2xl flex items-center justify-center relative shadow-sm">
+                               <Medal className="w-6 h-6 text-slate-600" />
+                                <div className="absolute -top-2 -right-2 bg-slate-400 text-white text-[10px] font-bold px-1.5 rounded-md shadow-sm">2nd</div>
                            </div>
                         ) : isSecondRunnerUp ? (
-                           <div className="w-12 h-12 bg-orange-700/20 border border-orange-700/30 rounded-2xl flex items-center justify-center relative">
-                               <Medal className="w-6 h-6 text-orange-400" />
-                                <div className="absolute -top-2 -right-2 bg-orange-700 text-white text-[10px] font-black px-1.5 rounded-md shadow-lg">3rd</div>
+                           <div className="w-12 h-12 bg-orange-50 border border-orange-100 rounded-2xl flex items-center justify-center relative shadow-sm">
+                               <Medal className="w-6 h-6 text-orange-600" />
+                                <div className="absolute -top-2 -right-2 bg-orange-600 text-white text-[10px] font-bold px-1.5 rounded-md shadow-sm">3rd</div>
                            </div>
                         ) : (
-                           <div className="w-12 h-12 rounded-2xl flex items-center justify-center group-hover:bg-white/5 transition-colors">
-                               <span className="text-xl font-black text-slate-600">#{index + 1}</span>
+                           <div className="w-12 h-12 rounded-2xl flex items-center justify-center group-hover:bg-white transition-colors border border-transparent group-hover:border-slate-100 shadow-sm group-hover:shadow-sm">
+                               <span className="text-xl font-bold text-slate-400">#{index + 1}</span>
                            </div>
                         )}
                       </td>
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-4">
-                          <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 border ${isTopper ? 'bg-amber-500/20 border-amber-500/30 text-amber-400' : 'bg-slate-800 border-slate-700 text-slate-400'}`}>
+                          <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 border shadow-sm ${isTopper ? 'bg-amber-100 border-amber-200 text-amber-600' : 'bg-slate-50 border-slate-200 text-slate-400'}`}>
                             {isTopper ? <Award className="w-5 h-5" /> : <User className="w-5 h-5" />}
                           </div>
                           <div>
-                            <p className={`text-sm font-bold transition-colors ${isTopper ? 'text-amber-400' : 'text-white'}`}>{result.studentName}</p>
+                            <p className={`text-sm font-bold transition-colors ${isTopper ? 'text-amber-700' : 'text-slate-900'}`}>{result.studentName}</p>
                             <p className="text-[10px] font-bold text-slate-400 mt-1">{result.studentEmail}</p>
                           </div>
                         </div>
                       </td>
                       <td className="px-8 py-6 text-center">
-                         <span className={`text-lg font-black ${isTopper ? 'text-amber-400' : 'text-slate-300'}`}>{result.score}</span>
+                         <span className={`text-lg font-bold ${isTopper ? 'text-amber-600' : 'text-slate-700'}`}>{result.score}</span>
                       </td>
                       <td className="px-8 py-6 text-center">
                          <span className="text-sm font-bold text-slate-400">{Number(result.percentage).toFixed(1)}%</span>
@@ -136,10 +136,10 @@ export default function AdminTestResults() {
                       </td>
                       <td className="px-8 py-6 text-right">
                          <div className="flex items-center justify-end gap-3">
-                            <span className="text-xs font-bold text-slate-500 mr-2">Attempt #{result.attemptNumber}</span>
+                            <span className="text-xs font-bold text-slate-400 mr-2">Attempt #{result.attemptNumber}</span>
                             <button
                               onClick={() => { setSelectedResult(result); setIsModalOpen(true); }}
-                              className="p-2.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl transition-all"
+                              className="p-2.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all shadow-sm border border-transparent hover:border-slate-200"
                               title="View Detailed Report"
                             >
                               <Eye className="w-5 h-5" />

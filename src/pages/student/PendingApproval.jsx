@@ -14,7 +14,7 @@ export default function PendingApproval() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-slate-900 p-4">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-slate-800 p-4">
       {/* Dynamic Background Elements */}
       <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-amber-500/20 rounded-full blur-[100px] animate-pulse"></div>
       <div className="absolute bottom-[-10%] left-[-10%] w-96 h-96 bg-rose-500/20 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1.5s' }}></div>

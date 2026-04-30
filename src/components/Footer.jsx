@@ -23,7 +23,7 @@ export default function Footer() {
   }, []);
 
   return (
-    <footer className="relative flex items-center justify-center h-[40vh] md:h-[60vh] bg-slate-900 overflow-hidden">
+    <footer className="relative flex items-center justify-center h-[40vh] md:h-[60vh] bg-slate-800 overflow-hidden">
       {/* Background Subtle Gradient to match Home */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent to-primary-900/10 pointer-events-none"></div>
 

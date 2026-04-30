@@ -8,7 +8,7 @@ export default function Home() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-slate-900 overflow-hidden relative selection:bg-primary-500/30">
+    <div className="min-h-screen bg-slate-800 overflow-hidden relative selection:bg-primary-500/30">
       {/* Background Gradients */}
       <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-primary-600/20 rounded-full blur-[120px]"></div>
       <div className="absolute top-[20%] right-[-10%] w-[600px] h-[600px] bg-accent-500/20 rounded-full blur-[120px]"></div>

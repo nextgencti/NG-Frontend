@@ -72,8 +72,9 @@ export default function Logo({
             }
             .particle-${id} {
               animation: blinkParticle-${id} 2s infinite;
-              fill: ${isWhite ? 'white' : 'currentColor'};
               opacity: ${isWhite ? '0.5' : '1'};
+              transform-origin: center;
+              transform-box: fill-box;
             }
             @keyframes blinkParticle-${id} {
               0%, 100% { opacity: 0.2; transform: scale(0.8); }
@@ -92,10 +93,10 @@ export default function Logo({
         </style>
 
         {/* Twinkling Particles */}
-        <circle cx="40" cy="40" r="3" fill="#06b6d4" className={`particle-${id}`} style={{ animationDelay: '0s' }}/>
-        <circle cx="210" cy="60" r="3" fill="#d946ef" className={`particle-${id}`} style={{ animationDelay: '0.5s' }}/>
-        <circle cx="200" cy="150" r="3" fill="#6366f1" className={`particle-${id}`} style={{ animationDelay: '1s' }}/>
-        <circle cx="60" cy="160" r="3" fill="#06b6d4" className={`particle-${id}`} style={{ animationDelay: '1.5s' }}/>
+        <circle cx="40" cy="40" r="3" fill={isWhite ? "white" : "#06b6d4"} className={`particle-${id}`} style={{ animationDelay: '0s' }}/>
+        <circle cx="210" cy="60" r="3" fill={isWhite ? "white" : "#d946ef"} className={`particle-${id}`} style={{ animationDelay: '0.5s' }}/>
+        <circle cx="200" cy="150" r="3" fill={isWhite ? "white" : "#6366f1"} className={`particle-${id}`} style={{ animationDelay: '1s' }}/>
+        <circle cx="60" cy="160" r="3" fill={isWhite ? "white" : "#06b6d4"} className={`particle-${id}`} style={{ animationDelay: '1.5s' }}/>
 
         {/* Circuit/Technical Lines */}
         <line x1="30" y1="100" x2="60" y2="100" stroke={isWhite ? "white" : "#d946ef"} strokeWidth="2" strokeLinecap="round" opacity="0.6"/>

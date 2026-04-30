@@ -70,17 +70,17 @@ export default function Tests() {
     : 0;
 
   return (
-    <div className="space-y-8 pb-10">
+    <div className="space-y-4 pb-10">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-800">My Tests</h2>
-          <p className="text-slate-500 mt-1">View upcoming quizzes and track your performance.</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-800">My Tests</h2>
+          <p className="text-[12px] text-slate-500">View upcoming quizzes and track your performance.</p>
         </div>
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: 'Total Tests', value: totalTests, icon: ClipboardList, color: 'text-primary-600 bg-primary-50' },
           { label: 'Upcoming', value: upcomingCount, icon: Clock, color: 'text-amber-600 bg-amber-50' },
@@ -89,13 +89,13 @@ export default function Tests() {
         ].map(stat => {
           const Icon = stat.icon;
           return (
-            <div key={stat.label} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 sm:p-5 flex items-center gap-3 sm:gap-4 hover:shadow-md transition-shadow">
-              <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${stat.color}`}>
-                <Icon className="w-5 h-5" />
+            <div key={stat.label} className="bg-white rounded-lg border border-slate-100 shadow-sm p-2.5 sm:p-3 flex items-center gap-2.5 hover:shadow-md transition-shadow">
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${stat.color}`}>
+                <Icon className="w-4 h-4" />
               </div>
               <div>
-                <p className="text-xl sm:text-2xl font-bold text-slate-800 leading-none mb-1">{stat.value}</p>
-                <p className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase tracking-wider">{stat.label}</p>
+                <p className="text-lg font-bold text-slate-800 leading-none mb-0.5">{stat.value}</p>
+                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">{stat.label}</p>
               </div>
             </div>
           );
@@ -122,45 +122,45 @@ export default function Tests() {
         </div>
       )}
 
-      {/* Tests List Section */}
-      <div className="glass-dark p-6 sm:p-10 mb-8 relative overflow-hidden group">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-primary-600/20 to-accent-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:scale-110 transition-transform duration-700"></div>
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+      {/* Tests List Section Banner */}
+      <div className="bg-gradient-to-r from-primary-600 to-primary-800 p-4 sm:p-6 mb-4 rounded-2xl relative overflow-hidden group shadow-lg shadow-primary-500/20">
+        <div className="absolute top-0 right-0 w-60 h-60 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:scale-110 transition-transform duration-700"></div>
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h2 className="text-3xl sm:text-4xl font-black text-white mb-3 tracking-tight">Test Your Knowledge 🚀</h2>
-            <p className="text-slate-400 max-w-xl text-lg leading-relaxed">
+            <h2 className="text-xl sm:text-2xl font-black text-white mb-1.5 tracking-tight">Test Your Knowledge 🚀</h2>
+            <p className="text-primary-100 max-w-lg text-xs sm:text-sm leading-relaxed">
               Track your progress, challenge yourself with tests, and see how much you've learned.
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="px-6 py-4 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-md">
-              <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Avg Score</p>
-              <p className="text-2xl font-bold text-white">{avgScore}%</p>
+          <div className="grid grid-cols-2 gap-2.5">
+            <div className="px-4 py-2.5 bg-white/10 rounded-lg border border-white/10 backdrop-blur-md">
+              <p className="text-[8px] font-black text-primary-200 uppercase tracking-[0.2em] mb-0.5">Avg Score</p>
+              <p className="text-lg font-bold text-white">{avgScore}%</p>
             </div>
-            <div className="px-6 py-4 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-md">
-              <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Best Performance</p>
-              <p className="text-2xl font-bold text-primary-400">{bestScore}%</p>
+            <div className="px-4 py-2.5 bg-white/10 rounded-lg border border-white/10 backdrop-blur-md">
+              <p className="text-[8px] font-black text-primary-200 uppercase tracking-[0.2em] mb-0.5">Best Perf</p>
+              <p className="text-lg font-bold text-white">{bestScore}%</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Filters & Tabs */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-        <div className="flex bg-white/5 p-1.5 rounded-2xl border border-white/10 w-fit backdrop-blur-md">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+        <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200 w-fit">
           {tabs.map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+              className={`px-5 py-2 rounded-md text-[9px] font-black uppercase tracking-widest transition-all ${
                 activeTab === tab
-                  ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/20'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-white text-primary-600 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
               }`}
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 {tab}
-                <span className={`px-2 py-0.5 rounded-md text-[10px] ${activeTab === tab ? 'bg-white/20 text-white' : 'bg-white/10 text-slate-500'}`}>
+                <span className={`px-1.5 py-0.5 rounded text-[8px] ${activeTab === tab ? 'bg-primary-50 text-primary-600' : 'bg-slate-200 text-slate-500'}`}>
                   {tab === 'Upcoming' ? upcomingCount : completedCount}
                 </span>
               </div>
@@ -168,16 +168,16 @@ export default function Tests() {
           ))}
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex bg-white/5 p-1.5 rounded-2xl border border-white/10 backdrop-blur-md">
+        <div className="flex items-center gap-2">
+          <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
             {['All', 'Easy', 'Medium', 'Hard'].map(diff => (
               <button
                 key={diff}
                 onClick={() => setFilterDifficulty(diff)}
-                className={`px-5 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+                className={`px-3 py-1.5 rounded-md text-[9px] font-black uppercase tracking-widest transition-all ${
                   filterDifficulty === diff
-                    ? 'bg-white/10 text-white shadow-sm'
-                    : 'text-slate-500 hover:text-slate-300'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
                 }`}
               >
                 {diff}
@@ -197,11 +197,11 @@ export default function Tests() {
               <p className="text-slate-400 font-bold uppercase tracking-[0.2em] animate-pulse">Loading tests...</p>
             </div>
           ) : filteredTests.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredTests.map((test, index) => (
                 <div 
                   key={index}
-                  className="group relative p-6 glass-dark border border-white/5 hover:border-primary-500/30 hover:shadow-[0_20px_50px_rgba(79,70,229,0.15)] transition-all duration-500"
+                  className="group relative p-4 bg-white rounded-2xl border border-slate-100 hover:border-primary-500/30 hover:shadow-[0_20px_50px_rgba(79,70,229,0.1)] transition-all duration-500"
                 >
                   <div className="flex flex-col gap-5">
                     {/* Header */}
@@ -219,65 +219,63 @@ export default function Tests() {
                           <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
                           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{test.course}</span>
                         </div>
-                        <h4 className="text-xl font-black text-white group-hover:text-primary-400 transition-colors uppercase leading-tight line-clamp-1 mt-1">
+                        <h4 className="text-lg font-black text-slate-800 group-hover:text-primary-600 transition-colors uppercase leading-tight line-clamp-1 mt-1">
                           {test.title}
                         </h4>
                       </div>
-                      <div className="w-12 h-12 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-center group-hover:rotate-6 transition-all group-hover:border-primary-500/20 shadow-inner">
-                        <ClipboardList className="w-6 h-6 text-primary-400" />
+                      <div className="w-10 h-10 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-center group-hover:rotate-6 transition-all group-hover:border-primary-500/20 shadow-inner">
+                        <ClipboardList className="w-5 h-5 text-primary-600" />
                       </div>
                     </div>
 
                     {/* Stats */}
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-2">
                       {[
                         test.attemptsCount ? { icon: BookOpen, label: `${test.attemptsCount} Attempts`, sub: 'Attempt Status' } : null,
                         test.type === 'Live Test' || test.type === 'Fixed' ? { icon: Calendar, label: test.date, sub: 'Scheduled Date' } : null,
-                        { icon: Clock, label: test.duration, sub: 'Test Duration' },
-                        { icon: BarChart2, label: `${test.questions} Fixed Qs`, sub: 'Question Count' },
-                        { icon: Trophy, label: `${test.totalMarks} Total marks`, sub: 'Max Points' }
+                        { icon: Clock, label: test.duration, sub: 'Duration' },
+                        { icon: BarChart2, label: `${test.questions} Qs`, sub: 'Questions' },
+                        { icon: Trophy, label: `${test.totalMarks} Marks`, sub: 'Max Points' }
                       ].filter(Boolean).map((item, idx) => (
-                        <div key={idx} className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/5 transition-colors group-hover:border-white/10">
-                          <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0">
-                            <item.icon className="w-4 h-4 text-slate-500 group-hover:text-primary-400 transition-colors" />
+                        <div key={idx} className="flex items-center gap-2.5 bg-slate-50 p-2 rounded-xl border border-slate-100 transition-colors group-hover:border-primary-100">
+                          <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center flex-shrink-0 shadow-sm">
+                            <item.icon className="w-3.5 h-3.5 text-slate-500 group-hover:text-primary-600 transition-colors" />
                           </div>
                           <div className="flex flex-col min-w-0">
-                            <span className="text-[11px] font-black text-slate-200 truncate uppercase tracking-tight">{item.label}</span>
-                            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest truncate">{item.sub}</span>
+                            <span className="text-[10px] font-black text-slate-700 truncate uppercase tracking-tight">{item.label}</span>
+                            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest truncate">{item.sub}</span>
                           </div>
                         </div>
                       ))}
-                    </div>
-
-                    {/* Footer / Actions */}
-                    <div className="flex flex-wrap items-center justify-between pt-5 gap-4 border-t border-white/5">
+                    </div>                    {/* Footer / Actions */}
+                    <div className="flex flex-wrap items-center justify-between pt-4 gap-4 border-t border-slate-100">
                       {test.attemptsCount > 0 ? (
-                        <div className="flex items-center gap-4">
-                           <div className="text-left hidden sm:block">
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] mb-1">Grade</p>
-                            <span className={`text-2xl font-black leading-none ${gradeColor(test.score / test.totalMarks * 100)}`}>{test.grade || 'A'}</span>
+                        <div className="flex items-center gap-3">
+                          <div className="text-left hidden sm:block">
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em] mb-1">Grade</p>
+                            <span className={`text-xl font-black leading-none ${gradeColor(test.score / test.totalMarks * 100)}`}>{test.grade || 'A'}</span>
                           </div>
-                          <div className="h-8 w-[1px] bg-white/5 hidden sm:block" />
+                          <div className="h-7 w-[1px] bg-slate-100 hidden sm:block" />
                           <div>
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] mb-1">Best Score</p>
-                            <span className="text-lg leading-none font-black text-white">{test.score || 0}<span className="text-slate-500 text-sm font-bold">/{test.totalMarks}</span></span>
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em] mb-1">Score</p>
+                            <span className="text-base leading-none font-black text-slate-900">{test.score || 0}<span className="text-slate-400 text-xs font-bold">/{test.totalMarks}</span></span>
                           </div>
                         </div>
                       ) : test.type === 'Practice' ? (
                         <div className="flex items-center gap-4">
                           <div className="flex flex-col gap-1">
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.15em]">Access</p>
-                            <span className="text-xs font-bold text-white uppercase tracking-wider bg-white/5 px-3 py-1 rounded-lg">Anytime</span>
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em]">Access</p>
+                            <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider bg-slate-50 px-2 py-1 rounded-md border border-slate-100">Anytime</span>
                           </div>
                         </div>
                       ) : (
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center border border-amber-500/20">
-                            <Clock className="w-5 h-5 text-amber-500" />
+                          <div className="w-9 h-9 bg-amber-50 rounded-xl flex items-center justify-center border border-amber-100">
+                            <Clock className="w-4 h-4 text-amber-600" />
                           </div>
                           <div>
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.15em]">Start Time</p>
-                            <span className="text-sm font-bold text-white tracking-wide">{test.time}</span>
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em]">Start Time</p>
+                            <span className="text-xs font-bold text-slate-800 tracking-wide">{test.time}</span>
                           </div>
                         </div>
                       )}
@@ -289,12 +287,12 @@ export default function Tests() {
                           }
                         }}
                         disabled={test.status !== 'published'}
-                        className={`flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-xl active:scale-95 whitespace-nowrap ${
+                        className={`flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] transition-all shadow-lg active:scale-95 whitespace-nowrap ${
                         test.status === 'completed' 
-                          ? 'bg-white/5 border border-white/10 text-white hover:bg-white/10 shadow-none w-full sm:w-auto' 
+                          ? 'bg-slate-800 text-white hover:bg-slate-900 w-full sm:w-auto' 
                           : test.status === 'published'
-                            ? 'bg-primary-600 text-white hover:bg-primary-500 shadow-primary-500/40 w-full sm:w-auto'
-                            : 'bg-white/5 border border-white/5 text-slate-600 cursor-not-allowed shadow-none w-full sm:w-auto'
+                            ? 'bg-primary-600 text-white hover:bg-primary-700 shadow-primary-500/30 w-full sm:w-auto'
+                            : 'bg-slate-100 text-slate-400 cursor-not-allowed w-full sm:w-auto'
                       }`}>
                         {test.status === 'completed' ? (
                           <><TrendingUp className="w-4 h-4" />View Result</>
@@ -319,12 +317,12 @@ export default function Tests() {
                 <ClipboardList className="w-24 h-24 text-slate-800 relative" />
               </div>
               <div className="space-y-2 relative">
-                <h3 className="text-2xl font-black text-white uppercase tracking-[0.2em]">Clear For Now</h3>
-                <p className="text-slate-500 font-medium text-sm max-w-xs mx-auto">There are no {activeTab.toLowerCase()} tests found matching your current filters.</p>
+                <h3 className="text-xl font-black text-slate-800 uppercase tracking-[0.2em]">Clear For Now</h3>
+                <p className="text-slate-500 font-medium text-xs max-w-xs mx-auto">There are no {activeTab.toLowerCase()} tests found matching your current filters.</p>
               </div>
               <button 
                 onClick={() => { setFilterDifficulty('All'); setActiveTab('Upcoming'); }}
-                className="px-8 py-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white hover:bg-white/10 transition-all active:scale-95"
+                className="px-8 py-3 bg-slate-100 border border-slate-200 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-200 transition-all active:scale-95"
               >
                 Reset Filters
               </button>

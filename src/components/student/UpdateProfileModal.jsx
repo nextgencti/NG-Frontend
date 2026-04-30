@@ -104,7 +104,7 @@ export default function UpdateProfileModal({ isOpen, onClose }) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+          className="absolute inset-0 bg-slate-800/60 backdrop-blur-sm"
         />
 
         {/* Modal */}
@@ -112,7 +112,7 @@ export default function UpdateProfileModal({ isOpen, onClose }) {
           initial={{ scale: 0.95, opacity: 0, y: 20 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.95, opacity: 0, y: 20 }}
-          className="relative w-full max-w-md bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/5"
+          className="relative w-full max-w-md bg-slate-800 rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/5"
         >
           {/* Header */}
           <div className="p-6 bg-gradient-to-r from-primary-600 to-indigo-600 text-white flex justify-between items-center">
