@@ -489,51 +489,51 @@ export default function AdminCourseContent() {
         </div>
       )}
 
-      {/* Preview Modal */}
-      {isPreviewModalOpen && previewLesson && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-[#111827]/60 backdrop-blur-md">
-          <div className="bg-white rounded-[28px] w-full max-w-4xl shadow-2xl border border-[#E5E7EB] animate-in slide-in-from-bottom-6 duration-400 overflow-hidden flex flex-col max-h-[92vh]">
-            <div className="p-6 border-b border-[#F1F5F9] flex justify-between items-center bg-[#F8FAFC]">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-[14px] bg-white shadow-sm border border-[#E5E7EB] flex items-center justify-center text-[#4F46E5]">
-                  {previewLesson.type === 'video' ? <PlayCircle className="w-7 h-7" /> : <FileText className="w-7 h-7" />}
-                </div>
-                <div>
-                  <h3 className="text-[20px] font-bold text-[#111827]">{previewLesson.title}</h3>
-                  <p className="text-[11px] text-[#6B7280] font-bold uppercase">{previewLesson.type} Lesson • {previewLesson.duration}</p>
+    {/* Preview Modal */}
+    {isPreviewModalOpen && previewLesson && (
+      <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-[#111827]/60 backdrop-blur-md">
+        <div className="bg-white rounded-[24px] w-full max-w-3xl shadow-2xl border border-[#E5E7EB] animate-in slide-in-from-bottom-6 duration-400 overflow-hidden flex flex-col max-h-[85vh]">
+          <div className="p-4 border-b border-[#F1F5F9] flex justify-between items-center bg-[#F8FAFC]">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white shadow-sm border border-[#E5E7EB] flex items-center justify-center text-[#4F46E5]">
+                {previewLesson.type === 'video' ? <PlayCircle className="w-6 h-6" /> : <FileText className="w-6 h-6" />}
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-[#111827] leading-tight">{previewLesson.title}</h3>
+                <p className="text-[10px] text-[#6B7280] font-bold uppercase">{previewLesson.type} Lesson • {previewLesson.duration}</p>
+              </div>
+            </div>
+            <button onClick={() => setIsPreviewModalOpen(false)} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-[#F1F5F9] text-[#6B7280]"><X className="w-5 h-5" /></button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4 lg:p-6 bg-white">
+            {previewLesson.type === 'note' ? (
+              <div className="prose prose-indigo max-w-none">
+                <div className="rich-content" dangerouslySetInnerHTML={{ __html: previewLesson.content }} />
+              </div>
+            ) : previewLesson.type === 'video' ? (
+              <div className="aspect-video bg-[#111827] rounded-[16px] flex items-center justify-center text-white flex-col gap-4 border border-[#1E293B] shadow-2xl">
+                <Video className="w-16 h-16 opacity-20" />
+                <p className="text-[12px] font-bold opacity-60 uppercase tracking-widest">Video Stream Integration</p>
+                <a href={previewLesson.url} target="_blank" rel="noreferrer" className="px-6 py-2.5 bg-[#4F46E5] rounded-full text-[13px] font-bold hover:bg-[#4338CA] transition-all shadow-lg shadow-[#4F46E5]/30">Open Stream</a>
+              </div>
+            ) : (
+              <div className="flex flex-col h-[65vh]">
+                <div className="flex-1 bg-[#F8FAFC] rounded-[16px] border border-[#E5E7EB] overflow-hidden shadow-inner relative">
+                  <iframe 
+                    src={`https://docs.google.com/viewer?url=${encodeURIComponent(previewLesson.url)}&embedded=true`} 
+                    className="w-full h-full border-none"
+                    title="PDF Preview"
+                  />
                 </div>
               </div>
-              <button onClick={() => setIsPreviewModalOpen(false)} className="w-11 h-11 flex items-center justify-center rounded-full hover:bg-[#F1F5F9] text-[#6B7280]"><X className="w-6 h-6" /></button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-10 bg-white">
-              {previewLesson.type === 'note' ? (
-                <div className="prose prose-indigo max-w-none">
-                  <div className="rich-content" dangerouslySetInnerHTML={{ __html: previewLesson.content }} />
-                </div>
-              ) : previewLesson.type === 'video' ? (
-                <div className="aspect-video bg-[#111827] rounded-[20px] flex items-center justify-center text-white flex-col gap-5 border border-[#1E293B] shadow-2xl">
-                  <Video className="w-20 h-20 opacity-20" />
-                  <p className="text-[14px] font-bold opacity-60 uppercase">Video Stream Integration</p>
-                  <a href={previewLesson.url} target="_blank" rel="noreferrer" className="px-8 py-3 bg-[#4F46E5] rounded-full text-[14px] font-bold hover:bg-[#4338CA] transition-all shadow-lg shadow-[#4F46E5]/30">Open Stream</a>
-                </div>
-              ) : (
-                <div className="flex flex-col h-[75vh]">
-                  <div className="flex-1 bg-[#F8FAFC] rounded-[24px] border border-[#E5E7EB] overflow-hidden shadow-inner relative">
-                    <iframe 
-                      src={`https://docs.google.com/viewer?url=${encodeURIComponent(previewLesson.url)}&embedded=true`} 
-                      className="w-full h-full border-none"
-                      title="PDF Preview"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="p-6 border-t border-[#F1F5F9] bg-[#F8FAFC] flex justify-end">
-              <button onClick={() => setIsPreviewModalOpen(false)} className="px-10 py-3.5 bg-[#111827] text-white rounded-[16px] text-[15px] font-bold hover:bg-black transition-all">Close Preview</button>
-            </div>
+            )}
+          </div>
+          <div className="p-4 border-t border-[#F1F5F9] bg-[#F8FAFC] flex justify-end">
+            <button onClick={() => setIsPreviewModalOpen(false)} className="px-8 py-2.5 bg-[#111827] text-white rounded-[12px] text-xs font-bold hover:bg-black transition-all">Close Preview</button>
           </div>
         </div>
-      )}
+      </div>
+    )}
 
       <style>{`
         .rich-content h1 { font-size: 2.25em; font-weight: 800; margin-bottom: 0.75em; color: #111827; }

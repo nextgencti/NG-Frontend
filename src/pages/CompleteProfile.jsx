@@ -26,7 +26,13 @@ export default function CompleteProfile() {
           api.get('/student/all-institutes')
         ]);
         setCourses(courseRes.data.courses || []);
-        setInstitutes(instRes.data.institutes || []);
+        const fetchedInstitutes = instRes.data.institutes || [];
+        setInstitutes(fetchedInstitutes);
+        
+        // Auto-select first institute if available
+        if (fetchedInstitutes.length > 0) {
+          setFormData(prev => ({ ...prev, instituteId: fetchedInstitutes[0].id }));
+        }
       } catch (error) {
         console.error('Failed to fetch signup data', error);
       }
@@ -216,38 +222,17 @@ export default function CompleteProfile() {
           {step === 2 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
               <div className="space-y-2">
-                <label className="text-[12px] font-semibold text-[#111827] uppercase tracking-wider ml-1">Select Institute</label>
-                <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#94A3B8] z-10" />
-                  <select
-                    name="instituteId" required
-                    value={formData.instituteId} onChange={handleChange}
-                    className="w-full pl-11 pr-4 py-3 bg-white border border-[#E5E7EB] rounded-[10px] text-[#111827] text-[14px] focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] transition-all outline-none appearance-none cursor-pointer relative"
-                  >
-                    <option value="" disabled>Choose an institute</option>
-                    {institutes.map(inst => (
-                      <option key={inst.id} value={inst.id}>
-                        {inst.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
                 <label className="text-[12px] font-semibold text-[#111827] uppercase tracking-wider ml-1">Select Course</label>
                 <div className="relative">
                   <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#94A3B8] z-10" />
                   <select
-                    name="courseId" required disabled={!formData.instituteId}
+                    name="courseId" required
                     value={formData.courseId} onChange={handleChange}
-                    className="w-full pl-11 pr-4 py-3 bg-white border border-[#E5E7EB] rounded-[10px] text-[#111827] text-[14px] focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] transition-all outline-none appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed relative"
+                    className="w-full pl-11 pr-4 py-3 bg-white border border-[#E5E7EB] rounded-[10px] text-[#111827] text-[14px] focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] transition-all outline-none appearance-none cursor-pointer relative"
                   >
-                    <option value="" disabled>
-                      {!formData.instituteId ? "Select an institute first" : "Choose a course"}
-                    </option>
+                    <option value="" disabled>Choose a course</option>
                     {courses
-                      .filter(course => course.instituteId === formData.instituteId || !course.instituteId)
+                      .filter(course => !formData.instituteId || course.instituteId === formData.instituteId || !course.instituteId)
                       .map(course => (
                       <option key={course.id} value={course.id}>
                         {course.name}

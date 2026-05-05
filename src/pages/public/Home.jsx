@@ -86,7 +86,7 @@ export default function Home() {
               <button 
                 key={link.name} 
                 onClick={() => navigate(link.path)}
-                className="text-sm font-bold text-slate-500 hover:text-primary-600 transition-colors uppercase tracking-widest relative group"
+                className="text-[11px] font-bold text-slate-500 hover:text-primary-600 transition-colors uppercase tracking-widest relative group"
               >
                 {link.name}
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-primary-600 to-indigo-600 transition-all duration-300 group-hover:w-full rounded-full"></span>
