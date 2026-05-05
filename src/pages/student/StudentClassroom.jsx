@@ -301,11 +301,11 @@ export default function StudentClassroom() {
   );
 
   return (
-    <div className="flex h-[calc(100vh-64px)] -m-4 lg:-m-6 overflow-hidden bg-[#F8FAFC]">
+    <div className="flex h-[calc(100vh-64px)] -m-4 lg:-m-6 overflow-hidden bg-[#F8FAFC] relative">
 
       {/* ═══ MOBILE SIDEBAR OVERLAY ═══ */}
       {mobileSidebar && (
-        <div className="fixed inset-0 z-50 xl:hidden">
+        <div className="absolute inset-0 z-50 xl:hidden">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setMobileSidebar(false)} />
           <aside className="absolute left-0 top-0 bottom-0 w-[260px] bg-white flex flex-col shadow-2xl z-10 animate-in slide-in-from-left duration-200">
             <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100">

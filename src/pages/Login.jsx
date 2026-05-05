@@ -56,6 +56,17 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-[#F8FAFC]">
+      {/* Back Button */}
+      <button 
+        onClick={() => navigate('/')}
+        className="absolute top-8 left-8 flex items-center gap-2 text-slate-500 hover:text-slate-900 font-bold transition-all group z-20"
+      >
+        <div className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center shadow-sm group-hover:shadow-md transition-all group-hover:-translate-x-1">
+          <ArrowRight className="w-5 h-5 rotate-180" />
+        </div>
+        <span className="hidden sm:block">Back to Home</span>
+      </button>
+
       {/* Dynamic Background Elements - Subtle */}
       <div className="absolute top-[-10%] left-[-10%] w-[40rem] h-[40rem] bg-primary-600/[0.03] rounded-full blur-[120px] pointer-events-none"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[40rem] h-[40rem] bg-primary-600/[0.03] rounded-full blur-[120px] pointer-events-none"></div>
@@ -135,9 +146,9 @@ export default function Login() {
         </button>
 
         <div className="mt-8 pt-8 border-t border-[#F1F5F9] text-center">
-          <Link to="/register-institute" className="text-[12px] font-bold text-[#94A3B8] hover:text-[#4F46E5] uppercase tracking-widest transition-colors">
-            Are you an Institute? <span className="text-[#4F46E5]">Register Now</span>
-          </Link>
+          <p className="text-[12px] font-bold text-[#94A3B8] uppercase tracking-widest">
+            NextGen Computer Training Institute Muskara
+          </p>
         </div>
       </div>
     </div>

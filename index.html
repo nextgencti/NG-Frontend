@@ -2,12 +2,96 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/png" href="/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
+    <meta name="description" content="NextGen Computer Training Institute Muskara - Best Computer Courses & Training Center. Professional courses in ADCA, DCA, CCC, Tally Prime with GST." />
+    <title>NGCTI | NextGen Computer Training Institute Muskara | Best Computer Courses & Training Center</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <style>
+        #initial-loader {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          background-color: #F8FAFC;
+          font-family: 'Inter', system-ui, -apple-system, sans-serif;
+          z-index: 9999;
+          transition: opacity 0.4s ease-out, visibility 0.4s ease-out;
+        }
+        #initial-loader.fade-out {
+          opacity: 0;
+          visibility: hidden;
+        }
+        .initial-spinner {
+          width: 50px;
+          height: 50px;
+          border: 4px solid #E0E7FF;
+          border-top: 4px solid #4F46E5;
+          border-radius: 50%;
+          animation: ispin 1s linear infinite;
+          margin-bottom: 24px;
+        }
+        @keyframes ispin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        .initial-brand {
+          font-size: 14px;
+          font-weight: 800;
+          color: #475569;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          animation: ipulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        .initial-logo {
+          height: 120px;
+          margin-bottom: 30px;
+          object-fit: contain;
+        }
+        @keyframes ipulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+      </style>
+      <div id="initial-loader">
+        <img src="/logo.png" alt="NGCTI Logo" class="initial-logo" />
+        <div class="initial-spinner"></div>
+        <div class="initial-brand">Loading Workspace...</div>
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      // Smooth fade-out: remove pre-loader once React has rendered content
+      const observer = new MutationObserver(() => {
+        const root = document.getElementById('root');
+        const loader = document.getElementById('initial-loader');
+        // Once React renders real content (more than just the loader), fade out
+        if (root && loader && root.children.length > 1) {
+          loader.classList.add('fade-out');
+          setTimeout(() => loader.remove(), 500);
+          observer.disconnect();
+        }
+      });
+      observer.observe(document.getElementById('root'), { childList: true, subtree: true });
+      // Fallback: force remove after 5 seconds no matter what
+      setTimeout(() => {
+        const loader = document.getElementById('initial-loader');
+        if (loader) {
+          loader.classList.add('fade-out');
+          setTimeout(() => loader.remove(), 500);
+        }
+      }, 5000);
+    </script>
   </body>
 </html>
+

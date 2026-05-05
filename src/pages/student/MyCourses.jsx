@@ -116,52 +116,55 @@ export default function MyCourses() {
                 </div>
               </div>
 
-              {/* Details Section - More compact padding */}
-              <div className="p-5 flex-1 flex flex-col">
-                <div className="flex justify-between items-center mb-4">
-                  <div className="space-y-0.5">
-                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Progress</span>
-                    <p className="text-xl font-black text-slate-900 leading-none">{course.progress || 0}%</p>
+              {/* Details Section */}
+              <div className="p-6 flex-1 flex flex-col">
+                {/* Course Description */}
+                <div className="mb-6 flex-1">
+                  <p className="text-sm text-slate-500 font-medium line-clamp-2 leading-relaxed">
+                    {course.description || "Master the fundamentals and advanced concepts of this course with our comprehensive curriculum and expert guidance."}
+                  </p>
+                </div>
+
+                {/* Progress Section */}
+                <div className="mb-6">
+                  <div className="flex justify-between items-end mb-2">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Course Progress</span>
+                    <span className="text-sm font-black text-slate-900">{course.progress || 0}%</span>
                   </div>
-                  <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-300">
-                    <BarChart className="w-5 h-5" />
+                  <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-primary-600 rounded-full transition-all duration-1000 ease-out"
+                      style={{ width: `${course.progress || 0}%` }}
+                    ></div>
                   </div>
                 </div>
 
-                {/* Progress Bar - Thinner */}
-                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden mb-6">
-                  <div 
-                    className="h-full bg-primary-600 rounded-full transition-all duration-1000 ease-out"
-                    style={{ width: `${course.progress || 0}%` }}
-                  ></div>
-                </div>
-
-                {/* Stats Row - Smaller font */}
-                <div className="grid grid-cols-2 gap-4 mb-6 pb-5 border-b border-slate-50">
-                  <div className="space-y-0.5">
-                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Modules</span>
-                    <p className="text-[12px] font-bold text-slate-700">
-                      {course.completedModules || 0} / {course.totalModules || 10}
+                {/* Stats Blocks */}
+                <div className="grid grid-cols-2 gap-3 mb-6 pb-6 border-b border-slate-100">
+                  <div className="bg-slate-50 rounded-xl p-3 border border-slate-100/50">
+                    <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Modules</span>
+                    <p className="text-sm font-black text-slate-700">
+                      {course.completedModules || 0} <span className="text-xs text-slate-400 font-medium">/ {course.totalModules || 10}</span>
                     </p>
                   </div>
-                  <div className="space-y-0.5 text-right">
-                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Schedule</span>
-                    <p className="text-[12px] font-bold text-slate-700 truncate">
+                  <div className="bg-slate-50 rounded-xl p-3 border border-slate-100/50">
+                    <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Schedule</span>
+                    <p className="text-sm font-black text-slate-700 truncate">
                       {course.nextClass || 'TBA'}
                     </p>
                   </div>
                 </div>
 
-                {/* Action Button - More compact */}
+                {/* Action Button */}
                 <button 
                   disabled={course.enrollmentStatus === 'pending'}
                   onClick={() => course.enrollmentStatus !== 'pending' && navigate(`/dashboard/courses/${course.id}/classroom`)}
-                  className="w-full py-3.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all disabled:opacity-30 disabled:grayscale flex items-center justify-center gap-2 group/btn"
+                  className="w-full mt-auto py-4 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-[11px] font-black uppercase tracking-[0.15em] transition-all disabled:opacity-30 disabled:grayscale flex items-center justify-center gap-2 group/btn shadow-lg shadow-primary-500/20 active:scale-95"
                 >
                   {course.enrollmentStatus === 'pending' ? 'Pending Approval' : (
                     <>
                       Enter Classroom
-                      <ChevronRight className="w-3.5 h-3.5 group-hover/btn:translate-x-1 transition-transform" />
+                      <ChevronRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
                     </>
                   )}
                 </button>

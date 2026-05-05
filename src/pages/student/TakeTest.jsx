@@ -314,7 +314,7 @@ export default function TakeTest() {
             <button
               onClick={handleManualSubmit}
               disabled={isSubmitting}
-              className="px-6 py-3 bg-rose-500 hover:bg-rose-600 active:scale-95 text-white text-sm font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-rose-500/30 disabled:opacity-50"
+              className="px-4 py-2 sm:px-5 sm:py-2.5 bg-rose-500 hover:bg-rose-600 active:scale-95 text-white text-xs font-black uppercase tracking-wider rounded-lg transition-all shadow-md shadow-rose-500/30 disabled:opacity-50"
             >
               {isSubmitting ? 'Submitting...' : 'Finish Test'}
             </button>
@@ -454,8 +454,8 @@ export default function TakeTest() {
             </div>
             
             {/* Mobile Question Navigator (Horizontal) */}
-            <div className="lg:hidden mt-8 overflow-x-auto pb-6 scrollbar-hide">
-              <div className="flex gap-3 w-max px-2">
+            <div className="lg:hidden mt-8 -mx-4 px-4 overflow-x-auto">
+              <div className="flex gap-3 w-max py-4 px-1">
                 {questions.map((q, idx) => {
                   const isAnswered = !!answers[q.id];
                   const isCurrent = idx === currentQuestionIndex;
@@ -476,7 +476,7 @@ export default function TakeTest() {
                   );
                 })}
               </div>
-              </div>
+            </div>
             </>
           )}
         </div>

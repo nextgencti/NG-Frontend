@@ -102,47 +102,52 @@ export default function Tests() {
         })}
       </div>
 
-      {/* Best Score Banner */}
-      {bestScore > 0 && (
-        <div className="bg-gradient-to-r from-primary-600 to-accent-600 rounded-3xl p-6 flex flex-col sm:flex-row items-center gap-4 sm:gap-6 shadow-xl shadow-primary-500/20 text-center sm:text-left">
-          <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0 animate-bounce">
-            <Trophy className="w-9 h-9 text-yellow-300" />
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center justify-center sm:justify-start gap-2 mb-1">
-              <span className="px-2 py-0.5 bg-accent-400/30 text-white text-[10px] font-black uppercase tracking-widest rounded-full">Outstanding</span>
-              <TrendingUp className="w-3.5 h-3.5 text-accent-300" />
+      {/* Banners Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        
+        {/* Best Score Banner */}
+        {bestScore > 0 && (
+          <div className="bg-gradient-to-r from-primary-600 to-accent-600 rounded-[2rem] p-6 flex flex-col xl:flex-row items-center gap-4 xl:gap-6 shadow-xl shadow-primary-500/20 text-center xl:text-left h-full">
+            <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0 animate-bounce">
+              <Trophy className="w-9 h-9 text-yellow-300" />
             </div>
-            <p className="text-white font-black text-xl sm:text-2xl">Your Best Performance: {bestScore}%</p>
-            <p className="text-white/70 text-sm font-medium">You're outperforming 85% of your batch. Keep pushing!</p>
+            <div className="flex-1">
+              <div className="flex items-center justify-center xl:justify-start gap-2 mb-1">
+                <span className="px-2 py-0.5 bg-accent-400/30 text-white text-[10px] font-black uppercase tracking-widest rounded-full">Outstanding</span>
+                <TrendingUp className="w-3.5 h-3.5 text-accent-300" />
+              </div>
+              <p className="text-white font-black text-xl sm:text-2xl mt-1">Your Best Performance: {bestScore}%</p>
+              <p className="text-white/70 text-sm font-medium mt-1">You're outperforming 85% of your batch.</p>
+            </div>
+            <button className="w-full xl:w-auto px-6 py-3 bg-white text-primary-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition-colors shadow-lg shadow-white/10 active:scale-95 flex-shrink-0 mt-2 xl:mt-0">
+              View Analytics
+            </button>
           </div>
-          <button className="px-6 py-2.5 bg-white text-primary-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition-colors shadow-lg shadow-white/10 active:scale-95">
-            View Analytics
-          </button>
-        </div>
-      )}
+        )}
 
-      {/* Tests List Section Banner */}
-      <div className="bg-gradient-to-r from-primary-600 to-primary-800 p-4 sm:p-6 mb-4 rounded-2xl relative overflow-hidden group shadow-lg shadow-primary-500/20">
-        <div className="absolute top-0 right-0 w-60 h-60 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:scale-110 transition-transform duration-700"></div>
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-xl sm:text-2xl font-black text-white mb-1.5 tracking-tight">Test Your Knowledge 🚀</h2>
-            <p className="text-primary-100 max-w-lg text-xs sm:text-sm leading-relaxed">
-              Track your progress, challenge yourself with tests, and see how much you've learned.
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-2.5">
-            <div className="px-4 py-2.5 bg-white/10 rounded-lg border border-white/10 backdrop-blur-md">
-              <p className="text-[8px] font-black text-primary-200 uppercase tracking-[0.2em] mb-0.5">Avg Score</p>
-              <p className="text-lg font-bold text-white">{avgScore}%</p>
+        {/* Tests List Section Banner */}
+        <div className={`bg-gradient-to-r from-primary-600 to-primary-800 p-6 rounded-[2rem] relative overflow-hidden group shadow-lg shadow-primary-500/20 h-full flex flex-col justify-center ${bestScore > 0 ? '' : 'lg:col-span-2'}`}>
+          <div className="absolute top-0 right-0 w-60 h-60 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:scale-110 transition-transform duration-700"></div>
+          <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+            <div className="flex-1">
+              <h2 className="text-xl sm:text-2xl font-black text-white mb-1.5 tracking-tight">Test Your Knowledge 🚀</h2>
+              <p className="text-primary-100 text-sm leading-relaxed">
+                Track your progress, challenge yourself, and see how much you've learned.
+              </p>
             </div>
-            <div className="px-4 py-2.5 bg-white/10 rounded-lg border border-white/10 backdrop-blur-md">
-              <p className="text-[8px] font-black text-primary-200 uppercase tracking-[0.2em] mb-0.5">Best Perf</p>
-              <p className="text-lg font-bold text-white">{bestScore}%</p>
+            <div className="flex gap-3 flex-shrink-0">
+              <div className="flex-1 xl:flex-none px-5 py-3 bg-white/95 rounded-xl border border-white shadow-xl shadow-black/5 backdrop-blur-md">
+                <p className="text-[8px] font-black text-primary-600 uppercase tracking-[0.2em] mb-0.5">Avg Score</p>
+                <p className="text-xl font-black text-slate-900 leading-none">{avgScore}%</p>
+              </div>
+              <div className="flex-1 xl:flex-none px-5 py-3 bg-white/95 rounded-xl border border-white shadow-xl shadow-black/5 backdrop-blur-md">
+                <p className="text-[8px] font-black text-primary-600 uppercase tracking-[0.2em] mb-0.5">Best Perf</p>
+                <p className="text-xl font-black text-slate-900 leading-none">{bestScore}%</p>
+              </div>
             </div>
           </div>
         </div>
+
       </div>
 
       {/* Filters & Tabs */}

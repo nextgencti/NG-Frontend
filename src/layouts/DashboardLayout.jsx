@@ -14,7 +14,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Settings,
-  ChevronDown
+  Activity,
+  ChevronDown,
+  Shield,
+  Building2,
+  Users
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useRef, useEffect } from 'react';
@@ -47,7 +51,7 @@ export default function DashboardLayout() {
     { name: 'Overview', path: '/dashboard', icon: LayoutDashboard },
     { name: 'My Courses', path: '/dashboard/courses', icon: BookOpen },
     { name: 'Tests', path: '/dashboard/tests', icon: ClipboardList },
-    { name: 'Attendance', path: '/dashboard/attendance', icon: CalendarCheck },
+    { name: 'Activity', path: '/dashboard/activity', icon: Activity },
     { name: 'Fees', path: '/dashboard/fees', icon: CreditCard },
     { name: 'Certificates', path: '/dashboard/certificates', icon: Award },
   ];
@@ -57,14 +61,20 @@ export default function DashboardLayout() {
     { name: 'Manage Students', path: '/admin/students', icon: User },
     { name: 'All Courses', path: '/admin/courses', icon: BookOpen },
     { name: 'Tests', path: '/admin/tests', icon: ClipboardList },
+    { name: 'Public Leads', path: '/superadmin/leads', icon: Users },
     { name: 'Fees & Revenue', path: '/admin/finance', icon: CreditCard },
     { name: 'Settings', path: '/admin/settings', icon: Settings },
   ];
 
   const superAdminLinks = [
     { name: 'Dashboard', path: '/superadmin', icon: LayoutDashboard },
-    { name: 'Institutes', path: '/superadmin/institutes', icon: BookOpen },
-    { name: 'Admins', path: '/superadmin/admins', icon: User },
+    { name: 'Manage Students', path: '/admin/students', icon: User },
+    { name: 'Courses', path: '/admin/courses', icon: BookOpen },
+    { name: 'Tests', path: '/admin/tests', icon: ClipboardList },
+    { name: 'Public Leads', path: '/superadmin/leads', icon: Users },
+    { name: 'Finance', path: '/admin/finance', icon: CreditCard },
+    { name: 'Staff Members', path: '/superadmin/admins', icon: Shield },
+    { name: 'Institute Profile', path: '/superadmin/institutes', icon: Building2 },
   ];
 
   const sidebarLinks = isSuperAdmin ? superAdminLinks : (isAdmin ? adminLinks : studentLinks);
@@ -98,14 +108,13 @@ export default function DashboardLayout() {
             <Logo 
               className={isCollapsed ? "w-8 h-8" : "w-8 h-8"} 
               showText={!isCollapsed} 
-              textClassName="text-base font-bold text-[#111827] tracking-tight"
             />
           </div>
           
           {/* Desktop Collapse Toggle */}
           <button 
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="hidden lg:flex absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white border border-[#E5E7EB] rounded-full items-center justify-center text-[#94A3B8] hover:text-[#4F46E5] hover:border-[#4F46E5] transition-all shadow-sm z-50 group-hover:opacity-100 opacity-0 lg:opacity-100"
+            className="hidden lg:flex absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-[#EEF2FF] border border-[#C7D2FE] rounded-full items-center justify-center text-[#4F46E5] hover:bg-[#4F46E5] hover:text-white hover:border-[#4F46E5] transition-all shadow-md z-50 group-hover:opacity-100 opacity-0 lg:opacity-100"
           >
             {isCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
           </button>
@@ -183,7 +192,7 @@ export default function DashboardLayout() {
               <Menu className="w-5 h-5" />
             </button>
             <div className="flex items-center gap-3">
-              {isAdmin && currentUser?.instituteLogoURL && (
+              {(isAdmin || isSuperAdmin) && currentUser?.instituteLogoURL && (
                 <div className="w-8 h-8 rounded-lg bg-[#F8FAFC] border border-[#E5E7EB] p-1 flex items-center justify-center overflow-hidden hidden sm:flex">
                   <img 
                     src={currentUser.instituteLogoURL} 
@@ -194,10 +203,10 @@ export default function DashboardLayout() {
               )}
               <div className="flex flex-col">
                 <h1 className="text-sm font-bold text-[#111827] tracking-tight truncate max-w-[200px]">
-                  {isSuperAdmin ? 'Super Admin' : (isAdmin ? (currentUser?.instituteName || 'Admin Portal') : 'Student Portal')}
+                  {isSuperAdmin ? (currentUser?.instituteName || 'Super Admin') : (isAdmin ? (currentUser?.instituteName || 'Admin Portal') : 'Student Portal')}
                 </h1>
                 <p className="text-[10px] font-medium text-[#6B7280] uppercase tracking-wider -mt-0.5">
-                  {isSuperAdmin ? 'System Control' : (isAdmin ? 'Institute Management' : 'Dashboard')}
+                  {isSuperAdmin ? 'Institute Owner' : (isAdmin ? 'Institute Management' : 'Dashboard')}
                 </p>
               </div>
             </div>
@@ -213,7 +222,7 @@ export default function DashboardLayout() {
                 <span className="text-[11px] font-medium text-[#6B7280] uppercase tracking-wider">{currentUser?.role || 'Student'}</span>
               </div>
               {/* Avatar block */}
-              <div className="w-8 h-8 rounded-full bg-[#EEF2FF] flex items-center justify-center border border-[#E0E7FF] overflow-hidden">
+              <div className="w-9 h-9 rounded-full bg-[#EEF2FF] flex items-center justify-center border-2 border-[#4F46E5] ring-2 ring-white overflow-hidden shadow-sm shrink-0">
                 {currentUser?.photoURL ? (
                   <img src={currentUser.photoURL} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
@@ -244,7 +253,7 @@ export default function DashboardLayout() {
                       setIsProfileModalOpen(true);
                     }
                   }}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors text-sm font-semibold"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors text-[13px] font-semibold rounded-md"
                 >
                   <User className="w-4 h-4 text-primary-500" />
                   My Profile
@@ -256,7 +265,7 @@ export default function DashboardLayout() {
                       setShowUserDropdown(false);
                       navigate('/admin/settings');
                     }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors text-sm font-semibold"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors text-[13px] font-semibold rounded-md"
                   >
                     <Settings className="w-4 h-4 text-accent-500" />
                     Settings
@@ -270,7 +279,7 @@ export default function DashboardLayout() {
                     setShowUserDropdown(false);
                     handleLogout();
                   }}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-rose-400 hover:bg-rose-500/10 transition-colors text-sm font-bold"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-rose-500 hover:bg-rose-50 transition-colors text-[13px] font-bold rounded-md"
                 >
                   <LogOut className="w-4 h-4" />
                   Logout Account

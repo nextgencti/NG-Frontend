@@ -1,95 +1,153 @@
-import React from 'react';
-import { CreditCard, Download, ExternalLink, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { CreditCard, Download, CheckCircle2, IndianRupee, Clock } from 'lucide-react';
+import api from '../../lib/axios';
 
 export default function Fees() {
+  const [data, setData] = useState({
+    summary: { total: 0, paid: 0, outstanding: 0 },
+    nextPayment: null,
+    history: [],
+    loading: true
+  });
+
+  useEffect(() => {
+    const fetchFees = async () => {
+      try {
+        // Since backend doesn't have fees endpoint yet, we set it to empty
+        // In future, this will be api.get('/student/fees')
+        setTimeout(() => {
+          setData({
+            summary: { total: 0, paid: 0, outstanding: 0 },
+            nextPayment: null,
+            history: [],
+            loading: false
+          });
+        }, 800);
+      } catch (error) {
+        console.error(error);
+        setData(prev => ({ ...prev, loading: false }));
+      }
+    };
+    fetchFees();
+  }, []);
+
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-5xl mx-auto pb-10">
       
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">Fees & Payments</h2>
-          <p className="text-slate-400 mt-2 font-medium">Manage your course fees and download receipts.</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">Fees & Payments</h2>
+          <p className="text-slate-500 mt-0.5 text-[11px] font-medium">Manage your course fees and download receipts.</p>
         </div>
-        <button className="flex items-center gap-3 px-8 py-3.5 bg-primary-600 hover:bg-primary-500 text-white rounded-2xl font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-primary-500/20 active:scale-95 text-[10px]">
+        <button className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-bold transition-all shadow-md active:scale-95 text-xs">
           <CreditCard className="w-4 h-4" />
           Pay Now
         </button>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
+      <div className="grid lg:grid-cols-3 gap-6">
         {/* Next Payment Card */}
-        <div className="lg:col-span-2 bg-slate-800 border border-white/5 rounded-[2.5rem] p-8 sm:p-10 text-white relative overflow-hidden flex flex-col justify-between group">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-primary-600/20 rounded-full blur-[100px] translate-x-1/2 -translate-y-1/2 group-hover:scale-110 transition-transform duration-700"></div>
+        <div className="lg:col-span-2 bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 text-slate-900 relative overflow-hidden flex flex-col justify-between shadow-sm group hover:border-primary-100 transition-all">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary-50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 opacity-50 group-hover:opacity-100 transition-opacity"></div>
           
-          <div className="relative z-10 flex items-start justify-between mb-10">
+          <div className="relative z-10 flex flex-col sm:flex-row sm:items-start justify-between mb-8 gap-4">
             <div>
-              <p className="text-slate-500 font-black tracking-[0.2em] text-[10px] uppercase">Next Payment</p>
-              <p className="text-5xl sm:text-6xl font-black mt-3 tracking-tighter">₹4,500</p>
+              <p className="text-slate-400 font-black tracking-widest text-[9px] uppercase">Next Payment</p>
+              {data.loading ? (
+                <div className="w-32 h-10 bg-slate-100 animate-pulse rounded-xl mt-2"></div>
+              ) : (
+                <p className="text-3xl sm:text-4xl font-black mt-2 text-slate-900 tracking-tight">
+                  ₹{data.nextPayment?.amount || '0'}
+                </p>
+              )}
             </div>
-            <span className="px-4 py-1.5 bg-rose-500/10 text-rose-400 text-[10px] font-black rounded-xl border border-rose-500/20 uppercase tracking-widest">
-              DUE IN 05 DAYS
-            </span>
+            {!data.loading && (
+              <span className={`px-3 py-1 text-[9px] font-black rounded-lg border uppercase tracking-wider shrink-0 ${data.nextPayment ? 'bg-rose-50 text-rose-600 border-rose-100' : 'bg-slate-50 text-slate-400 border-slate-100'}`}>
+                {data.nextPayment ? `Due in ${data.nextPayment.daysLeft} Days` : 'No Dues'}
+              </span>
+            )}
           </div>
           
-          <div className="relative z-10 border-t border-white/5 pt-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+          <div className="relative z-10 border-t border-slate-50 pt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <p className="text-white font-bold text-lg">Web Design Authority</p>
-              <p className="text-slate-500 text-xs mt-1 font-bold uppercase tracking-widest">DEADLINE: MARCH 15, 2026</p>
+              <p className="text-slate-800 font-bold text-sm">{data.nextPayment?.course || 'No Active Course Fee'}</p>
+              <p className="text-slate-400 text-[9px] mt-1 font-bold uppercase tracking-wider">
+                {data.nextPayment?.deadline ? `Deadline: ${data.nextPayment.deadline}` : 'All caught up!'}
+              </p>
             </div>
-            <button className="px-8 py-3.5 bg-white text-slate-900 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:bg-slate-100 transition-all active:scale-95">
-              PAY NOW
+            <button 
+              disabled={!data.nextPayment}
+              className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold shadow-md hover:bg-slate-800 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Pay Now
             </button>
           </div>
         </div>
 
         {/* Payment Summary */}
-        <div className="glass-dark p-8 flex flex-col justify-center border border-white/5">
-          <h3 className="text-xl font-black text-white mb-8 uppercase tracking-widest">Fee Summary</h3>
+        <div className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col justify-center">
+          <h3 className="text-[10px] font-black text-slate-400 mb-6 uppercase tracking-widest">Fee Summary</h3>
           
-          <div className="space-y-6">
-            <div className="flex justify-between items-center pb-5 border-b border-white/5">
-              <span className="text-slate-500 text-xs font-bold uppercase tracking-widest">Total Fees</span>
-              <span className="text-white font-black">₹15,000</span>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center pb-4 border-b border-slate-50">
+              <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Total Fees</span>
+              <span className="text-slate-900 font-bold text-sm">₹{data.summary.total.toLocaleString()}</span>
             </div>
-            <div className="flex justify-between items-center pb-5 border-b border-white/5">
-              <span className="text-slate-500 text-xs font-bold uppercase tracking-widest">Paid Amount</span>
-              <span className="text-emerald-400 font-black">₹7,500</span>
+            <div className="flex justify-between items-center pb-4 border-b border-slate-50">
+              <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Paid Amount</span>
+              <span className="text-emerald-600 font-bold text-sm">₹{data.summary.paid.toLocaleString()}</span>
             </div>
-            <div className="flex justify-between items-center pt-2">
-              <span className="text-slate-300 text-xs font-bold uppercase tracking-widest">Outstanding</span>
-              <span className="text-white font-black text-2xl tracking-tighter">₹7,500</span>
+            <div className="flex justify-between items-center pt-1">
+              <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Outstanding</span>
+              <span className="text-slate-900 font-black text-xl tracking-tight">₹{data.summary.outstanding.toLocaleString()}</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Transaction History Placeholder */}
-      <div className="glass-dark border border-white/5 overflow-hidden mt-10">
-        <div className="p-8 border-b border-white/5">
-          <h3 className="text-xl font-black text-white uppercase tracking-widest">Payment History</h3>
+      {/* Transaction History */}
+      <div className="bg-white border border-slate-100 rounded-[2rem] shadow-sm overflow-hidden mt-6">
+        <div className="px-6 py-5 border-b border-slate-50 flex items-center justify-between bg-slate-50/30">
+          <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Payment History</h3>
         </div>
         
-        <div className="divide-y divide-white/5">
-          {/* Mock Transaction */}
-          <div className="p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 hover:bg-white/5 transition-all group">
-            <div className="flex items-center gap-5">
-              <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <CheckCircle2 className="w-7 h-7 text-emerald-400" />
+        {data.loading ? (
+          <div className="p-12 text-center text-slate-400 animate-pulse font-bold tracking-widest uppercase text-xs">Loading History...</div>
+        ) : data.history.length > 0 ? (
+          <div className="divide-y divide-slate-50">
+            {data.history.map((item, i) => (
+              <div key={i} className="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50 transition-colors group">
+                <div className="flex items-center gap-4">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-900">{item.description}</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5 font-bold uppercase tracking-wider">{item.date} • {item.method}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-6">
+                  <span className="text-base font-black text-slate-900">₹{item.amount.toLocaleString()}</span>
+                  <button className="flex items-center gap-1.5 text-xs font-bold text-primary-600 hover:text-primary-700 transition-colors bg-primary-50 hover:bg-primary-100 px-4 py-2 rounded-lg border border-primary-100 shrink-0">
+                    <Download className="w-3.5 h-3.5" />
+                    Receipt
+                  </button>
+                </div>
               </div>
-              <div>
-                <p className="text-lg font-black text-white uppercase tracking-tight">Phase 1 - Web Development</p>
-                <p className="text-sm text-slate-500 mt-1 font-medium">Payment Date: Feb 10, 2026 via UPI</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-8">
-              <span className="text-2xl font-black text-white tracking-widest">₹3,000</span>
-              <button className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-primary-400 hover:text-primary-300 transition-colors bg-white/5 px-5 py-3 rounded-xl border border-white/5">
-                <Download className="w-4 h-4" />
-                Download Receipt
-              </button>
-            </div>
+            ))}
           </div>
-        </div>
+        ) : (
+          <div className="p-16 text-center">
+            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-5 border border-slate-100 relative">
+               <div className="absolute inset-0 bg-primary-100/30 rounded-full blur-xl animate-pulse"></div>
+               <Clock className="w-6 h-6 text-slate-300 relative" />
+            </div>
+            <h4 className="text-lg font-black text-slate-800 uppercase tracking-widest">No History</h4>
+            <p className="text-slate-400 mt-2 max-w-sm mx-auto font-medium text-xs">
+              You haven't made any payments yet.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

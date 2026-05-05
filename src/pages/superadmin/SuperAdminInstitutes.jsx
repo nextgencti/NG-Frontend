@@ -1,223 +1,217 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, Plus, Search, Mail, Phone, MapPin, X } from 'lucide-react';
+import { Building2, Mail, Phone, MapPin, Edit3, Globe, Save } from 'lucide-react';
 import api from '../../lib/axios';
 import toast from 'react-hot-toast';
+import { useAuth } from '../../context/AuthContext';
 
 export default function SuperAdminInstitutes() {
-  const [institutes, setInstitutes] = useState([]);
+  const { currentUser } = useAuth();
+  const [institute, setInstitute] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-
-  // Form State
+  const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
-    address: '',
+    email: '',
     phone: '',
-    email: ''
+    address: '',
+    website: ''
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    fetchInstitutes();
+    fetchInstituteDetails();
   }, []);
 
-  const fetchInstitutes = async () => {
+  const fetchInstituteDetails = async () => {
     try {
       const response = await api.get('/superadmin/institutes');
-      setInstitutes(response.data.institutes);
+      const myInstitute = response.data.institutes[0];
+      if (myInstitute) {
+        setInstitute(myInstitute);
+        setFormData({
+          name: myInstitute.name || '',
+          email: myInstitute.email || '',
+          phone: myInstitute.phone || '',
+          address: myInstitute.address || '',
+          website: myInstitute.website || ''
+        });
+      }
     } catch (error) {
-      toast.error('Failed to fetch institutes');
+      toast.error('Failed to fetch institute details');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleAddInstitute = async (e) => {
+  const handleUpdate = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
     try {
-      const response = await api.post('/superadmin/institutes', formData);
-      toast.success(response.data.message);
-      setInstitutes([{ ...response.data.institute }, ...institutes]);
-      setIsAddModalOpen(false);
-      setFormData({ name: '', address: '', phone: '', email: '' });
+      await api.put(`/superadmin/institutes/${institute.id}`, formData);
+      toast.success('Institute details updated successfully');
+      setInstitute({ ...institute, ...formData });
+      setIsEditing(false);
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to add institute');
-    } finally {
-      setIsSubmitting(false);
+      toast.error('Failed to update details');
     }
   };
 
-  const filteredInstitutes = institutes.filter(inst => 
-    inst.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <h2 className="text-2xl font-bold text-white tracking-tight">Manage Institutes</h2>
-        
-        <div className="flex items-center gap-4 w-full sm:w-auto">
-          <div className="relative flex-1 sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search institutes..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all font-medium"
-            />
-          </div>
+    <div className="max-w-3xl mx-auto space-y-5">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold text-slate-900 tracking-tight">Institute Profile</h2>
+        {!isEditing && (
           <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-xl font-medium transition-all shadow-lg shadow-primary-500/20"
+            onClick={() => setIsEditing(true)}
+            className="flex items-center gap-2 px-3.5 py-1.5 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-semibold transition-all"
           >
-            <Plus className="w-5 h-5 flex-shrink-0" />
-            <span className="hidden sm:inline">Add Institute</span>
+            <Edit3 className="w-3.5 h-3.5" />
+            Edit Profile
           </button>
-        </div>
+        )}
       </div>
 
-      {isLoading ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredInstitutes.length === 0 ? (
-            <div className="col-span-full py-12 text-center text-slate-400 bg-white/5 rounded-2xl border border-white/5">
-              <Building2 className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p className="text-lg">No institutes found</p>
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        {/* Banner - Reduced height */}
+        <div className="h-24 bg-gradient-to-r from-primary-600 to-indigo-600 relative">
+          <div className="absolute -bottom-10 left-6 p-0.5 bg-white rounded-xl border-2 border-white shadow-lg">
+            <div className="w-20 h-20 bg-slate-50 rounded-lg flex items-center justify-center">
+              <Building2 className="w-10 h-10 text-primary-500" />
             </div>
-          ) : (
-            filteredInstitutes.map((inst) => (
-              <div key={inst.id} className="glass-dark p-6 rounded-2xl border border-white/5 hover:border-white/10 transition-all flex flex-col h-full group">
-                <div className="flex items-start gap-4 mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500/20 to-accent-500/20 flex items-center justify-center flex-shrink-0 border border-white/5 group-hover:border-primary-500/30 transition-colors">
-                    <Building2 className="w-6 h-6 text-primary-400" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-white text-lg tracking-tight line-clamp-2">{inst.name}</h3>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mt-1">
-                      {inst.status === 'active' ? 'Active' : inst.status}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="space-y-3 mt-auto">
-                  {inst.email && (
-                    <div className="flex items-center gap-3 text-sm text-slate-400">
-                      <Mail className="w-4 h-4 text-slate-500" />
-                      <span className="truncate">{inst.email}</span>
-                    </div>
-                  )}
-                  {inst.phone && (
-                    <div className="flex items-center gap-3 text-sm text-slate-400">
-                      <Phone className="w-4 h-4 text-slate-500" />
-                      <span>{inst.phone}</span>
-                    </div>
-                  )}
-                  {inst.address && (
-                    <div className="flex items-start gap-3 text-sm text-slate-400">
-                      <MapPin className="w-4 h-4 text-slate-500 mt-0.5 shrink-0" />
-                      <span className="line-clamp-2">{inst.address}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))
-          )}
+          </div>
         </div>
-      )}
 
-      {/* Add Institute Modal */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => !isSubmitting && setIsAddModalOpen(false)}></div>
-          
-          <div className="relative w-full max-w-lg glass-dark rounded-3xl border border-white/10 p-6 sm:p-8 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-white">Add New Institute</h3>
-              <button 
-                onClick={() => setIsAddModalOpen(false)}
-                disabled={isSubmitting}
-                className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl transition-colors disabled:opacity-50"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleAddInstitute} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5 ml-1">Institute Name <span className="text-rose-500">*</span></label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                  placeholder="e.g. NextGen Computer Institute"
-                />
+        <div className="pt-14 p-6">
+          {isEditing ? (
+            <form onSubmit={handleUpdate} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Institute Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Official Email</label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Contact Phone</label>
+                  <input
+                    type="text"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                    className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Website URL</label>
+                  <input
+                    type="text"
+                    value={formData.website}
+                    onChange={(e) => setFormData({...formData, website: e.target.value})}
+                    className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                    placeholder="https://institute.com"
+                  />
+                </div>
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5 ml-1">Email Address</label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                  placeholder="admin@institute.com"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5 ml-1">Phone Number</label>
-                <input
-                  type="text"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                  className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                  placeholder="+91 98765 43210"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5 ml-1">Address</label>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Address</label>
                 <textarea
-                  rows="3"
+                  rows="2"
                   value={formData.address}
                   onChange={(e) => setFormData({...formData, address: e.target.value})}
-                  className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all resize-none"
-                  placeholder="Full physical address..."
+                  className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none transition-all resize-none"
                 />
               </div>
-
-              <div className="pt-4 flex justify-end gap-3">
+              <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => setIsAddModalOpen(false)}
-                  disabled={isSubmitting}
-                  className="px-5 py-2.5 text-slate-300 hover:text-white font-medium transition-colors"
+                  onClick={() => setIsEditing(false)}
+                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 rounded-lg transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting || !formData.name}
-                  className="px-6 py-2.5 bg-primary-600 hover:bg-primary-500 text-white rounded-xl font-medium transition-all shadow-lg shadow-primary-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                  className="flex items-center gap-2 px-5 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold hover:bg-slate-800 transition-all shadow-md"
                 >
-                  {isSubmitting ? (
-                    <span className="animate-spin w-5 h-5 border-2 border-white/30 border-t-white rounded-full mr-2" />
-                  ) : null}
-                  {isSubmitting ? 'Adding...' : 'Add Institute'}
+                  <Save className="w-3.5 h-3.5" />
+                  Save Details
                 </button>
               </div>
             </form>
-          </div>
+          ) : (
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-xl font-bold text-slate-900 leading-tight">{institute?.name}</h3>
+                <div className="text-[11px] font-bold text-primary-600 uppercase tracking-widest flex items-center gap-1.5 mt-0.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary-500"></div>
+                  Primary Institution
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-primary-50 rounded-lg text-primary-600 border border-primary-100">
+                      <Mail className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Email Address</p>
+                      <p className="text-sm text-slate-800 font-semibold">{institute?.email || 'Not set'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600 border border-emerald-100">
+                      <Phone className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Phone Number</p>
+                      <p className="text-sm text-slate-800 font-semibold">{institute?.phone || 'Not set'}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-amber-50 rounded-lg text-amber-600 border border-amber-100">
+                      <Globe className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Website</p>
+                      <p className="text-sm text-slate-800 font-semibold">{institute?.website || 'Not set'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-rose-50 rounded-lg text-rose-600 border border-rose-100">
+                      <MapPin className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Physical Address</p>
+                      <p className="text-sm text-slate-800 font-semibold leading-relaxed">{institute?.address || 'Not set'}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

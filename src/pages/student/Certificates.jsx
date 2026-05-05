@@ -12,41 +12,41 @@ export default function Certificates() {
   ];
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-5xl mx-auto">
       
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">Digital Credentials</h2>
-          <p className="text-slate-400 mt-2 font-medium">Verify and synchronize your earned course certifications.</p>
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Digital Credentials</h2>
+          <p className="text-slate-500 mt-1 text-sm">Verify and synchronize your earned course certifications.</p>
         </div>
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {certificates.map((cert) => (
-          <div key={cert.id} className="glass-dark border border-white/5 overflow-hidden group hover:border-primary-500/30 hover:shadow-[0_20px_50px_rgba(79,70,229,0.15)] transition-all duration-500">
+          <div key={cert.id} className="bg-white border border-slate-200 rounded-2xl overflow-hidden group hover:border-primary-200 hover:shadow-lg hover:shadow-primary-600/5 transition-all duration-300">
             
-            <div className="h-52 relative overflow-hidden bg-white/5 p-8 flex flex-col items-center justify-center text-center">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary-600/10 to-accent-600/10 z-0 group-hover:scale-110 transition-transform duration-700"></div>
-              <Award className="w-16 h-16 text-primary-400 mb-4 relative z-10 transition-transform group-hover:rotate-12" />
-              <h3 className="text-xl font-black text-white relative z-10 leading-tight px-4 uppercase tracking-tight">{cert.title}</h3>
+            <div className="h-40 relative overflow-hidden bg-slate-50 border-b border-slate-100 flex flex-col items-center justify-center text-center p-6">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary-50 to-indigo-50/50 z-0 group-hover:scale-105 transition-transform duration-500"></div>
+              <Award className="w-12 h-12 text-primary-500 mb-3 relative z-10 transition-transform group-hover:scale-110" />
+              <h3 className="text-lg font-bold text-slate-900 relative z-10 leading-tight px-2">{cert.title}</h3>
             </div>
 
-            <div className="p-8">
-              <div className="flex justify-between items-center mb-6 text-sm">
-                <span className="text-slate-500 text-[10px] font-black uppercase tracking-widest">VALIDATION DATE</span>
-                <span className="font-bold text-white uppercase tracking-tight">{cert.issueDate}</span>
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4 text-sm">
+                <span className="text-slate-500 text-xs font-bold uppercase tracking-wider">Date</span>
+                <span className="font-bold text-slate-900">{cert.issueDate}</span>
               </div>
-              <div className="flex justify-between items-center mb-8 text-sm">
-                <span className="text-slate-500 text-[10px] font-black uppercase tracking-widest">CREDENTIAL ADDR</span>
-                <span className="font-mono text-[10px] font-bold text-primary-400 bg-primary-500/10 border border-primary-500/20 px-3 py-1.5 rounded-lg">{cert.id}</span>
+              <div className="flex justify-between items-center mb-6 text-sm">
+                <span className="text-slate-500 text-xs font-bold uppercase tracking-wider">ID</span>
+                <span className="font-mono text-xs font-bold text-primary-700 bg-primary-50 border border-primary-100 px-2 py-1 rounded-md">{cert.id}</span>
               </div>
               
-              <div className="flex gap-4">
-                <button className="flex-1 flex items-center justify-center gap-2 py-4 bg-primary-600 hover:bg-primary-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-primary-500/20 active:scale-95">
-                  <Download className="w-4 h-4" /> Download
+              <div className="flex gap-3">
+                <button className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-95">
+                  <Download className="w-3.5 h-3.5" /> Download
                 </button>
-                <button className="flex items-center justify-center w-14 h-14 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white rounded-2xl transition-all active:scale-95">
-                  <ExternalLink className="w-4 h-4" />
+                <button className="flex items-center justify-center w-10 h-10 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-500 hover:text-slate-700 rounded-xl transition-all active:scale-95">
+                  <ExternalLink className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
@@ -54,13 +54,12 @@ export default function Certificates() {
         ))}
 
         {/* Empty State / Lock Card */}
-        <div className="glass-dark border border-white/5 flex flex-col items-center justify-center p-12 text-center min-h-[400px]">
-          <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-8 relative">
-            <div className="absolute inset-0 bg-primary-500/10 rounded-full blur-2xl animate-pulse"></div>
-            <Award className="w-10 h-10 text-slate-700 relative" />
+        <div className="bg-white border border-slate-200 border-dashed rounded-2xl flex flex-col items-center justify-center p-8 text-center min-h-[300px]">
+          <div className="w-14 h-14 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center mb-4 relative">
+            <Award className="w-6 h-6 text-slate-300" />
           </div>
-          <h3 className="text-2xl font-black text-white uppercase tracking-[0.2em]">Ascension Awaits</h3>
-          <p className="text-slate-500 text-sm font-medium mt-4 max-w-[220px] leading-relaxed">Persist in your learning sequences to unlock high-level credentials.</p>
+          <h3 className="text-base font-bold text-slate-900 mb-1">More to Come</h3>
+          <p className="text-slate-500 text-sm max-w-[200px]">Keep learning to unlock more credentials.</p>
         </div>
       </div>
     </div>

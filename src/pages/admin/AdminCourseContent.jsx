@@ -21,7 +21,8 @@ import {
   Loader2, 
   Upload, 
   Video,
-  ClipboardList
+  ClipboardList,
+  CloudUpload
 } from 'lucide-react';
 import api from '../../lib/axios';
 import toast from 'react-hot-toast';
@@ -144,6 +145,13 @@ export default function AdminCourseContent() {
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    // Check if file is greater than 10 MB
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('File size must be less than 10 MB');
+      e.target.value = null; // Reset the file input
+      return;
+    }
 
     setIsUploading(true);
     const toastId = toast.loading(`Uploading ${file.name}...`);

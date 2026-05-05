@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { initFirebase, auth as firebaseAuth, googleProvider, signInWithPopup, signOut } from '../lib/firebase';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { initFirebase, signInWithPopup, signOut } from '../lib/firebase';
 import toast from 'react-hot-toast';
 import api from '../lib/axios';
 
@@ -15,42 +15,61 @@ export const AuthProvider = ({ children }) => {
   const [isSuperAdminVerified, setIsSuperAdminVerified] = useState(false);
   const [isAdminVerified, setIsAdminVerified] = useState(false);
 
-  // Initialize Firebase and load user from localStorage
+  // Keep a ref to track Firebase init promise so we can await it in loginWithGoogle
+  const firebaseInitPromise = useRef(null);
+
   useEffect(() => {
-    const initialize = async () => {
-      try {
-        const { auth, googleProvider: provider } = await initFirebase();
+    // ── PHASE 1: Instant localStorage read (< 10ms) ──
+    try {
+      const storedUser = localStorage.getItem('user');
+      const token = localStorage.getItem('token');
+      const saVerified = localStorage.getItem('sa_verified');
+      const adminVerified = localStorage.getItem('admin_verified');
+
+      if (storedUser && token) {
+        setCurrentUser(JSON.parse(storedUser));
+      }
+      if (saVerified === 'true') {
+        setIsSuperAdminVerified(true);
+      }
+      if (adminVerified === 'true') {
+        setIsAdminVerified(true);
+      }
+    } catch (error) {
+      console.error("localStorage read error:", error);
+    }
+    // App renders immediately after this
+    setLoading(false);
+
+    // ── PHASE 2: Firebase init in background (doesn't block UI) ──
+    firebaseInitPromise.current = initFirebase()
+      .then(({ auth, googleProvider: provider }) => {
         setAuthInstance(auth);
         setProviderInstance(provider);
-
-        const storedUser = localStorage.getItem('user');
-        const token = localStorage.getItem('token');
-        const saVerified = localStorage.getItem('sa_verified');
-        const adminVerified = localStorage.getItem('admin_verified');
-        
-        if (storedUser && token) {
-          setCurrentUser(JSON.parse(storedUser));
-        }
-        if (saVerified === 'true') {
-          setIsSuperAdminVerified(true);
-        }
-        if (adminVerified === 'true') {
-          setIsAdminVerified(true);
-        }
-      } catch (error) {
-        console.error("Initialization error:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initialize();
+        console.log('[AUTH] Firebase ready in background');
+      })
+      .catch((error) => {
+        console.error("[AUTH] Background Firebase init error:", error);
+      });
   }, []);
 
-  // Login with Google
+  // Login with Google — waits for Firebase only when user actually clicks login
   const loginWithGoogle = async () => {
     try {
-      if (!authInstance || !providerInstance) throw new Error("Firebase not initialized fully");
+      // If Firebase isn't ready yet, wait for it now (only blocks login, not page)
+      if (!authInstance || !providerInstance) {
+        console.log('[AUTH] Waiting for Firebase to initialize...');
+        try {
+          const { auth, googleProvider: provider } = await initFirebase();
+          setAuthInstance(auth);
+          setProviderInstance(provider);
+        } catch (fbError) {
+          console.error('[AUTH] Firebase init failed during login:', fbError);
+          toast.error('Connection issue. Please try again.');
+          throw fbError;
+        }
+      }
+
       const result = await signInWithPopup(authInstance, providerInstance);
       const idToken = await result.user.getIdToken();
       
@@ -139,7 +158,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };

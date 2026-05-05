@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, ClipboardList, BookOpen, Clock, Hash, BarChart2, Calendar, AlignLeft, Upload, FileText, Download } from 'lucide-react';
+import { X, ClipboardList, BookOpen, Clock, Hash, BarChart2, Calendar, AlignLeft, Upload, FileText, Download, Globe } from 'lucide-react';
 import api from '../../lib/axios';
 import toast from 'react-hot-toast';
 
@@ -14,6 +14,7 @@ const initialForm = {
   difficulty: 'Easy',
   description: '',
   type: 'Live',
+  isPublic: false,
 };
 
 export default function AddTestModal({ isOpen, onClose, onTestAdded }) {
@@ -282,6 +283,26 @@ export default function AddTestModal({ isOpen, onClose, onTestAdded }) {
                 className="w-full pl-11 pr-5 py-3 bg-slate-50 border border-slate-200 rounded-[14px] text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all resize-none placeholder:text-slate-400"
               />
             </div>
+          </div>
+
+          {/* Public Access Toggle */}
+          <div className="flex items-center justify-between p-4 bg-indigo-50/50 rounded-[14px] border border-indigo-100">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                <Globe className="w-4 h-4 text-indigo-600" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-900">Public Test</p>
+                <p className="text-[9px] text-slate-500">Allow anyone to take this test from the home page</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, isPublic: !form.isPublic })}
+              className={`relative w-11 h-6 rounded-full transition-colors duration-300 ${form.isPublic ? 'bg-indigo-600' : 'bg-slate-300'}`}
+            >
+              <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-300 ${form.isPublic ? 'translate-x-5' : 'translate-x-0'}`} />
+            </button>
           </div>
 
           {/* CSV Upload */}

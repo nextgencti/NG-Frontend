@@ -1,140 +1,265 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { BookOpen, CalendarCheck, Clock, CheckCircle2, Zap, CreditCard } from 'lucide-react';
-import IDCard from '../../components/shared/IDCard';
-import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { BookOpen, FileText, Award, ChevronRight, Download, PlayCircle, Loader2 } from 'lucide-react';
+import api from '../../lib/axios';
+import toast from 'react-hot-toast';
 
 export default function StudentOverview() {
   const { currentUser } = useAuth();
-  const [showIDCard, setShowIDCard] = useState(false);
+  const navigate = useNavigate();
   
-  const stats = [
-    { label: 'Attendance', value: '85%', icon: CalendarCheck, color: 'text-emerald-600', bg: 'bg-emerald-50 border-emerald-100' },
-    { label: 'Active Courses', value: '2', icon: BookOpen, color: 'text-primary-600', bg: 'bg-primary-50 border-primary-100' },
-    { label: 'Next Class', value: '10:00 AM', icon: Clock, color: 'text-accent-600', bg: 'bg-accent-50 border-accent-100' },
-  ];
+  const [dashboardData, setDashboardData] = useState({
+    activeCourses: 0,
+    attendancePercent: '0%',
+    firstCourseId: null,
+    isLoading: true
+  });
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const [coursesRes, attendanceRes] = await Promise.all([
+          api.get('/student/courses'),
+          api.get('/student/attendance')
+        ]);
+
+        const courses = coursesRes.data.success ? coursesRes.data.courses : [];
+        const activeCourses = courses.length;
+        const firstCourseId = courses.length > 0 ? courses[0].id : null;
+        const attendancePercent = attendanceRes.data.success ? attendanceRes.data.stats.percentage : '0%';
+
+        setDashboardData({
+          activeCourses,
+          attendancePercent,
+          firstCourseId,
+          isLoading: false
+        });
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+        toast.error('Failed to load dashboard data');
+        setDashboardData(prev => ({ ...prev, isLoading: false }));
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  if (dashboardData.isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] gap-3">
+        <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
+        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Loading Dashboard...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-700 pb-10">
       
-      {/* Welcome Banner */}
-      <div className="glass-dark p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden group rounded-2xl border border-slate-100 shadow-sm bg-white">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-primary-500/5 to-accent-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:scale-110 transition-transform duration-700"></div>
-        <div className="relative z-10 flex-1 text-center sm:text-left">
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2 tracking-tight">
-            Welcome back, <span className="text-primary-600">{currentUser?.name?.split(' ')[0]}</span>! 👋
+      {/* 1. Hero Section */}
+      <div className="bg-gradient-to-r from-indigo-50/80 via-blue-50/50 to-white rounded-3xl p-8 sm:p-10 border border-indigo-100/50 shadow-sm relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8">
+        {/* Decorative subtle background shapes */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-100/40 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-100/40 rounded-full blur-3xl translate-y-1/2 -translate-x-1/3"></div>
+
+        <div className="relative z-10 text-center md:text-left">
+          <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight mb-2">
+            Welcome, <span className="text-primary-600">{currentUser?.name?.split(' ')[0] || 'Student'}</span> 👋
           </h2>
-          <p className="text-slate-500 max-w-xl text-base leading-relaxed font-medium">
-            You have a Web Development class coming up in 2 hours. Keep up the great work! Your attendance is looking solid this week.
-          </p>
+          <p className="text-slate-500 text-sm font-medium">Continue your learning journey today.</p>
         </div>
-        <div className="relative z-10 w-full sm:w-auto flex flex-col sm:flex-row gap-3">
-          <button 
-            onClick={() => setShowIDCard(true)}
-            className="w-full sm:w-auto px-6 py-3 bg-white hover:bg-slate-50 text-slate-900 rounded-xl font-bold border border-slate-200 transition-all hover:shadow-sm flex items-center justify-center gap-2 text-sm shadow-sm"
-          >
-            <CreditCard className="w-4 h-4 text-primary-600" />
-            My ID Card
-          </button>
-          <button className="w-full sm:w-auto px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-bold shadow-lg shadow-primary-500/10 transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2 text-sm">
-            <Zap className="w-4 h-4 text-accent-300" />
-            Join Class
-          </button>
-        </div>
-      </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        {stats.map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <div key={index} className="glass-dark p-5 rounded-2xl border border-slate-100 flex items-center gap-4 hover:shadow-md transition-all group">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center border ${stat.bg} group-hover:scale-110 transition-transform shadow-sm`}>
-                <Icon className={`w-6 h-6 ${stat.color}`} />
-              </div>
-              <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{stat.label}</p>
-                <p className="text-2xl font-bold text-slate-900 tracking-tight">{stat.value}</p>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Recent Activity / Agenda */}
-      <div className="grid lg:grid-cols-3 gap-6">
-        
-        {/* Left Col - 2/3 */}
-        <div className="lg:col-span-2 glass-dark overflow-hidden rounded-2xl border border-slate-100 shadow-sm">
-          <div className="p-5 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
-            <h3 className="text-lg font-bold text-slate-900 tracking-tight">Today's Schedule</h3>
-            <span className="text-[10px] font-bold text-primary-600 uppercase tracking-widest cursor-pointer hover:text-primary-700">Full Schedule</span>
+        {/* Hero Stats */}
+        <div className="relative z-10 flex gap-4 sm:gap-6">
+          <div className="bg-white/80 backdrop-blur-sm px-6 py-4 rounded-2xl border border-white shadow-sm flex flex-col items-center md:items-start min-w-[120px]">
+            <span className="text-3xl font-black text-slate-900">{dashboardData.activeCourses}</span>
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mt-1">Courses</span>
           </div>
-          <div className="divide-y divide-slate-50">
-            {/* Mock Schedule Item */}
-            <div className="p-5 flex items-start gap-4 hover:bg-slate-50/50 transition-colors group">
-              <div className="min-w-[4rem] text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">10:00 AM</div>
-              <div className="relative mt-2">
-                <div className="w-2.5 h-2.5 rounded-full bg-primary-600 ring-4 ring-primary-500/10"></div>
-                <div className="absolute top-2.5 left-[4.5px] w-[1px] h-12 bg-slate-100"></div>
-              </div>
-              <div className="flex-1 ml-1">
-                <h4 className="text-base font-bold text-slate-900 group-hover:text-primary-600 transition-colors">Advanced React Patterns</h4>
-                <p className="text-xs text-slate-500 font-medium mt-0.5">Web Development • Zoom</p>
-              </div>
-              <span className="px-2 py-0.5 bg-primary-50 text-primary-600 text-[10px] font-bold uppercase tracking-widest rounded-lg border border-primary-100">Upcoming</span>
+          <div className="bg-white/80 backdrop-blur-sm px-6 py-4 rounded-2xl border border-white shadow-sm flex flex-col items-center md:items-start min-w-[120px]">
+            <span className="text-3xl font-black text-slate-900">{dashboardData.attendancePercent}</span>
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mt-1">Progress</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Quick Actions */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+        <button 
+          onClick={() => navigate('/dashboard/courses')}
+          className="flex items-center gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-primary-200 transition-all group cursor-pointer"
+        >
+          <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+            <BookOpen className="w-6 h-6 text-blue-600" />
+          </div>
+          <div className="text-left">
+            <h3 className="text-sm font-bold text-slate-900">Continue Course</h3>
+            <p className="text-xs text-slate-500 mt-0.5">Resume where you left off</p>
+          </div>
+        </button>
+
+        <button 
+          onClick={() => {
+            if (dashboardData.firstCourseId) {
+              navigate(`/dashboard/courses/${dashboardData.firstCourseId}/classroom`);
+            } else {
+              toast('Enroll in a course first to access the classroom', { icon: '🎓' });
+              navigate('/dashboard/courses');
+            }
+          }}
+          className="flex items-center gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all group cursor-pointer"
+        >
+          <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+            <PlayCircle className="w-6 h-6 text-indigo-600" />
+          </div>
+          <div className="text-left">
+            <h3 className="text-sm font-bold text-slate-900">Classroom</h3>
+            <p className="text-xs text-slate-500 mt-0.5">Access your lessons</p>
+          </div>
+        </button>
+
+        <button 
+          onClick={() => navigate('/dashboard/certificates')}
+          className="flex items-center gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-amber-200 transition-all group cursor-pointer"
+        >
+          <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+            <Award className="w-6 h-6 text-amber-600" />
+          </div>
+          <div className="text-left">
+            <h3 className="text-sm font-bold text-slate-900">Certificates</h3>
+            <p className="text-xs text-slate-500 mt-0.5">Download credentials</p>
+          </div>
+        </button>
+      </div>
+
+      <div className="grid lg:grid-cols-3 gap-8">
+        {/* Left Column: Courses & Notes */}
+        <div className="lg:col-span-2 space-y-8">
+          
+          {/* 3. My Courses Section */}
+          <section>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-slate-900">My Courses</h3>
+              <button onClick={() => navigate('/dashboard/courses')} className="text-sm font-semibold text-primary-600 hover:text-primary-700 flex items-center gap-1 cursor-pointer">
+                View All <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
             
-            {/* Mock Schedule Item */}
-            <div className="p-5 flex items-start gap-4 hover:bg-slate-50/50 transition-colors opacity-60 group">
-              <div className="min-w-[4rem] text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">08:00 AM</div>
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 mt-2 ring-4 ring-emerald-500/10"></div>
-              <div className="flex-1 ml-1">
-                <h4 className="text-base font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">JavaScript DOM Basics</h4>
-                <p className="text-xs text-slate-500 font-medium mt-0.5">Web Development • Recorded</p>
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 flex flex-col sm:flex-row items-center gap-6 group hover:border-primary-200 transition-colors">
+              <div className="w-24 h-24 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
+                <BookOpen className="w-10 h-10 text-slate-300" />
               </div>
-              <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[10px] font-bold uppercase tracking-widest rounded-lg flex items-center gap-1.5 border border-emerald-100">
-                <CheckCircle2 className="w-3 h-3" /> Attended
-              </span>
+              <div className="flex-1 w-full">
+                <h4 className="text-lg font-bold text-slate-900 mb-1">Course on Computer Concepts (CCC)</h4>
+                <p className="text-sm text-slate-500 mb-4">Master the fundamentals of computer hardware and software.</p>
+                
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold text-slate-700">Progress</span>
+                  <span className="text-xs font-bold text-primary-600">30% (3/10 Modules)</span>
+                </div>
+                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-primary-600 rounded-full" style={{ width: '30%' }}></div>
+                </div>
+              </div>
+              <button onClick={() => navigate('/dashboard/courses')} className="w-full sm:w-auto px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold rounded-xl transition-all shadow-md active:scale-95 shrink-0 whitespace-nowrap cursor-pointer">
+                Continue Learning
+              </button>
             </div>
-          </div>
+          </section>
+
+          {/* 4. Course Content / Notes */}
+          <section>
+            <h3 className="text-lg font-bold text-slate-900 mb-4">Recent Notes & Materials</h3>
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="divide-y divide-slate-100">
+                {[
+                  { title: 'Chapter 1 – Basics of Computer', type: 'PDF' },
+                  { title: 'Chapter 2 – Hardware Components', type: 'PDF' },
+                  { title: 'Chapter 3 – Introduction to Operating Systems', type: 'PDF' }
+                ].map((note, idx) => (
+                  <div key={idx} className="p-4 sm:p-5 flex items-center justify-between hover:bg-slate-50 transition-colors group cursor-pointer">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
+                        <FileText className="w-5 h-5 text-red-500" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-900">{note.title}</h4>
+                        <p className="text-xs text-slate-500 font-medium mt-0.5">Course Material • {note.type}</p>
+                      </div>
+                    </div>
+                    <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer">
+                      <Download className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">View PDF</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
         </div>
 
-        {/* Right Col - 1/3 */}
-        <div className="glass-dark p-5 relative overflow-hidden rounded-2xl border border-slate-100 shadow-sm bg-white">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-primary-500/5 rounded-full blur-3xl"></div>
-          <h3 className="text-lg font-bold text-slate-900 tracking-tight mb-6">Quick Links</h3>
-          <div className="space-y-5 relative z-10">
-            <div className="relative pl-5 border-l border-primary-500/30 group cursor-pointer">
-              <span className="absolute -left-[4.5px] top-1.5 w-2 h-2 rounded-full bg-primary-600 shadow-[0_0_10px_rgba(99,102,241,0.2)] group-hover:scale-125 transition-transform"></span>
-              <p className="text-sm font-bold text-slate-900 group-hover:text-primary-600 transition-colors">Hackathon Registrations</p>
-              <p className="text-xs text-slate-500 font-medium mt-1 leading-relaxed">Join the upcoming weekend hackathon to level up your portfolio.</p>
-              <div className="flex items-center gap-1.5 mt-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                <Clock className="w-3 h-3" /> 2 hours ago
+        {/* Right Column: Tracking & Updates */}
+        <div className="space-y-8">
+          
+          {/* 5. Progress Tracking */}
+          <section>
+            <h3 className="text-lg font-bold text-slate-900 mb-4">Performance</h3>
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 space-y-6">
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-bold text-slate-700">Engagement Score</span>
+                  <span className="text-sm font-bold text-emerald-600">{dashboardData.attendancePercent}</span>
+                </div>
+                <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: dashboardData.attendancePercent === '0%' ? '0%' : dashboardData.attendancePercent }}></div>
+                </div>
+              </div>
+              
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-bold text-slate-700">Modules Completed</span>
+                  <span className="text-sm font-bold text-primary-600">3 of 10</span>
+                </div>
+                <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-primary-500 rounded-full" style={{ width: '30%' }}></div>
+                </div>
               </div>
             </div>
-            <div className="relative pl-5 border-l border-slate-100 group cursor-pointer">
-              <span className="absolute -left-[4.5px] top-1.5 w-2 h-2 rounded-full bg-slate-200 transition-colors group-hover:bg-accent-500"></span>
-              <p className="text-sm font-bold text-slate-900 group-hover:text-accent-600 transition-colors">New Course Material</p>
-              <p className="text-xs text-slate-500 font-medium mt-1 leading-relaxed">Module 4 resources are now available in your dashboard.</p>
-              <div className="flex items-center gap-1.5 mt-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                <Clock className="w-3 h-3" /> Yesterday
-              </div>
-            </div>
-          </div>
-          <button className="w-full mt-8 py-3 bg-white hover:bg-slate-50 text-slate-900 font-bold rounded-xl text-[10px] uppercase tracking-widest transition-all border border-slate-200 shadow-sm active:scale-95">
-            View All Updates
-          </button>
-        </div>
+          </section>
 
+          {/* 6. Updates Section */}
+          <section>
+            <h3 className="text-lg font-bold text-slate-900 mb-4">Institute Updates</h3>
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
+              <ul className="space-y-5">
+                <li className="flex items-start gap-3">
+                  <div className="w-2 h-2 mt-1.5 rounded-full bg-primary-500 shrink-0"></div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-900">New notes added for Chapter 4</p>
+                    <p className="text-xs text-slate-500 mt-1">Access the latest PDF materials in your course.</p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="w-2 h-2 mt-1.5 rounded-full bg-amber-500 shrink-0"></div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-900">Course Syllabus Updated</p>
+                    <p className="text-xs text-slate-500 mt-1">Check the updated curriculum for CCC.</p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="w-2 h-2 mt-1.5 rounded-full bg-slate-300 shrink-0"></div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-900">Platform Maintenance</p>
+                    <p className="text-xs text-slate-500 mt-1">Scheduled for this weekend.</p>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </section>
+
+        </div>
       </div>
-
-      {showIDCard && (
-        <IDCard 
-          student={currentUser} 
-          onClose={() => setShowIDCard(false)} 
-        />
-      )}
     </div>
   );
 }
