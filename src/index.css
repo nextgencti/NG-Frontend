@@ -1,4 +1,61 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
+
+@font-face {
+  font-family: 'HelveticaNowDisplay';
+  src: url('./assets/Fonts/HelveticaNowDisplay-Regular_5Mzhp8KlA8_CAVTbnsPOM.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'HelveticaNowDisplay';
+  src: url('./assets/Fonts/HelveticaNowDisplay-Medium_2wEhlmo-TD_wsqqEEwmJC.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'HelveticaNowDisplay';
+  src: url('./assets/Fonts/HelveticaNowDisplay-ExtraBold_Qqt_sGOvuc_Z0ZOJEQucI.woff2') format('woff2');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'HelveticaNowDisplay-Light';
+  src: url('./assets/Fonts/HelveticaNowDisplay-Light_M4nzWhve6k_k7HolyzL10.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'NeueMachina-Ultrabold';
+  src: url('./assets/Fonts/NeueMachina-Regular_DQCmjH1st.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'NeueMachina-Medium';
+  src: url('./assets/Fonts/NeueMachina-Light_gwWCZxVuQl.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Juana-Regular';
+  src: url('./assets/Fonts/Fontspring-DEMO-juana-extralightit_toKzXEsfr (1).ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
 @theme {
   /* Colors - Strict SaaS System */
@@ -7,6 +64,13 @@
   --color-primary-500: #6366F1;
   --color-primary-600: #4F46E5;
   --color-primary-700: #4338CA;
+
+  --color-accent-50: #EEF2FF;
+  --color-accent-100: #E0E7FF;
+  --color-accent-400: #818CF8;
+  --color-accent-500: #6366F1;
+  --color-accent-600: #4F46E5;
+  --color-accent-700: #4338CA;
   
   --color-surface: #FFFFFF;
   --color-surface-muted: #F8FAFC;
@@ -20,7 +84,13 @@
   --color-danger: #DC2626;
   --color-warning: #F59E0B;
 
-  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-sans: 'Inter', sans-serif;
+  --font-manrope: 'Manrope', sans-serif;
+  --font-poppins: 'Poppins', sans-serif;
+  --font-helvetica-light: 'Inter', sans-serif;
+  --font-neue-machina-ultrabold: 'Poppins', sans-serif;
+  --font-neue-machina-medium: 'Inter', sans-serif;
+  --font-juana-regular: 'Manrope', sans-serif;
   
   /* Shadows - Soft Style */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -82,8 +152,33 @@
     animation-delay: 4s;
   }
 
+  @keyframes hero-bg-drift {
+    0% { transform: scale(1.05) translate(0%, 0%); }
+    25% { transform: scale(1.1) translate(-1%, -0.5%); }
+    50% { transform: scale(1.08) translate(0.5%, 0.5%); }
+    75% { transform: scale(1.12) translate(-0.5%, -0.3%); }
+    100% { transform: scale(1.05) translate(0%, 0%); }
+  }
+
+  .animate-hero-bg {
+    animation: hero-bg-drift 20s ease-in-out infinite;
+  }
+
   .bg-dot-pattern {
     background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
     background-size: 32px 32px;
+  }
+
+  /* Global typography overrides to map legacy font classes to the Inter/Manrope/Poppins system */
+  .font-NeueMachina-Medium,
+  .font-neue-machina-medium {
+    font-family: 'Inter', sans-serif !important;
+  }
+  .font-NeueMachina-Ultrabold,
+  .font-neue-machina-ultrabold {
+    font-family: 'Poppins', sans-serif !important;
+  }
+  .font-juana-regular {
+    font-family: 'Manrope', sans-serif !important;
   }
 }

@@ -58,7 +58,7 @@ export default function StudentOverview() {
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-700 pb-10">
       
       {/* 1. Hero Section */}
-      <div className="bg-gradient-to-r from-indigo-50/80 via-blue-50/50 to-white rounded-3xl p-8 sm:p-10 border border-indigo-100/50 shadow-sm relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8">
+      <div className="bg-gradient-to-r from-indigo-50/80 via-blue-50/50 to-white rounded-3xl p-5 sm:p-8 md:p-10 border border-indigo-100/50 shadow-sm relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 sm:gap-8">
         {/* Decorative subtle background shapes */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary-100/40 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-100/40 rounded-full blur-3xl translate-y-1/2 -translate-x-1/3"></div>
@@ -71,14 +71,14 @@ export default function StudentOverview() {
         </div>
 
         {/* Hero Stats */}
-        <div className="relative z-10 flex gap-4 sm:gap-6">
-          <div className="bg-white/80 backdrop-blur-sm px-6 py-4 rounded-2xl border border-white shadow-sm flex flex-col items-center md:items-start min-w-[120px]">
-            <span className="text-3xl font-black text-slate-900">{dashboardData.activeCourses}</span>
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mt-1">Courses</span>
+        <div className="relative z-10 flex gap-3 sm:gap-4 md:gap-6 w-full sm:w-auto justify-center">
+          <div className="bg-white/80 backdrop-blur-sm px-4 py-3 sm:px-6 sm:py-4 rounded-2xl border border-white/60 shadow-sm flex flex-col items-center min-w-[100px] sm:min-w-[120px] flex-1 sm:flex-initial">
+            <span className="text-2xl sm:text-3xl font-black text-slate-900">{dashboardData.activeCourses}</span>
+            <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider mt-1">Courses</span>
           </div>
-          <div className="bg-white/80 backdrop-blur-sm px-6 py-4 rounded-2xl border border-white shadow-sm flex flex-col items-center md:items-start min-w-[120px]">
-            <span className="text-3xl font-black text-slate-900">{dashboardData.attendancePercent}</span>
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mt-1">Progress</span>
+          <div className="bg-white/80 backdrop-blur-sm px-4 py-3 sm:px-6 sm:py-4 rounded-2xl border border-white/60 shadow-sm flex flex-col items-center min-w-[100px] sm:min-w-[120px] flex-1 sm:flex-initial">
+            <span className="text-2xl sm:text-3xl font-black text-slate-900">{dashboardData.attendancePercent}</span>
+            <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider mt-1">Progress</span>
           </div>
         </div>
       </div>
@@ -134,7 +134,7 @@ export default function StudentOverview() {
 
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Left Column: Courses & Notes */}
-        <div className="lg:col-span-2 space-y-8">
+        <div className="lg:col-span-2 min-w-0 space-y-8">
           
           {/* 3. My Courses Section */}
           <section>
@@ -177,17 +177,17 @@ export default function StudentOverview() {
                   { title: 'Chapter 2 – Hardware Components', type: 'PDF' },
                   { title: 'Chapter 3 – Introduction to Operating Systems', type: 'PDF' }
                 ].map((note, idx) => (
-                  <div key={idx} className="p-4 sm:p-5 flex items-center justify-between hover:bg-slate-50 transition-colors group cursor-pointer">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
-                        <FileText className="w-5 h-5 text-red-500" />
+                  <div key={idx} className="p-4 sm:p-5 flex items-center justify-between hover:bg-slate-50 transition-colors group cursor-pointer gap-4 min-w-0">
+                    <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
+                        <FileText className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-red-500" />
                       </div>
-                      <div>
-                        <h4 className="text-sm font-bold text-slate-900">{note.title}</h4>
-                        <p className="text-xs text-slate-500 font-medium mt-0.5">Course Material • {note.type}</p>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate" title={note.title}>{note.title}</h4>
+                        <p className="text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5">Course Material • {note.type}</p>
                       </div>
                     </div>
-                    <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer">
+                    <button className="flex items-center justify-center gap-1.5 px-2.5 sm:px-4 py-1.5 sm:py-2 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-[10px] sm:text-xs font-bold transition-all shadow-sm shrink-0 cursor-pointer">
                       <Download className="w-3.5 h-3.5" />
                       <span className="hidden sm:inline">View PDF</span>
                     </button>
@@ -200,7 +200,7 @@ export default function StudentOverview() {
         </div>
 
         {/* Right Column: Tracking & Updates */}
-        <div className="space-y-8">
+        <div className="min-w-0 space-y-8">
           
           {/* 5. Progress Tracking */}
           <section>

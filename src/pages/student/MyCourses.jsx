@@ -77,11 +77,11 @@ export default function MyCourses() {
           {courses.map((course, index) => (
             <div 
               key={course.id} 
-              className="bg-white rounded-[24px] border border-slate-100 overflow-hidden group hover:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.06)] transition-all duration-500 flex flex-col h-full"
+              className="bg-white rounded-[28px] border border-slate-100 overflow-hidden group hover:shadow-[0_24px_48px_-12px_rgba(79,70,229,0.06)] hover:-translate-y-1 transition-all duration-500 flex flex-col h-full relative"
             >
               {/* Thumbnail Container - Fixed Height */}
-              <div className="relative h-44 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent z-10"></div>
+              <div className="relative h-36 overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent z-10"></div>
                 {course.thumbnailUrl || course.image ? (
                   <img 
                     src={course.thumbnailUrl || course.image} 
@@ -90,68 +90,85 @@ export default function MyCourses() {
                   />
                 ) : (
                   <div className="w-full h-full bg-slate-100 flex items-center justify-center">
-                    <BookOpen className="w-10 h-10 text-slate-200" />
+                    <BookOpen className="w-10 h-10 text-slate-300 animate-pulse" />
                   </div>
                 )}
                 
-                {/* Status Badge - Smaller */}
-                <div className="absolute top-4 left-4 z-20">
-                  <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest text-white ${
-                    course.enrollmentStatus === 'pending' ? 'bg-amber-500/90' : 'bg-primary-600/90'
+                {/* Status Badge - Sleek Glassmorphism */}
+                <div className="absolute top-3 left-3 z-20">
+                  <span className={`px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest text-white backdrop-blur-md shadow-sm border ${
+                    course.enrollmentStatus === 'pending' 
+                      ? 'bg-amber-500/90 border-amber-400/20' 
+                      : 'bg-emerald-500/90 border-emerald-400/20'
                   }`}>
                     {course.enrollmentStatus === 'pending' ? 'Pending' : 'Active'}
                   </span>
                 </div>
 
-                <div className="absolute bottom-4 left-4 right-4 z-20">
-                  <div className="flex items-center gap-1.5 mb-1 opacity-80">
+                {/* Duration Badge - Floating */}
+                <div className="absolute bottom-3 left-3 z-20">
+                  <div className="flex items-center gap-1 bg-slate-900/60 backdrop-blur-md border border-white/10 px-2 py-1 rounded-lg">
                     <Calendar className="w-3 h-3 text-white" />
-                    <span className="text-[9px] font-bold text-white uppercase tracking-wider">
+                    <span className="text-[8px] font-extrabold text-white uppercase tracking-wider">
                       {course.duration || '3 Months'}
                     </span>
                   </div>
-                  <h3 className="text-base font-black text-white leading-tight uppercase tracking-tight line-clamp-1">
-                    {course.name || course.title}
-                  </h3>
                 </div>
               </div>
 
               {/* Details Section */}
-              <div className="p-6 flex-1 flex flex-col">
+              <div className="p-5 flex-1 flex flex-col">
+                {/* Course Name - High contrast and bold */}
+                <div className="mb-2">
+                  <h3 className="text-base font-black text-slate-800 tracking-tight leading-snug group-hover:text-primary-600 transition-colors uppercase line-clamp-1">
+                    {course.name || course.title}
+                  </h3>
+                </div>
+
                 {/* Course Description */}
-                <div className="mb-6 flex-1">
-                  <p className="text-sm text-slate-500 font-medium line-clamp-2 leading-relaxed">
-                    {course.description || "Master the fundamentals and advanced concepts of this course with our comprehensive curriculum and expert guidance."}
+                <div className="mb-4 flex-1">
+                  <p className="text-slate-500 text-[12px] font-medium leading-relaxed line-clamp-2">
+                    {course.description || "Master the fundamentals and advanced concepts of this course."}
                   </p>
                 </div>
 
                 {/* Progress Section */}
-                <div className="mb-6">
-                  <div className="flex justify-between items-end mb-2">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Course Progress</span>
-                    <span className="text-sm font-black text-slate-900">{course.progress || 0}%</span>
+                <div className="mb-4">
+                  <div className="flex justify-between items-end mb-1.5">
+                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Course Progress</span>
+                    <span className="text-xs font-black text-[#4F46E5]">{course.progress || 0}%</span>
                   </div>
-                  <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-primary-600 rounded-full transition-all duration-1000 ease-out"
+                      className="h-full bg-gradient-to-r from-primary-600 to-indigo-500 rounded-full shadow-[0_0_8px_rgba(79,70,229,0.25)] transition-all duration-1000 ease-out"
                       style={{ width: `${course.progress || 0}%` }}
                     ></div>
                   </div>
                 </div>
 
                 {/* Stats Blocks */}
-                <div className="grid grid-cols-2 gap-3 mb-6 pb-6 border-b border-slate-100">
-                  <div className="bg-slate-50 rounded-xl p-3 border border-slate-100/50">
-                    <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Modules</span>
-                    <p className="text-sm font-black text-slate-700">
-                      {course.completedModules || 0} <span className="text-xs text-slate-400 font-medium">/ {course.totalModules || 10}</span>
-                    </p>
+                <div className="grid grid-cols-2 gap-2.5 mb-4 pb-4 border-b border-slate-100">
+                  <div className="bg-slate-50/50 rounded-xl p-2.5 border border-slate-100/50 hover:bg-slate-50 transition-colors flex items-center gap-2">
+                    <div className="w-7.5 h-7.5 rounded-lg bg-primary-50 flex items-center justify-center text-primary-600 shrink-0">
+                      <BookOpen className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <span className="block text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Modules</span>
+                      <p className="text-xs font-black text-slate-800">
+                        {course.completedModules || 0} <span className="text-[10px] text-slate-400 font-medium">/{course.totalModules || 10}</span>
+                      </p>
+                    </div>
                   </div>
-                  <div className="bg-slate-50 rounded-xl p-3 border border-slate-100/50">
-                    <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Schedule</span>
-                    <p className="text-sm font-black text-slate-700 truncate">
-                      {course.nextClass || 'TBA'}
-                    </p>
+                  <div className="bg-slate-50/50 rounded-xl p-2.5 border border-slate-100/50 hover:bg-slate-50 transition-colors flex items-center gap-2">
+                    <div className="w-7.5 h-7.5 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0">
+                      <Calendar className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <span className="block text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Schedule</span>
+                      <p className="text-xs font-black text-slate-800 truncate max-w-[65px]">
+                        {course.nextClass || 'TBA'}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
@@ -159,12 +176,12 @@ export default function MyCourses() {
                 <button 
                   disabled={course.enrollmentStatus === 'pending'}
                   onClick={() => course.enrollmentStatus !== 'pending' && navigate(`/dashboard/courses/${course.id}/classroom`)}
-                  className="w-full mt-auto py-4 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-[11px] font-black uppercase tracking-[0.15em] transition-all disabled:opacity-30 disabled:grayscale flex items-center justify-center gap-2 group/btn shadow-lg shadow-primary-500/20 active:scale-95"
+                  className="w-full mt-auto py-2.5 bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 disabled:opacity-30 disabled:grayscale flex items-center justify-center gap-1.5 group/btn shadow-md shadow-indigo-500/10 hover:shadow-indigo-500/20 hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
                 >
                   {course.enrollmentStatus === 'pending' ? 'Pending Approval' : (
                     <>
                       Enter Classroom
-                      <ChevronRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                      <ChevronRight className="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 transition-transform" />
                     </>
                   )}
                 </button>

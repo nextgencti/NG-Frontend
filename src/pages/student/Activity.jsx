@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   Activity as ActivityIcon, 
   Clock, 
@@ -18,8 +19,12 @@ import {
 import api from '../../lib/axios';
 
 export default function Activity() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
+  const [completedTests, setCompletedTests] = useState([]);
+  const [testsLoading, setTestsLoading] = useState(false);
   const [data, setData] = useState({
     stats: {
       lastLogin: '-',
@@ -51,6 +56,32 @@ export default function Activity() {
       }
     };
     fetchActivityData();
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tabParam = params.get('tab');
+    if (tabParam === 'results') {
+      setActiveTab('test results');
+    }
+  }, [location]);
+
+  useEffect(() => {
+    const fetchTests = async () => {
+      setTestsLoading(true);
+      try {
+        const response = await api.get('/student/tests');
+        if (response.data.success) {
+          const completed = response.data.tests.filter(t => t.hasAttempts || t.status === 'completed');
+          setCompletedTests(completed);
+        }
+      } catch (error) {
+        console.error('Error fetching completed tests:', error);
+      } finally {
+        setTestsLoading(false);
+      }
+    };
+    fetchTests();
   }, []);
 
   const formatLastLogin = (dateStr) => {
@@ -130,7 +161,7 @@ export default function Activity() {
       {/* Tabs Section */}
       <div className="space-y-6">
         <div className="flex items-center gap-1 p-1 bg-slate-100/50 rounded-xl w-fit">
-          {['overview', 'learning activity', 'attendance'].map((tab) => (
+          {['overview', 'learning activity', 'attendance', 'test results'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -287,6 +318,67 @@ export default function Activity() {
                     <div className="p-20 text-center">
                        <Calendar className="w-12 h-12 text-slate-200 mx-auto mb-4" />
                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">No records found</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'test results' && (
+              <div className="bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <div className="p-6 bg-slate-50/50 border-b border-slate-100">
+                  <h3 className="text-sm font-bold text-slate-800 tracking-tight">Completed Quizzes & Test Results</h3>
+                  <p className="text-[10px] text-slate-500 font-medium mt-0.5">Review your detailed performance analysis and reports.</p>
+                </div>
+                
+                <div className="divide-y divide-slate-50">
+                  {testsLoading ? (
+                    <div className="p-20 text-center flex flex-col items-center justify-center gap-2">
+                      <div className="w-8 h-8 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin"></div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Loading results...</p>
+                    </div>
+                  ) : completedTests.length > 0 ? (
+                    completedTests.map((t, i) => (
+                      <div key={i} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-slate-50 transition-colors gap-4">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
+                            <Award className="w-5 h-5 text-indigo-600" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-slate-800 tracking-tight leading-tight">{t.title}</p>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">
+                              {t.course}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between sm:justify-end gap-6 border-t sm:border-t-0 pt-3 sm:pt-0">
+                          <div className="flex items-center gap-4 text-left sm:text-right">
+                            <div>
+                              <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Score</p>
+                              <span className="text-sm font-bold text-slate-800">{t.score}<span className="text-slate-400 text-xs">/{t.totalMarks}</span></span>
+                            </div>
+                            <div className="h-6 w-[1px] bg-slate-200" />
+                            <div>
+                              <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Grade</p>
+                              <span className={`text-sm font-extrabold ${(t.score / t.totalMarks * 100) >= 85 ? 'text-emerald-600' : (t.score / t.totalMarks * 100) >= 65 ? 'text-amber-600' : 'text-rose-600'}`}>{t.grade || 'A'}</span>
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={() => navigate(`/dashboard/tests/${t.id}/take?view=result`)}
+                            className="px-4 py-2 bg-slate-950 hover:bg-slate-900 text-white rounded-xl text-[9px] font-bold uppercase tracking-wider transition-all active:scale-95 cursor-pointer shadow-sm flex items-center gap-1.5 border border-slate-800"
+                          >
+                            <span>Report</span>
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-20 text-center">
+                       <Award className="w-12 h-12 text-slate-200 mx-auto mb-4" />
+                       <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">No completed test results found</p>
                     </div>
                   )}
                 </div>

@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 
 export default function ProtectedRoute({ requiredRole = null }) {
   const { isAuthenticated, currentUser, loading } = useAuth();
+  const { pathname } = useLocation();
 
   if (loading) {
     return (
@@ -16,8 +17,6 @@ export default function ProtectedRoute({ requiredRole = null }) {
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;
   }
-
-  const { pathname } = useLocation();
 
   // Enforce pending account approval block
   if (currentUser?.role === 'student' && currentUser?.status === 'pending') {

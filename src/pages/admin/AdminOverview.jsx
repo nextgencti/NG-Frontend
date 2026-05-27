@@ -27,26 +27,26 @@ export default function AdminOverview() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       
-      {/* Metrics Cards */}
+      {/* Metrics Cards - Compacted Padding & Typography */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <div key={index} className="bg-white p-5 rounded-[12px] border border-[#E5E7EB] shadow-sm flex items-center justify-between hover:border-[#4F46E5]/30 transition-all group">
+            <div key={index} className="bg-white p-4.5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between hover:border-[#4F46E5]/30 transition-all group">
               <div>
-                <p className="text-[12px] font-medium text-[#6B7280] mb-1">{stat.label}</p>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">{stat.label}</p>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-[22px] font-bold text-[#111827] leading-none tracking-tight">{stat.value}</h3>
-                  <span className={`text-[11px] font-semibold px-1.5 py-0.5 rounded-md flex items-center ${
+                  <h3 className="text-xl font-extrabold text-slate-900 leading-none tracking-tight">{stat.value}</h3>
+                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md flex items-center ${
                     stat.trend.startsWith('+') ? 'text-[#16A34A] bg-[#F0FDF4]' : 'text-[#DC2626] bg-[#FEF2F2]'
                   }`}>
                     {stat.trend}
                   </span>
                 </div>
               </div>
-              <div className={`w-11 h-11 rounded-[10px] ${stat.bg} flex items-center justify-center transition-transform duration-300 group-hover:scale-110`}>
+              <div className={`w-10 h-10 rounded-lg ${stat.bg} flex items-center justify-center transition-transform duration-300 group-hover:scale-105`}>
                 <Icon className={`w-5 h-5 ${stat.color}`} />
               </div>
             </div>
@@ -55,13 +55,13 @@ export default function AdminOverview() {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid lg:grid-cols-12 gap-6">
+      <div className="grid lg:grid-cols-12 gap-5">
         
-        {/* Recent Students Table (8/12 width) */}
-        <div className="lg:col-span-8 bg-white rounded-[12px] border border-[#E5E7EB] shadow-sm overflow-hidden flex flex-col">
-          <div className="p-5 border-b border-[#F1F5F9] flex items-center justify-between">
-            <h3 className="text-[18px] font-semibold text-[#111827]">Recent Students</h3>
-            <button className="text-[#4F46E5] hover:text-[#4338CA] text-[13px] font-semibold flex items-center gap-1 transition-colors">
+        {/* Recent Students Table (8/12 width) - Compact Padding & Sleek Row Heights */}
+        <div className="lg:col-span-8 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+          <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+            <h3 className="text-base font-extrabold text-slate-900">Recent Students</h3>
+            <button className="text-[#4F46E5] hover:text-[#4338CA] text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer">
               View All <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -70,33 +70,35 @@ export default function AdminOverview() {
             {/* Desktop Table View */}
             <table className="w-full text-left border-collapse hidden md:table">
               <thead>
-                <tr className="bg-[#F8FAFC] text-[#6B7280] text-[12px] font-semibold uppercase tracking-wider">
-                  <th className="px-6 py-4">Student</th>
-                  <th className="px-6 py-4">Course</th>
-                  <th className="px-6 py-4">Enrolled On</th>
-                  <th className="px-6 py-4 text-right">Status</th>
+                <tr className="bg-slate-50/80 text-slate-400 text-[9px] font-bold uppercase tracking-widest border-b border-slate-100">
+                  <th className="px-4.5 py-3">Student</th>
+                  <th className="px-4.5 py-3">Course</th>
+                  <th className="px-4.5 py-3">Enrolled On</th>
+                  <th className="px-4.5 py-3 text-right">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#F1F5F9]">
+              <tbody className="divide-y divide-slate-100">
                 {[1, 2, 3, 4, 5].map((i) => (
-                  <tr key={i} className="hover:bg-[#F8FAFC] transition-colors group">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-[#EEF2FF] flex items-center justify-center text-[11px] font-bold text-[#4F46E5]">
+                  <tr key={i} className="hover:bg-slate-50/50 transition-colors group">
+                    <td className="px-4.5 py-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-[#EEF2FF] flex items-center justify-center text-[9px] font-extrabold text-[#4F46E5]">
                           SR
                         </div>
                         <div>
-                          <p className="text-[14px] font-semibold text-[#111827] group-hover:text-[#4F46E5] transition-colors">Sanjay Rajpoot</p>
-                          <p className="text-[12px] text-[#6B7280]">sanjay@example.com</p>
+                          <p className="text-xs font-extrabold text-slate-900 group-hover:text-[#4F46E5] transition-colors">Sanjay Rajpoot</p>
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">sanjay@example.com</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className="text-[13px] font-medium text-[#4B5563]">Web Systems</span>
+                    <td className="px-4.5 py-3">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50/50 text-[#4F46E5] border border-indigo-100/50">
+                        Web Systems
+                      </span>
                     </td>
-                    <td className="px-6 py-4 text-[13px] text-[#6B7280]">Mar {10 - i}, 2026</td>
-                    <td className="px-6 py-4 text-right">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#F0FDF4] text-[#16A34A]">
+                    <td className="px-4.5 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-tighter">Mar {10 - i}, 2026</td>
+                    <td className="px-4.5 py-3 text-right">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-widest bg-emerald-50 text-emerald-600 border border-emerald-100">
                         Active
                       </span>
                     </td>
@@ -106,26 +108,26 @@ export default function AdminOverview() {
             </table>
 
             {/* Mobile Card View */}
-            <div className="md:hidden divide-y divide-[#F1F5F9]">
+            <div className="md:hidden divide-y divide-slate-100">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="p-4 flex flex-col gap-3">
+                <div key={i} className="p-3.5 flex flex-col gap-2.5">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-[#EEF2FF] flex items-center justify-center text-[11px] font-bold text-[#4F46E5]">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-full bg-[#EEF2FF] flex items-center justify-center text-[9px] font-extrabold text-[#4F46E5]">
                         SR
                       </div>
                       <div>
-                        <p className="text-[14px] font-semibold text-[#111827]">Sanjay Rajpoot</p>
-                        <p className="text-[12px] text-[#6B7280]">sanjay@example.com</p>
+                        <p className="text-xs font-extrabold text-slate-900">Sanjay Rajpoot</p>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">sanjay@example.com</p>
                       </div>
                     </div>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#F0FDF4] text-[#16A34A]">
+                    <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-widest bg-emerald-50 text-emerald-600 border border-emerald-100">
                       Active
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-[12px]">
-                    <span className="text-[#6B7280]">Course: <span className="text-[#111827] font-medium">Web Systems</span></span>
-                    <span className="text-[#6B7280]">Mar {10 - i}, 2026</span>
+                  <div className="flex items-center justify-between text-[11px] font-medium">
+                    <span className="text-slate-400">Course: <span className="text-slate-800 font-bold uppercase">Web Systems</span></span>
+                    <span className="text-slate-400 uppercase font-bold tracking-tighter">Mar {10 - i}, 2026</span>
                   </div>
                 </div>
               ))}
@@ -133,13 +135,13 @@ export default function AdminOverview() {
           </div>
         </div>
 
-        {/* Quick Actions (4/12 width) */}
-        <div className="lg:col-span-4 space-y-6">
-          <div className="bg-white rounded-[12px] border border-[#E5E7EB] shadow-sm overflow-hidden">
-            <div className="p-5 border-b border-[#F1F5F9] bg-[#F8FAFC]/50">
-              <h3 className="text-[18px] font-semibold text-[#111827]">Quick Actions</h3>
+        {/* Quick Actions (4/12 width) - Compacted Spacing & Sizes */}
+        <div className="lg:col-span-4 space-y-5">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="p-4 border-b border-slate-100 bg-[#F8FAFC]/50">
+              <h3 className="text-base font-extrabold text-slate-900">Quick Actions</h3>
             </div>
-            <div className="p-5 space-y-3">
+            <div className="p-4 space-y-2.5">
               {[
                 { label: 'Add New Course', icon: BookOpen, color: 'text-[#4F46E5]', bg: 'bg-[#EEF2FF]' },
                 { label: 'Add New Student', icon: Users, iconColor: 'text-[#0EA5E9]', bg: 'bg-[#F0F9FF]' },
@@ -147,27 +149,27 @@ export default function AdminOverview() {
               ].map((action, idx) => (
                 <button 
                   key={idx} 
-                  className="w-full flex items-center justify-between p-3 rounded-[8px] border border-[#E5E7EB] bg-white hover:bg-[#F8FAFC] hover:border-[#4F46E5]/30 transition-all group text-left"
+                  className="w-full flex items-center justify-between p-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 hover:border-[#4F46E5]/30 transition-all group text-left cursor-pointer"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-lg ${action.bg} flex items-center justify-center transition-all group-hover:scale-110`}>
+                  <div className="flex items-center gap-2.5">
+                    <div className={`w-8 h-8 rounded-lg ${action.bg} flex items-center justify-center transition-all group-hover:scale-105`}>
                       <action.icon className={`w-4 h-4 ${action.color || action.iconColor}`} />
                     </div>
-                    <span className="font-semibold text-[14px] text-[#111827]">{action.label}</span>
+                    <span className="font-extrabold text-xs text-slate-800 uppercase tracking-wider">{action.label}</span>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-[#94A3B8] group-hover:text-[#4F46E5] group-hover:translate-x-1 transition-all" />
+                  <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#4F46E5] group-hover:translate-x-0.5 transition-all" />
                 </button>
               ))}
             </div>
           </div>
 
           {/* Help Card */}
-          <div className="bg-[#4F46E5] rounded-[12px] p-5 text-white relative overflow-hidden group shadow-lg shadow-[#4F46E5]/10">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform"></div>
+          <div className="bg-[#4F46E5] rounded-xl p-4.5 text-white relative overflow-hidden group shadow-lg shadow-[#4F46E5]/10">
+            <div className="absolute top-0 right-0 w-28 h-28 bg-white/10 rounded-full -mr-14 -mt-14 group-hover:scale-105 transition-transform"></div>
             <div className="relative z-10">
-              <h4 className="font-bold text-[16px] mb-1">Need help?</h4>
-              <p className="text-[13px] text-white/80 mb-4 leading-relaxed">Check our documentation or contact support for assistance.</p>
-              <button className="bg-white text-[#4F46E5] px-4 py-2 rounded-[8px] text-[13px] font-bold hover:bg-[#EEF2FF] transition-colors shadow-sm">
+              <h4 className="font-extrabold text-sm mb-1 uppercase tracking-wide">Need help?</h4>
+              <p className="text-xs text-white/80 mb-3.5 leading-relaxed">Check our documentation or contact support for assistance.</p>
+              <button className="bg-white text-[#4F46E5] px-3.5 py-1.5 rounded-lg text-xs font-bold hover:bg-[#EEF2FF] transition-colors shadow-sm cursor-pointer">
                 Get Support
               </button>
             </div>
@@ -178,4 +180,3 @@ export default function AdminOverview() {
     </div>
   );
 }
-

@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Clock, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, Loader2, Sun, Moon, Maximize, Minimize } from 'lucide-react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { Clock, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, Loader2, Sun, Moon, Maximize, Minimize, Download } from 'lucide-react';
 import api from '../../lib/axios';
 import toast from 'react-hot-toast';
 
 export default function TakeTest() {
   const { testId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   
   const [test, setTest] = useState(null);
   const [questions, setQuestions] = useState([]);
@@ -73,22 +74,62 @@ export default function TakeTest() {
   const fetchTestDetails = async () => {
     setIsLoading(true);
     try {
-      const response = await api.get(`/student/tests/${testId}`);
-      if (response.data.success) {
-        setTest(response.data.test);
-        
-        // Shuffle questions using Fisher-Yates algorithm
-        const shuffledQuestions = [...response.data.questions];
-        for (let i = shuffledQuestions.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [shuffledQuestions[i], shuffledQuestions[j]] = [shuffledQuestions[j], shuffledQuestions[i]];
+      const searchParams = new URLSearchParams(location.search);
+      const isViewResult = searchParams.get('view') === 'result';
+
+      if (isViewResult) {
+        // Load completed test results
+        try {
+          const response = await api.get(`/student/tests/${testId}/result`);
+          if (response.data.success) {
+            const resultData = response.data.result;
+            setTest({
+              title: resultData.testTitle || 'Test',
+              course: resultData.testCourse || 'Course'
+            });
+            // Ensure percentage is calculated if missing
+            if (resultData.percentage === undefined && resultData.score !== undefined && resultData.totalMarks) {
+              resultData.percentage = (resultData.score / resultData.totalMarks) * 100;
+            }
+            if (!resultData.grade) {
+              const pct = resultData.percentage || 0;
+              if (pct >= 90) resultData.grade = 'A+';
+              else if (pct >= 80) resultData.grade = 'A';
+              else if (pct >= 70) resultData.grade = 'B';
+              else if (pct >= 60) resultData.grade = 'C';
+              else if (pct >= 50) resultData.grade = 'D';
+              else resultData.grade = 'F';
+            }
+            setResult(resultData);
+            setIsFinished(true);
+          }
+        } catch (resultErr) {
+          console.error('Fetch result error:', resultErr);
+          // Instead of redirecting, show a "no result" state
+          setTest({ title: 'Test Result', course: '' });
+          setResult({ score: 0, totalMarks: 0, percentage: 0, grade: 'N/A', detailedReport: [] });
+          setIsFinished(true);
+          toast.error(resultErr.response?.data?.message || 'No results found for this test. Please attempt the test first.');
         }
-        setQuestions(shuffledQuestions);
-        
-        // Parse duration (e.g., "45 min" or "60") to seconds
-        const durationStr = response.data.test.duration;
-        const minutes = parseInt(durationStr.replace(/[^0-9]/g, '')) || 30; // default 30 min
-        setTimeLeft(minutes * 60);
+      } else {
+        // Normal test taking flow
+        const response = await api.get(`/student/tests/${testId}`);
+        if (response.data.success) {
+          setTest(response.data.test);
+          
+          // Shuffle questions using Fisher-Yates algorithm
+          const shuffledQuestions = [...response.data.questions];
+          for (let i = shuffledQuestions.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [shuffledQuestions[i], shuffledQuestions[j]] = [shuffledQuestions[j], shuffledQuestions[i]];
+          }
+          setQuestions(shuffledQuestions);
+          
+          // Parse duration (e.g., "45 min" or "60") to seconds
+          const durationStr = response.data.test.duration;
+          const minutes = parseInt(durationStr.replace(/[^0-9]/g, '')) || 30; // default 30 min
+          setTimeLeft(minutes * 60);
+        }
       }
     } catch (error) {
       console.error('Fetch test details error:', error);
@@ -159,38 +200,120 @@ export default function TakeTest() {
 
   if (isFinished && result) {
     return (
-      <div className={`min-h-screen transition-colors duration-500 flex flex-col items-center py-12 px-4 ${isDarkMode ? 'bg-slate-950' : 'bg-slate-50'}`}>
-        <div className={`${isDarkMode ? 'glass-dark' : 'bg-white shadow-xl'} rounded-3xl p-8 max-w-3xl w-full space-y-8 border ${isDarkMode ? 'border-white/5' : 'border-slate-100'}`}>
+      <div className={`min-h-screen transition-colors duration-500 flex flex-col items-center py-8 px-4 ${isDarkMode ? 'bg-slate-950' : 'bg-slate-50'}`}>
+        <div className={`${isDarkMode ? 'glass-dark' : 'bg-white shadow-xl'} rounded-3xl p-6 md:p-8 max-w-2xl w-full space-y-6 md:space-y-8 border ${isDarkMode ? 'border-white/5' : 'border-slate-100'} relative`}>
+          
+          {/* Dynamic Printable PDF Styles */}
+          <style dangerouslySetInnerHTML={{__html: `
+            @media print {
+              html, body, #root, .flex-1, .overflow-auto, .overflow-hidden, .min-h-screen {
+                height: auto !important;
+                min-height: auto !important;
+                max-height: none !important;
+                overflow: visible !important;
+                display: block !important;
+                position: static !important;
+                background: white !important;
+                color: black !important;
+                padding: 0 !important;
+                margin: 0 !important;
+              }
+              .fixed, .sticky {
+                display: none !important;
+              }
+              .print\\:hidden {
+                display: none !important;
+              }
+              aside, nav, header, button, footer, .sidebar, .navbar {
+                display: none !important;
+              }
+              .max-w-2xl {
+                display: block !important;
+                max-width: 100% !important;
+                width: 100% !important;
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+                margin: 0 auto !important;
+                background: white !important;
+                overflow: visible !important;
+              }
+              /* Darken typography for high readability in print */
+              h2, h3, h4, p, span, div {
+                color: #000000 !important;
+                page-break-inside: avoid;
+              }
+              /* Allow page breaks in the parent container of the questions */
+              .space-y-6 {
+                page-break-inside: auto;
+              }
+              /* Background fills force-enable for correct answers */
+              .bg-emerald-50\\/30 {
+                background-color: rgba(16, 185, 129, 0.08) !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+              .border-emerald-100 {
+                border-color: rgba(16, 185, 129, 0.2) !important;
+              }
+              .bg-rose-50\\/30 {
+                background-color: rgba(239, 68, 68, 0.08) !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+              .border-rose-100 {
+                border-color: rgba(239, 68, 68, 0.2) !important;
+              }
+            }
+          `}} />
+
+          {/* Action Header - Print Hidden */}
+          <div className="flex justify-between items-center border-b border-slate-100 dark:border-white/5 pb-5 print:hidden">
+            <button
+              onClick={() => navigate('/dashboard/tests')}
+              className="flex items-center gap-1.5 px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-white/10 dark:hover:bg-white/15 text-[#0f172a] dark:text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all border border-slate-300 dark:border-white/5 active:scale-95 cursor-pointer shadow-sm"
+              style={{ color: '#0f172a' }}
+            >
+              <ChevronLeft className="w-4 h-4 text-[#0f172a] dark:text-slate-300" style={{ color: '#0f172a' }} /> <span className="text-[#0f172a] dark:text-white" style={{ color: '#0f172a' }}>Back</span>
+            </button>
+            
+            <button
+              onClick={() => window.print()}
+              className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[10px] font-semibold uppercase tracking-widest shadow-md shadow-indigo-500/10 hover:shadow-indigo-500/20 transition-all active:scale-95 cursor-pointer border border-indigo-500/10"
+            >
+              <Download className="w-3.5 h-3.5" /> Download Report
+            </button>
+          </div>
           
           {/* Header Summary */}
-          <div className="text-center space-y-6">
-            <div className={`w-24 h-24 ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-100 text-emerald-500'} rounded-full flex items-center justify-center mx-auto shadow-inner`}>
-              <CheckCircle2 className="w-12 h-12" />
+          <div className="text-center space-y-4 md:space-y-6">
+            <div className={`w-20 h-20 ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-100 text-emerald-500'} rounded-full flex items-center justify-center mx-auto shadow-inner`}>
+              <CheckCircle2 className="w-10 h-10" />
             </div>
             <div>
-              <h2 className={`text-3xl font-black ${isDarkMode ? 'text-white' : 'text-slate-800'} mb-2`}>Test Completed!</h2>
-              <p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>You have successfully submitted the test. Here is your detailed analysis.</p>
+              <h2 className={`text-2xl font-black ${isDarkMode ? 'text-white' : 'text-slate-800'} mb-2`}>Test Completed!</h2>
+              <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>You have successfully submitted the test. Here is your detailed analysis.</p>
             </div>
             
-            <div className={`${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-slate-50 border-slate-100'} rounded-2xl border p-6 space-y-4 max-w-lg mx-auto`}>
-              <div className="grid grid-cols-2 gap-4">
-                <div className={`${isDarkMode ? 'bg-slate-800 shadow-xl border border-white/5' : 'bg-white shadow-sm border border-slate-100'} rounded-xl p-4 text-center`}>
-                  <p className={`text-sm font-bold ${isDarkMode ? 'text-slate-400' : 'text-slate-400'} uppercase tracking-wider mb-1`}>Score</p>
-                  <p className={`text-3xl font-black ${isDarkMode ? 'text-white' : 'text-primary-600'}`}>{result.score} <span className={`text-base ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>/ {result.totalMarks}</span></p>
+            <div className={`${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-slate-50 border-slate-100'} rounded-2xl border p-5 space-y-4 max-w-md mx-auto`}>
+              <div className="grid grid-cols-2 gap-3 md:gap-4">
+                <div className={`${isDarkMode ? 'bg-slate-800 shadow-xl border border-white/5' : 'bg-white shadow-sm border border-slate-100'} rounded-xl p-3 md:p-4 text-center`}>
+                  <p className={`text-xs font-bold ${isDarkMode ? 'text-slate-400' : 'text-slate-400'} uppercase tracking-wider mb-1`}>Score</p>
+                  <p className={`text-2xl md:text-3xl font-black ${isDarkMode ? 'text-white' : 'text-primary-600'}`}>{result.score ?? 0} <span className={`text-sm md:text-base ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>/ {result.totalMarks ?? 0}</span></p>
                 </div>
-                <div className={`${isDarkMode ? 'bg-slate-800 shadow-xl border border-white/5' : 'bg-white shadow-sm border border-slate-100'} rounded-xl p-4 text-center`}>
-                  <p className={`text-sm font-bold ${isDarkMode ? 'text-slate-400' : 'text-slate-400'} uppercase tracking-wider mb-1`}>Grade</p>
-                  <p className={`text-3xl font-black ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>{result.grade}</p>
+                <div className={`${isDarkMode ? 'bg-slate-800 shadow-xl border border-white/5' : 'bg-white shadow-sm border border-slate-100'} rounded-xl p-3 md:p-4 text-center`}>
+                  <p className={`text-xs font-bold ${isDarkMode ? 'text-slate-400' : 'text-slate-400'} uppercase tracking-wider mb-1`}>Grade</p>
+                  <p className={`text-2xl md:text-3xl font-black ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>{result.grade || 'N/A'}</p>
                 </div>
               </div>
               
-              <div className={`${isDarkMode ? 'bg-white/5' : 'bg-slate-200'} h-4 rounded-full overflow-hidden`}>
+              <div className={`${isDarkMode ? 'bg-white/5' : 'bg-slate-200'} h-3 rounded-full overflow-hidden`}>
                 <div 
-                  className={`h-full rounded-full ${result.percentage >= 50 ? 'bg-emerald-500' : 'bg-rose-500'}`}
-                  style={{ width: `${result.percentage}%` }}
+                  className={`h-full rounded-full ${(result.percentage || 0) >= 50 ? 'bg-emerald-500' : 'bg-rose-500'}`}
+                  style={{ width: `${result.percentage || 0}%` }}
                 />
               </div>
-              <p className={`text-xs font-bold ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>{result.percentage.toFixed(1)}% Achieved</p>
+              <p className={`text-[10px] md:text-xs font-bold ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>{(result.percentage || 0).toFixed(1)}% Achieved</p>
             </div>
           </div>
 
@@ -199,7 +322,7 @@ export default function TakeTest() {
           {/* Detailed Report */}
           <div className="space-y-6">
             <h3 className={`text-xl font-black ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Detailed Report</h3>
-            {result.detailedReport?.map((item, index) => (
+            {(result.detailedReport || []).map((item, index) => (
               <div key={item.questionId} className={`p-6 rounded-2xl border-2 ${item.isCorrect ? (isDarkMode ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-emerald-100 bg-emerald-50/30') : (isDarkMode ? 'border-rose-500/20 bg-rose-500/5' : 'border-rose-100 bg-rose-50/30')}`}>
                 <div className="flex items-start gap-4 mb-4">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-black text-sm ${item.isCorrect ? (isDarkMode ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600') : (isDarkMode ? 'bg-rose-500/20 text-rose-400' : 'bg-rose-100 text-rose-600')}`}>
@@ -213,7 +336,7 @@ export default function TakeTest() {
 
                 <div className="space-y-3 pl-12">
                   {['A', 'B', 'C', 'D'].map(opt => {
-                    if (!item.options[opt]) return null;
+                    if (!item.options || !item.options[opt]) return null;
                     
                     const isSelected = item.studentAnswer === opt;
                     const isCorrectOption = item.correctAnswer === opt;
