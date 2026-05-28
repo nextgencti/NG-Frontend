@@ -232,7 +232,19 @@ export default function AdminEditTest() {
                   className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm text-slate-900 focus:ring-2 focus:ring-primary-500/20 transition-all cursor-pointer font-bold appearance-none"
                 >
                   <option value="">Select a course</option>
-                  {courses.map(c => <option key={c.id || c.name} value={c.name}>{c.name}</option>)}
+                  {(() => {
+                    const uniqueCourses = [];
+                    const seenNames = new Set();
+                    courses.forEach(c => {
+                      if (c && c.name && !seenNames.has(c.name.trim().toLowerCase())) {
+                        seenNames.add(c.name.trim().toLowerCase());
+                        uniqueCourses.push(c);
+                      }
+                    });
+                    return uniqueCourses.map(c => (
+                      <option key={c.id || c.name} value={c.name}>{c.name}</option>
+                    ));
+                  })()}
                 </select>
               </div>
 

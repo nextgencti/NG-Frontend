@@ -118,9 +118,19 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded }) {
               <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-accent-600 transition-colors" />
               <select name="courseId" required value={formData.courseId} onChange={handleChange} className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-accent-500/20 transition-all appearance-none cursor-pointer uppercase font-bold">
                 <option value="" disabled>Select Course</option>
-                {courses.map(course => (
-                   <option key={course.id} value={course.id}>{course.name}</option>
-                ))}
+                {(() => {
+                  const uniqueCourses = [];
+                  const seenNames = new Set();
+                  courses.forEach(c => {
+                    if (c && c.name && !seenNames.has(c.name.trim().toLowerCase())) {
+                      seenNames.add(c.name.trim().toLowerCase());
+                      uniqueCourses.push(c);
+                    }
+                  });
+                  return uniqueCourses.map(course => (
+                    <option key={course.id} value={course.id}>{course.name}</option>
+                  ));
+                })()}
               </select>
             </div>
           </div>

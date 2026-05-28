@@ -1,9 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Clock, BarChart, ChevronRight, Loader2, Plus, Calendar } from 'lucide-react';
+import { BookOpen, Clock, BarChart, ChevronRight, Loader2, Plus, Calendar, Sparkles } from 'lucide-react';
+import { motion } from 'framer-motion';
 import api from '../../lib/axios';
 import toast from 'react-hot-toast';
 import BrowseCatalogModal from '../../components/student/BrowseCatalogModal';
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05
+    }
+  }
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 25 },
+  show: { 
+    opacity: 1, 
+    y: 0, 
+    transition: { 
+      type: "spring", 
+      stiffness: 80, 
+      damping: 15 
+    } 
+  }
+};
 
 export default function MyCourses() {
   const navigate = useNavigate();
@@ -31,40 +55,49 @@ export default function MyCourses() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-4">
-        <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Loading Courses...</p>
+      <div className="flex flex-col items-center justify-center py-32 gap-4">
+        <div className="relative flex items-center justify-center">
+          <div className="absolute w-10 h-10 border-4 border-primary-100 rounded-full"></div>
+          <div className="w-10 h-10 border-4 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] animate-pulse">Cataloging Courses…</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 pb-16 px-2">
-      {/* Header Section - More compact */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 mb-1">
-            <div className="w-7 h-7 rounded-lg bg-primary-50 flex items-center justify-center text-primary-600">
-              <BookOpen className="w-4 h-4" />
+    <div className="space-y-8 pb-16 px-1 bg-dashboard-grid bg-repeat">
+      {/* Header Section */}
+      <motion.div 
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col md:flex-row md:items-center justify-between gap-6"
+      >
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <div className="w-6.5 h-6.5 rounded-lg bg-primary-50 flex items-center justify-center border border-primary-100/50 text-primary-600">
+              <BookOpen className="w-3.5 h-3.5" />
             </div>
-            <span className="text-[10px] font-bold text-primary-600 uppercase tracking-[0.15em]">Learning Dashboard</span>
+            <span className="text-[10px] font-black text-primary-600 uppercase tracking-[0.18em]">Learning Board</span>
           </div>
           <h2 className="text-3xl font-black text-slate-900 tracking-tight">
-            My <span className="text-primary-600">Courses</span>
+            Registered <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-indigo-600">Courses</span>
           </h2>
-          <p className="text-slate-500 text-[13px] font-medium max-w-lg">
-            Track your progress and access your registered courses.
+          <p className="text-slate-500 text-xs sm:text-sm font-medium max-w-lg">
+            Access lessons, modules, and track syllabus progress.
           </p>
         </div>
         
-        <button 
+        <motion.button 
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           onClick={() => setIsCatalogOpen(true)}
-          className="flex items-center justify-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-black transition-all shadow-lg shadow-slate-900/5 active:scale-95 group"
+          className="flex items-center justify-center gap-2 px-6 py-3.5 bg-primary-600 text-white rounded-xl font-black transition-all shadow-md hover:bg-primary-700 cursor-pointer text-xs uppercase tracking-wider shrink-0"
         >
-          <Plus className="w-4 h-4" />
-          <span className="text-[12px] uppercase tracking-wider">Browse Catalog</span>
-        </button>
-      </div>
+          <Plus className="w-4 h-4 text-white/80" />
+          Browse Catalog
+        </motion.button>
+      </motion.div>
 
       <BrowseCatalogModal 
         isOpen={isCatalogOpen} 
@@ -73,43 +106,52 @@ export default function MyCourses() {
       />
 
       {courses.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {courses.map((course, index) => (
-            <div 
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+          className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+        >
+          {courses.map((course) => (
+            <motion.div 
               key={course.id} 
-              className="bg-white rounded-[28px] border border-slate-100 overflow-hidden group hover:shadow-[0_24px_48px_-12px_rgba(79,70,229,0.06)] hover:-translate-y-1 transition-all duration-500 flex flex-col h-full relative"
+              variants={cardVariants}
+              whileHover={{ y: -6, scale: 1.01 }}
+              className="bg-white rounded-[28px] border border-slate-100 overflow-hidden group hover:shadow-[0_24px_48px_-12px_rgba(79,70,229,0.05)] transition-all duration-300 flex flex-col h-full relative"
             >
-              {/* Thumbnail Container - Fixed Height */}
-              <div className="relative h-36 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent z-10"></div>
+              {/* Thumbnail Container */}
+              <div className="relative h-40 overflow-hidden bg-slate-50 border-b border-slate-100">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent z-10"></div>
                 {course.thumbnailUrl || course.image ? (
                   <img 
                     src={course.thumbnailUrl || course.image} 
                     alt={course.name} 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   />
                 ) : (
-                  <div className="w-full h-full bg-slate-100 flex items-center justify-center">
-                    <BookOpen className="w-10 h-10 text-slate-300 animate-pulse" />
+                  <div className="w-full h-full bg-gradient-to-tr from-slate-50 to-slate-100 flex items-center justify-center">
+                    <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-center">
+                      <BookOpen className="w-6.5 h-6.5 text-slate-300 group-hover:text-primary-400 transition-colors duration-500" />
+                    </div>
                   </div>
                 )}
                 
-                {/* Status Badge - Sleek Glassmorphism */}
-                <div className="absolute top-3 left-3 z-20">
-                  <span className={`px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest text-white backdrop-blur-md shadow-sm border ${
+                {/* Status Badge */}
+                <div className="absolute top-4 left-4 z-20">
+                  <span className={`px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest text-white backdrop-blur-md border ${
                     course.enrollmentStatus === 'pending' 
-                      ? 'bg-amber-500/90 border-amber-400/20' 
-                      : 'bg-emerald-500/90 border-emerald-400/20'
+                      ? 'bg-amber-500/90 border-amber-400/20 shadow-md' 
+                      : 'bg-emerald-500/90 border-emerald-400/20 shadow-md'
                   }`}>
-                    {course.enrollmentStatus === 'pending' ? 'Pending' : 'Active'}
+                    {course.enrollmentStatus === 'pending' ? 'Pending Approval' : 'Active'}
                   </span>
                 </div>
 
-                {/* Duration Badge - Floating */}
-                <div className="absolute bottom-3 left-3 z-20">
-                  <div className="flex items-center gap-1 bg-slate-900/60 backdrop-blur-md border border-white/10 px-2 py-1 rounded-lg">
-                    <Calendar className="w-3 h-3 text-white" />
-                    <span className="text-[8px] font-extrabold text-white uppercase tracking-wider">
+                {/* Duration Badge */}
+                <div className="absolute bottom-4 left-4 z-20">
+                  <div className="flex items-center gap-1.5 bg-slate-950/50 backdrop-blur-md border border-white/10 px-2.5 py-1 rounded-lg">
+                    <Calendar className="w-3.5 h-3.5 text-white" />
+                    <span className="text-[9px] font-black text-white uppercase tracking-wider">
                       {course.duration || '3 Months'}
                     </span>
                   </div>
@@ -117,55 +159,56 @@ export default function MyCourses() {
               </div>
 
               {/* Details Section */}
-              <div className="p-5 flex-1 flex flex-col">
-                {/* Course Name - High contrast and bold */}
+              <div className="p-6 flex-1 flex flex-col">
                 <div className="mb-2">
-                  <h3 className="text-base font-black text-slate-800 tracking-tight leading-snug group-hover:text-primary-600 transition-colors uppercase line-clamp-1">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">CCC Module</span>
+                  <h3 className="text-base font-black text-slate-800 tracking-tight leading-snug group-hover:text-primary-600 transition-colors line-clamp-1 uppercase mt-0.5">
                     {course.name || course.title}
                   </h3>
                 </div>
 
-                {/* Course Description */}
-                <div className="mb-4 flex-1">
-                  <p className="text-slate-500 text-[12px] font-medium leading-relaxed line-clamp-2">
+                <div className="mb-5 flex-1">
+                  <p className="text-slate-400 text-xs leading-relaxed line-clamp-2">
                     {course.description || "Master the fundamentals and advanced concepts of this course."}
                   </p>
                 </div>
 
-                {/* Progress Section */}
-                <div className="mb-4">
-                  <div className="flex justify-between items-end mb-1.5">
-                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Course Progress</span>
-                    <span className="text-xs font-black text-[#4F46E5]">{course.progress || 0}%</span>
+                {/* Progress bar */}
+                <div className="mb-5">
+                  <div className="flex justify-between items-center text-[10px] mb-1.5">
+                    <span className="font-bold text-slate-400 uppercase tracking-widest">Syllabus Covered</span>
+                    <span className="font-black text-primary-600">{course.progress || 0}%</span>
                   </div>
-                  <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-primary-600 to-indigo-500 rounded-full shadow-[0_0_8px_rgba(79,70,229,0.25)] transition-all duration-1000 ease-out"
-                      style={{ width: `${course.progress || 0}%` }}
-                    ></div>
+                  <div className="h-2 w-full bg-slate-50 border border-slate-100 rounded-full overflow-hidden">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${course.progress || 0}%` }}
+                      transition={{ duration: 1, ease: "easeOut" }}
+                      className="h-full bg-gradient-to-r from-primary-600 to-indigo-500 rounded-full"
+                    ></motion.div>
                   </div>
                 </div>
 
                 {/* Stats Blocks */}
-                <div className="grid grid-cols-2 gap-2.5 mb-4 pb-4 border-b border-slate-100">
-                  <div className="bg-slate-50/50 rounded-xl p-2.5 border border-slate-100/50 hover:bg-slate-50 transition-colors flex items-center gap-2">
-                    <div className="w-7.5 h-7.5 rounded-lg bg-primary-50 flex items-center justify-center text-primary-600 shrink-0">
-                      <BookOpen className="w-3.5 h-3.5" />
+                <div className="grid grid-cols-2 gap-3 mb-5 pb-5 border-b border-slate-50">
+                  <div className="bg-slate-50/50 rounded-2xl p-3 border border-slate-100/50 hover:bg-slate-50 transition-colors duration-200 flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-primary-50 flex items-center justify-center text-primary-600 shrink-0 border border-primary-100/30">
+                      <BookOpen className="w-4 h-4" />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <span className="block text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Modules</span>
-                      <p className="text-xs font-black text-slate-800">
-                        {course.completedModules || 0} <span className="text-[10px] text-slate-400 font-medium">/{course.totalModules || 10}</span>
+                      <p className="text-[11px] font-black text-slate-800 truncate">
+                        {course.completedModules || 0}<span className="text-[10px] text-slate-400 font-medium">/{course.totalModules || 10}</span>
                       </p>
                     </div>
                   </div>
-                  <div className="bg-slate-50/50 rounded-xl p-2.5 border border-slate-100/50 hover:bg-slate-50 transition-colors flex items-center gap-2">
-                    <div className="w-7.5 h-7.5 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0">
-                      <Calendar className="w-3.5 h-3.5" />
+                  <div className="bg-slate-50/50 rounded-2xl p-3 border border-slate-100/50 hover:bg-slate-50 transition-colors duration-200 flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0 border border-indigo-100/30">
+                      <Calendar className="w-4 h-4" />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <span className="block text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Schedule</span>
-                      <p className="text-xs font-black text-slate-800 truncate max-w-[65px]">
+                      <p className="text-[11px] font-black text-slate-800 truncate">
                         {course.nextClass || 'TBA'}
                       </p>
                     </div>
@@ -176,33 +219,39 @@ export default function MyCourses() {
                 <button 
                   disabled={course.enrollmentStatus === 'pending'}
                   onClick={() => course.enrollmentStatus !== 'pending' && navigate(`/dashboard/courses/${course.id}/classroom`)}
-                  className="w-full mt-auto py-2.5 bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 disabled:opacity-30 disabled:grayscale flex items-center justify-center gap-1.5 group/btn shadow-md shadow-indigo-500/10 hover:shadow-indigo-500/20 hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
+                  className="w-full py-3 bg-primary-600 hover:bg-primary-700 disabled:bg-slate-100 disabled:text-slate-400 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.16em] transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 group/btn cursor-pointer shadow-md shadow-primary-500/10 hover:shadow-primary-500/20"
                 >
                   {course.enrollmentStatus === 'pending' ? 'Pending Approval' : (
                     <>
                       Enter Classroom
-                      <ChevronRight className="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 transition-transform" />
+                      <ChevronRight className="w-4 h-4 group-hover/btn:translate-x-0.5 transition-transform text-white/80" />
                     </>
                   )}
                 </button>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-20 px-6 text-center bg-white rounded-[32px] border border-slate-100 shadow-sm">
-          <BookOpen className="w-10 h-10 text-slate-200 mb-6" />
-          <h3 className="text-xl font-black text-slate-900 mb-2 uppercase tracking-wider">No Courses</h3>
-          <p className="text-slate-500 text-xs font-medium max-w-xs mx-auto mb-8">
-            Explore our catalog to find professional courses.
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex flex-col items-center justify-center py-24 px-6 text-center bg-white rounded-[32px] border border-slate-100 shadow-[0_10px_30px_rgba(0,0,0,0.01)]"
+        >
+          <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 border border-slate-100">
+            <BookOpen className="w-6.5 h-6.5 text-slate-300" />
+          </div>
+          <h3 className="text-lg font-black text-slate-900 mb-1.5 uppercase tracking-wider">No Courses Found</h3>
+          <p className="text-slate-400 text-xs leading-relaxed max-w-xs mx-auto mb-8 font-medium">
+            Enroll in a course from our catalogue to begin learning.
           </p>
           <button 
             onClick={() => setIsCatalogOpen(true)}
-            className="px-8 py-3.5 bg-primary-600 text-white rounded-xl font-bold text-[11px] uppercase tracking-widest"
+            className="px-8 py-3.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-black text-[10px] uppercase tracking-widest cursor-pointer shadow-md hover:shadow-lg"
           >
-            Explore Catalog
+            Explore Catalogue
           </button>
-        </div>
+        </motion.div>
       )}
     </div>
   );

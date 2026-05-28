@@ -14,12 +14,20 @@ export default function NotificationBell() {
   // Fetch notifications
   const fetchNotifications = async () => {
     try {
-      const response = await api.get('/student/notifications');
-      if (response.data.success) {
+      const response = await api.get('/student/notifications', {
+        validateStatus: (status) => status < 500
+      });
+      if (response.status === 200 && response.data.success) {
         setNotifications(response.data.notifications || []);
+      } else if (response.status === 404) {
+        // Gracefully set empty array and avoid console clutter if not yet deployed/implemented
+        setNotifications([]);
+      } else {
+        console.warn('Failed to fetch notifications:', response.data?.message);
       }
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      // General fallbacks for serious network connection errors
+      console.warn('Network error fetching notifications.');
     }
   };
 
@@ -61,14 +69,15 @@ export default function NotificationBell() {
         prev.map(n => n.id === notification.id ? { ...n, isRead: true } : n)
       );
 
-      await api.put(`/student/notifications/${notification.id}/read`);
+      await api.put(`/student/notifications/${notification.id}/read`, null, {
+        validateStatus: (status) => status < 500
+      });
       
       setIsOpen(false);
       if (notification.link) {
         navigate(notification.link);
       }
     } catch (error) {
-      console.error('Error marking notification as read:', error);
       // Revert optimism if error
       fetchNotifications();
     }
@@ -85,7 +94,9 @@ export default function NotificationBell() {
 
       // Call mark-as-read API for all unread items
       const promises = unreadNotifications.map(n => 
-        api.put(`/student/notifications/${n.id}/read`)
+        api.put(`/student/notifications/${n.id}/read`, null, {
+          validateStatus: (status) => status < 500
+        })
       );
       await Promise.all(promises);
       
@@ -159,18 +170,18 @@ export default function NotificationBell() {
         }}
         className={`relative w-9 h-9 rounded-xl flex items-center justify-center border transition-all active:scale-95 cursor-pointer ${
           isOpen
-            ? 'bg-slate-100 border-slate-200 text-slate-800'
-            : 'bg-white hover:bg-slate-50 border-[#E5E7EB] hover:border-slate-300 text-slate-500 hover:text-slate-800 shadow-sm'
+            ? 'bg-white/15 border-white/20 text-white'
+            : 'bg-white/5 hover:bg-white/10 border-white/10 text-white/80 hover:text-white shadow-sm'
         }`}
       >
         <Bell className={`w-4.5 h-4.5 transition-transform duration-500 ${isOpen ? 'rotate-12' : 'hover:animate-[bounce_0.8s_infinite]'}`} />
         
         {unreadCount > 0 && (
           <>
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-tr from-[#4F46E5] to-[#818CF8] text-white rounded-full flex items-center justify-center text-[10px] font-black shadow-lg shadow-indigo-500/30 border border-white animate-in scale-in duration-300">
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-tr from-rose-500 to-pink-500 text-white rounded-full flex items-center justify-center text-[10px] font-black shadow-lg shadow-rose-500/30 border border-white animate-in scale-in duration-300">
               {unreadCount}
             </span>
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#4F46E5] rounded-full -z-10 animate-ping opacity-60"></span>
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 rounded-full -z-10 animate-ping opacity-60"></span>
           </>
         )}
       </button>

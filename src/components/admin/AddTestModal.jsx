@@ -161,7 +161,19 @@ export default function AddTestModal({ isOpen, onClose, onTestAdded }) {
                 disabled={isFetchingCourses}
               >
                 <option value="">{isFetchingCourses ? 'Loading courses...' : 'Select a course'}</option>
-                {courses.map(c => <option key={c.id || c.name} value={c.name}>{c.name}</option>)}
+                {(() => {
+                  const uniqueCourses = [];
+                  const seenNames = new Set();
+                  courses.forEach(c => {
+                    if (c && c.name && !seenNames.has(c.name.trim().toLowerCase())) {
+                      seenNames.add(c.name.trim().toLowerCase());
+                      uniqueCourses.push(c);
+                    }
+                  });
+                  return uniqueCourses.map(c => (
+                    <option key={c.id || c.name} value={c.name}>{c.name}</option>
+                  ));
+                })()}
               </select>
             </div>
           </div>
