@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, ClipboardList, Clock, CheckCircle2, Trash2, Edit2, BookOpen, BarChart2, Loader2, Trophy, Globe } from 'lucide-react';
+import { Plus, Search, ClipboardList, Clock, CheckCircle2, Trash2, Edit2, BookOpen, BarChart2, Loader2, Trophy, Globe, Presentation } from 'lucide-react';
 import AddTestModal from '../../components/admin/AddTestModal';
 import api from '../../lib/axios';
 import toast from 'react-hot-toast';
@@ -86,6 +86,32 @@ export default function AdminTests() {
       toast.success(!currentStatus ? 'Test is now public!' : 'Test is now private.');
     } catch (error) {
       toast.error('Failed to update public status');
+    }
+  };
+
+  const handleQuickExportPPT = async (testItem) => {
+    const toastId = toast.loading(`Preparing PowerPoint slides for "${testItem.title}"... 🎥`);
+    try {
+      const response = await api.get(`/admin/tests/${testItem.id}/full`);
+      if (response.data.success) {
+        const fullTest = response.data.test;
+        const questions = response.data.questions || [];
+        
+        if (questions.length === 0) {
+          toast.error('This test has no questions to export!', { id: toastId });
+          return;
+        }
+
+        const { exportTestToPPTX } = await import('../../utils/pptxExporter');
+        await exportTestToPPTX(fullTest, questions, { isTeachingMode: false });
+        
+        toast.success('PowerPoint slideshow downloaded successfully!', { id: toastId });
+      } else {
+        toast.error('Failed to retrieve test questions.', { id: toastId });
+      }
+    } catch (error) {
+      console.error('Error in quick PPT export:', error);
+      toast.error('Failed to export PowerPoint slideshow.', { id: toastId });
     }
   };
 
@@ -277,6 +303,15 @@ export default function AdminTests() {
                         >
                           <Globe className="w-4 h-4" />
                         </button>
+                        {test.questions > 0 && (
+                          <button
+                            onClick={() => handleQuickExportPPT(test)}
+                            className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all cursor-pointer"
+                            title="Quick Export PPT"
+                          >
+                            <Presentation className="w-4 h-4" />
+                          </button>
+                        )}
                         <button
                           onClick={() => navigate(`/admin/tests/${test.id}/results`)}
                           className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all cursor-pointer"

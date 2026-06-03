@@ -148,6 +148,12 @@ export default function NotificationBell() {
             <BookOpen className="w-4.5 h-4.5" />
           </div>
         );
+      case 'test':
+        return (
+          <div className="w-9 h-9 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600 shrink-0">
+            <CheckSquare className="w-4.5 h-4.5" />
+          </div>
+        );
       default:
         return (
           <div className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 shrink-0">

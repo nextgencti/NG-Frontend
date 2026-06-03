@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Plus, Trash2, Edit2, CheckCircle2, AlertCircle, Clock, BookOpen, BarChart2, Hash, FileText, Calendar, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2, Edit2, CheckCircle2, AlertCircle, Clock, BookOpen, BarChart2, Hash, FileText, Calendar, RefreshCw, Presentation } from 'lucide-react';
 import api from '../../lib/axios';
 import toast from 'react-hot-toast';
 
@@ -23,6 +23,26 @@ export default function AdminEditTest() {
   const [rescheduleDate, setRescheduleDate] = useState('');
   const [rescheduleTime, setRescheduleTime] = useState('');
   const [isRescheduling, setIsRescheduling] = useState(false);
+
+  // PPTX Export State
+  const [isPPTModalOpen, setIsPPTModalOpen] = useState(false);
+  const [isPPTExporting, setIsPPTExporting] = useState(false);
+  const [pptMode, setPptMode] = useState('exam'); // 'exam' or 'teaching'
+
+  const handleExportPPT = async () => {
+    setIsPPTExporting(true);
+    try {
+      const { exportTestToPPTX } = await import('../../utils/pptxExporter');
+      await exportTestToPPTX(test, questions, { isTeachingMode: pptMode === 'teaching' });
+      toast.success('PowerPoint slideshow downloaded successfully! 🎥');
+      setIsPPTModalOpen(false);
+    } catch (error) {
+      console.error('Error generating PPT:', error);
+      toast.error('Failed to generate PowerPoint slides.');
+    } finally {
+      setIsPPTExporting(false);
+    }
+  };
 
   useEffect(() => {
     fetchTestDetails();
@@ -181,6 +201,16 @@ export default function AdminEditTest() {
           <p className="text-slate-500 font-medium">Modify test configurations and restructure questions.</p>
         </div>
         <div className="flex gap-4">
+          {test && questions.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setIsPPTModalOpen(true)}
+              className="flex items-center gap-2 px-6 py-3 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 text-indigo-600 rounded-2xl font-bold uppercase tracking-widest transition-all shadow-sm active:scale-95 cursor-pointer"
+            >
+              <Presentation className="w-5 h-5" />
+              Export PPT
+            </button>
+          )}
           <button
             type="button"
             onClick={() => { setRescheduleDate(test.date || ''); setRescheduleTime((test.time || '').substring(0, 5)); setIsRescheduleOpen(true); }}
@@ -575,6 +605,107 @@ export default function AdminEditTest() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* PPTX Export Modal */}
+      {isPPTModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white border border-slate-150 rounded-3xl w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-300 overflow-hidden">
+            
+            {/* Header */}
+            <div className="px-8 pt-8 pb-6 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center border border-indigo-100 shadow-sm text-primary-600">
+                  <Presentation className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">PPT Export Tool</h3>
+                  <p className="text-[9.5px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">MCQ-to-PowerPoint Slides</p>
+                </div>
+              </div>
+              <button onClick={() => setIsPPTModalOpen(false)} className="text-slate-400 hover:text-slate-700 cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-8 space-y-6">
+              <div className="space-y-3.5">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Select Export Mode</label>
+                
+                <div className="grid grid-cols-1 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setPptMode('exam')}
+                    className={`p-4 rounded-2xl border text-left flex items-start gap-3 transition-all cursor-pointer ${
+                      pptMode === 'exam'
+                        ? 'bg-primary-50/50 border-primary-500 shadow-sm'
+                        : 'bg-slate-50/50 border-slate-100 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className={`w-4.5 h-4.5 rounded-full border-2 mt-0.5 flex items-center justify-center shrink-0 ${
+                      pptMode === 'exam' ? 'border-primary-600 bg-primary-600' : 'border-slate-300'
+                    }`}>
+                      {pptMode === 'exam' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                    </div>
+                    <div>
+                      <span className="block text-[11px] font-black text-slate-800 uppercase tracking-wide">Exam Mode</span>
+                      <span className="block text-[10px] text-slate-400 font-medium mt-0.5">Generates clean question slides. Correct answers are placed in a compact central **Answer Key** slide at the very end.</span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPptMode('teaching')}
+                    className={`p-4 rounded-2xl border text-left flex items-start gap-3 transition-all cursor-pointer ${
+                      pptMode === 'teaching'
+                        ? 'bg-primary-50/50 border-primary-500 shadow-sm'
+                        : 'bg-slate-50/50 border-slate-100 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className={`w-4.5 h-4.5 rounded-full border-2 mt-0.5 flex items-center justify-center shrink-0 ${
+                      pptMode === 'teaching' ? 'border-primary-600 bg-primary-600' : 'border-slate-300'
+                    }`}>
+                      {pptMode === 'teaching' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                    </div>
+                    <div>
+                      <span className="block text-[11px] font-black text-slate-800 uppercase tracking-wide">Teaching / Practice Mode</span>
+                      <span className="block text-[10px] text-slate-400 font-medium mt-0.5">Highlights the correct answer on every slide in **emerald green** with a checkbox icon. Best for screen-sharing & live review classes.</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-4 pt-4 border-t border-slate-100">
+                <button
+                  type="button" onClick={() => setIsPPTModalOpen(false)}
+                  className="flex-1 py-3.5 bg-slate-50 hover:bg-slate-100 text-slate-900 border border-slate-200 rounded-2xl font-bold text-[10px] uppercase tracking-widest transition-all active:scale-95 shadow-sm cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExportPPT}
+                  disabled={isPPTExporting}
+                  className="flex-1 py-3.5 bg-primary-600 hover:bg-primary-700 text-white rounded-2xl font-bold text-[10px] uppercase tracking-widest shadow-lg shadow-primary-500/10 transition-all active:scale-95 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  {isPPTExporting ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Presentation className="w-3.5 h-3.5" />
+                      Generate PPT
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
       )}
