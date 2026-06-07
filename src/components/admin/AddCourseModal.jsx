@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
-import { X, Upload, BookOpen, Clock, IndianRupee } from 'lucide-react';
+import { X, Upload, BookOpen, Clock, IndianRupee, Building2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../../lib/axios';
+import { useAuth } from '../../context/AuthContext';
 
-export default function AddCourseModal({ isOpen, onClose, onCourseAdded }) {
-  const [formData, setFormData] = useState({ name: '', duration: '', fees: '', status: 'active' });
+export default function AddCourseModal({ isOpen, onClose, onCourseAdded, institutes = [] }) {
+  const { currentUser } = useAuth();
+  const isSuperAdmin = currentUser?.role === 'superadmin';
+
+  const [formData, setFormData] = useState({ name: '', duration: '', fees: '', status: 'active', instituteId: '' });
   const [thumbnail, setThumbnail] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -23,6 +27,10 @@ export default function AddCourseModal({ isOpen, onClose, onCourseAdded }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSuperAdmin && !formData.instituteId) {
+      toast.error('Please select an institute');
+      return;
+    }
     setLoading(true);
 
     const submitData = new FormData();
@@ -30,6 +38,9 @@ export default function AddCourseModal({ isOpen, onClose, onCourseAdded }) {
     submitData.append('duration', formData.duration);
     submitData.append('fees', formData.fees);
     submitData.append('status', formData.status);
+    if (isSuperAdmin) {
+      submitData.append('instituteId', formData.instituteId);
+    }
     if (thumbnail) {
       submitData.append('thumbnail', thumbnail);
     }
@@ -83,11 +94,29 @@ export default function AddCourseModal({ isOpen, onClose, onCourseAdded }) {
                   <p className="text-[9px] font-medium text-slate-400 mt-1 uppercase">1200x800 Recommended Resolution</p>
                 </>
               )}
-              <input type="file" required accept="image/*" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+              <input type="file" accept="image/*" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
             </div>
           </div>
 
           <div className="space-y-6">
+            {isSuperAdmin && (
+              <div className="relative group">
+                <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-primary-600 transition-colors" />
+                <select 
+                  name="instituteId" 
+                  required 
+                  value={formData.instituteId} 
+                  onChange={handleChange} 
+                  className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all appearance-none cursor-pointer uppercase font-bold"
+                >
+                  <option value="" disabled>Select Institute</option>
+                  {institutes.map(inst => (
+                    <option key={inst.id} value={inst.id}>{inst.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+            
             <div className="relative group">
               <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-primary-600 transition-colors" />
               <input type="text" name="name" required placeholder="Course Name (e.g., Web Development)" value={formData.name} onChange={handleChange} className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all placeholder:text-slate-400 placeholder:uppercase placeholder:font-bold" />

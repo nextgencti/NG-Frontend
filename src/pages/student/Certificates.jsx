@@ -73,10 +73,10 @@ export default function Certificates() {
             key={cert.id} 
             variants={cardVariants}
             whileHover={{ y: -6, scale: 1.01 }}
-            className="bg-white border border-slate-100 rounded-[28px] overflow-hidden group hover:shadow-[0_24px_48px_-12px_rgba(79,70,229,0.05)] transition-all duration-300 flex flex-col justify-between"
+            className="bg-white/70 backdrop-blur-2xl border border-white/60 rounded-[28px] overflow-hidden group shadow-[0_12px_36px_rgba(79,70,229,0.035),0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-[0_24px_48px_-12px_rgba(79,70,229,0.08)] hover:border-white transition-all duration-300 flex flex-col justify-between"
           >
             {/* Header Display Seal */}
-            <div className="h-44 relative overflow-hidden bg-slate-950 flex flex-col items-center justify-center text-center p-6 border-b border-slate-100">
+            <div className="h-44 relative overflow-hidden bg-slate-950 flex flex-col items-center justify-center text-center p-6 border-b border-slate-200/50">
               {/* Organic glowing background */}
               <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 via-primary-500/10 to-transparent z-0 group-hover:scale-105 transition-transform duration-500"></div>
               <div className="absolute inset-0 bg-dot-pattern opacity-[0.1] pointer-events-none"></div>
@@ -92,7 +92,7 @@ export default function Certificates() {
 
             {/* Meta details body */}
             <div className="p-6 space-y-4">
-              <div className="flex justify-between items-center text-xs pb-3.5 border-b border-slate-50">
+              <div className="flex justify-between items-center text-xs pb-3.5 border-b border-slate-200/55">
                 <span className="text-slate-400 font-bold uppercase tracking-widest text-[9px]">Issued Date</span>
                 <span className="font-black text-slate-800 uppercase">{cert.issueDate}</span>
               </div>
@@ -104,10 +104,10 @@ export default function Certificates() {
               </div>
               
               <div className="flex gap-3 pt-2">
-                <button className="flex-1 flex items-center justify-center gap-1.5 py-3.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow-md active:scale-95 cursor-pointer">
+                <button className="flex-1 flex items-center justify-center gap-1.5 py-3.5 bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow-md hover:shadow-lg hover:shadow-primary-500/10 active:scale-95 cursor-pointer">
                   <Download className="w-4 h-4 text-white/80" /> Download PDF
                 </button>
-                <button className="flex items-center justify-center w-11 h-11 bg-slate-50 hover:bg-slate-100 border border-slate-150/40 text-slate-500 hover:text-slate-700 rounded-xl transition-all active:scale-95 cursor-pointer">
+                <button className="flex items-center justify-center w-11 h-11 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-500 hover:text-slate-700 rounded-xl transition-all active:scale-95 cursor-pointer">
                   <ExternalLink className="w-4 h-4" />
                 </button>
               </div>
@@ -118,9 +118,9 @@ export default function Certificates() {
         {/* Tactile Empty State Lock Card */}
         <motion.div 
           variants={cardVariants}
-          className="bg-white border-2 border-slate-100 border-dashed rounded-[28px] flex flex-col items-center justify-center p-8 text-center min-h-[320px] hover:border-primary-200 transition-colors group"
+          className="bg-white/30 backdrop-blur-sm border-2 border-white/60 border-dashed rounded-[28px] flex flex-col items-center justify-center p-8 text-center min-h-[320px] hover:border-white hover:bg-white/50 hover:shadow-lg transition-all duration-300 group"
         >
-          <div className="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center mb-4 relative shadow-inner group-hover:scale-105 transition-transform duration-300">
+          <div className="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-150 flex items-center justify-center mb-4 relative shadow-inner group-hover:scale-105 transition-transform duration-300">
             <Award className="w-6.5 h-6.5 text-slate-350" />
           </div>
           <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest mb-1">More credentials</h3>

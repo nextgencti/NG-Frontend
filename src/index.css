@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @font-face {
@@ -84,13 +84,13 @@
   --color-danger: #DC2626;
   --color-warning: #F59E0B;
 
-  --font-sans: 'Inter', sans-serif;
+  --font-sans: 'Plus Jakarta Sans', 'Inter', sans-serif;
   --font-manrope: 'Manrope', sans-serif;
   --font-poppins: 'Poppins', sans-serif;
-  --font-helvetica-light: 'Inter', sans-serif;
-  --font-neue-machina-ultrabold: 'Poppins', sans-serif;
-  --font-neue-machina-medium: 'Inter', sans-serif;
-  --font-juana-regular: 'Manrope', sans-serif;
+  --font-helvetica-light: 'Plus Jakarta Sans', sans-serif;
+  --font-neue-machina-ultrabold: 'Outfit', sans-serif;
+  --font-neue-machina-medium: 'Plus Jakarta Sans', sans-serif;
+  --font-juana-regular: 'Outfit', sans-serif;
   
   /* Shadows - Soft Style */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -99,8 +99,26 @@
 
 @layer base {
   body {
-    @apply bg-slate-50 text-slate-900 font-sans antialiased selection:bg-primary-500/10;
+    @apply text-slate-900 font-sans antialiased selection:bg-primary-500/10;
+    background-image: url('./assets/dashboard_bg.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-color: #F8FAFC;
     font-feature-settings: "cv02", "cv05", "cv08", "cv11";
+  }
+
+  /* Soften bold elements to make the design modern and sleek */
+  .font-black {
+    font-weight: 700 !important;
+    letter-spacing: -0.01em !important;
+  }
+  .font-extrabold {
+    font-weight: 700 !important;
+    letter-spacing: -0.015em !important;
+  }
+  .font-bold {
+    font-weight: 600 !important;
   }
 }
 

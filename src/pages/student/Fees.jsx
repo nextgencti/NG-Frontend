@@ -111,7 +111,7 @@ export default function Fees() {
         <motion.div 
           variants={cardVariants}
           whileHover={{ y: -4, scale: 1.01 }}
-          className="lg:col-span-2 bg-slate-900 rounded-[32px] p-6 sm:p-8 text-white relative overflow-hidden flex flex-col justify-between border border-slate-800 shadow-[0_16px_36px_rgba(0,0,0,0.03)] group"
+          className="lg:col-span-2 bg-slate-900/95 backdrop-blur-3xl rounded-[32px] p-6 sm:p-8 text-white relative overflow-hidden flex flex-col justify-between border border-slate-700/50 shadow-[0_16px_36px_rgba(0,0,0,0.03)] group"
         >
           {/* Holographic glowing orb background */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-primary-500/20 via-indigo-500/10 to-transparent rounded-full blur-3xl pointer-events-none group-hover:scale-110 transition-transform duration-700"></div>
@@ -156,7 +156,7 @@ export default function Fees() {
         {/* Payment Summary */}
         <motion.div 
           variants={cardVariants}
-          className="bg-white border border-slate-100 rounded-[32px] p-6 sm:p-8 shadow-[0_12px_36px_rgba(0,0,0,0.01)] flex flex-col justify-center space-y-5"
+          className="bg-white/70 backdrop-blur-2xl border border-white/60 rounded-[32px] p-6 sm:p-8 shadow-[0_12px_36px_rgba(0,0,0,0.02)] flex flex-col justify-center space-y-5 hover:shadow-[0_15px_40px_rgba(0,0,0,0.06)] hover:border-white transition-all duration-300"
         >
           <div className="flex items-center gap-2 pb-1">
             <div className="w-1.5 h-4 bg-primary-600 rounded-full"></div>
@@ -183,9 +183,9 @@ export default function Fees() {
       {/* Transaction History */}
       <motion.div 
         variants={cardVariants}
-        className="bg-white border border-slate-100 rounded-[32px] shadow-[0_12px_36px_rgba(0,0,0,0.01)] overflow-hidden"
+        className="bg-white/70 backdrop-blur-2xl border border-white/60 rounded-[32px] shadow-[0_12px_36px_rgba(0,0,0,0.02)] overflow-hidden hover:shadow-[0_15px_40px_rgba(0,0,0,0.06)] hover:border-white transition-all duration-300"
       >
-        <div className="px-6 py-5 border-b border-slate-50 flex items-center bg-slate-50/20">
+        <div className="px-6 py-5 border-b border-white/50 flex items-center bg-white/40 backdrop-blur-sm">
           <div className="w-1.5 h-4.5 bg-slate-400 rounded-full mr-2"></div>
           <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Invoices History</h3>
         </div>
@@ -195,8 +195,8 @@ export default function Fees() {
             {data.history.map((item, i) => (
               <div key={i} className="px-6 py-4.5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/50 transition-colors group">
                 <div className="flex items-center gap-4">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-100/50 flex items-center justify-center shrink-0">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 border border-emerald-500/20 shadow-[0_4px_12px_rgba(16,185,129,0.3)] flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="w-4 h-4 text-white" />
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-black text-slate-800 uppercase tracking-wide truncate">{item.description}</p>

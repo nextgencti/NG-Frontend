@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import dashboardBg from '../assets/dashboard_bg.png';
 import { 
   LayoutDashboard, 
   BookOpen, 
@@ -120,15 +121,23 @@ export default function DashboardLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex relative overflow-hidden font-sans">
+    <div 
+      className="min-h-screen bg-[#F8FAFC] flex relative overflow-hidden font-sans"
+      style={{
+        backgroundImage: `url(${dashboardBg})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed'
+      }}
+    >
       {/* Background Gradients - Very subtle */}
       <div className="absolute top-[-10%] left-[-5%] w-[500px] h-[500px] bg-primary-600/[0.03] rounded-full blur-[120px] pointer-events-none"></div>
 
       {/* Sidebar - Desktop Only */}
       <aside 
-        className={`hidden lg:flex flex-col bg-white border-r border-[#E5E7EB] transition-all duration-350 ease-in-out flex flex-col print:hidden ${
-          isCollapsed ? 'w-20' : 'w-64'
-        }`}
+        className={`hidden lg:flex flex-col bg-white/80 backdrop-blur-2xl border-r border-white/60 shadow-[4px_0_24px_rgba(0,0,0,0.03)] transition-all duration-350 ease-in-out flex flex-col print:hidden ${
+          isCollapsed ? 'w-20' : 'w-[260px]'
+        } z-40 relative`}
       >
         <div className={`h-20 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} px-6 border-b border-[#F1F5F9] transition-all relative group`}>
           <div className="flex items-center gap-3">
@@ -153,13 +162,14 @@ export default function DashboardLayout() {
           )}
         </div>
 
-        <div className="flex-1 overflow-y-auto py-6 px-3 scrollbar-hide">
+        <div className="flex-1 overflow-y-auto py-8 px-2.5 scrollbar-hide">
           {!isCollapsed && (
-            <div className="text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider mb-4 px-3">
+            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-5 px-3 flex items-center gap-2">
               {isSuperAdmin ? 'Super Admin' : (isAdmin ? 'Admin Menu' : 'Student Menu')}
+              <div className="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent"></div>
             </div>
           )}
-          <nav className="space-y-1">
+          <nav className="space-y-1.5 px-1">
             {sidebarLinks.map((link) => {
               const Icon = link.icon;
               return (
@@ -169,17 +179,17 @@ export default function DashboardLayout() {
                   end={link.path === '/dashboard' || link.path === '/admin' || link.path === '/superadmin'}
                   onClick={() => setSidebarOpen(false)}
                   className={({ isActive }) =>
-                    `flex items-center ${isCollapsed ? 'justify-center' : 'gap-3.5'} px-4 py-3 rounded-xl text-[13px] transition-all duration-300 relative group overflow-hidden ${
+                    `flex items-center ${isCollapsed ? 'justify-center' : 'gap-3.5'} px-4 py-3.5 rounded-2xl text-[12.5px] transition-all duration-300 relative group overflow-hidden ${
                       isActive 
-                        ? 'bg-gradient-to-r from-[#EEF2FF]/80 to-[#F5F7FF]/80 text-[#4F46E5] font-black border-l-4 border-[#4F46E5] shadow-sm' 
-                        : 'text-[#64748B] hover:bg-slate-50 hover:text-slate-800 font-semibold'
+                        ? 'bg-gradient-to-r from-primary-600 to-indigo-500 text-white font-black shadow-[0_8px_20px_rgba(79,70,229,0.25)] scale-[1.02] border border-primary-500/20' 
+                        : 'text-slate-500 hover:bg-slate-50 hover:text-primary-600 font-bold border border-transparent hover:border-slate-100 hover:shadow-sm'
                     }`
                   }
                   title={isCollapsed ? link.name : ""}
                 >
                   {({ isActive }) => (
                     <>
-                      <Icon className={`w-4.5 h-4.5 shrink-0 transition-transform group-hover:scale-105 duration-300 ${isActive ? 'text-[#4F46E5]' : 'text-[#94A3B8] group-hover:text-[#4F46E5]'}`} />
+                      <Icon className={`w-4.5 h-4.5 shrink-0 transition-transform group-hover:scale-110 duration-300 ${isActive ? 'text-white drop-shadow-sm' : 'text-slate-400 group-hover:text-primary-500'}`} />
                       {!isCollapsed && (
                         <span className="whitespace-nowrap transition-colors tracking-wide">
                           {link.name}
@@ -193,13 +203,13 @@ export default function DashboardLayout() {
           </nav>
         </div>
 
-        <div className={`p-4 border-t border-slate-100 ${isCollapsed ? 'flex justify-center' : ''}`}>
+        <div className={`p-5 border-t border-slate-100/60 bg-slate-50/30 ${isCollapsed ? 'flex justify-center' : ''}`}>
           <button 
             onClick={handleLogout}
-            className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-4 py-2.5 rounded-lg font-bold text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all group w-full cursor-pointer`}
+            className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 rounded-2xl font-black text-[11px] uppercase tracking-widest text-slate-500 hover:bg-rose-50 hover:text-rose-600 hover:shadow-sm border border-transparent hover:border-rose-100 transition-all group w-full cursor-pointer`}
             title={isCollapsed ? "Logout" : ""}
           >
-            <LogOut className={`w-5 h-5 shrink-0 transition-transform ${isCollapsed ? '' : 'group-hover:-translate-x-1'}`} />
+            <LogOut className={`w-4.5 h-4.5 shrink-0 transition-transform ${isCollapsed ? 'text-slate-400' : 'group-hover:-translate-x-1 group-hover:text-rose-500'}`} />
             {!isCollapsed && (
               <span className="animate-in fade-in duration-300">Logout</span>
             )}
@@ -208,7 +218,7 @@ export default function DashboardLayout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden z-10 relative bg-[#F8FAFC]">
+      <main className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden z-10 relative bg-transparent">
         {/* Top Header */}
         <header className="h-20 bg-[#4338CA] text-white border-b border-indigo-950/60 flex items-center justify-between px-4 sm:px-8 z-50 relative sticky top-0 shadow-lg shadow-indigo-950/20">
           {/* Logo - Mobile/Tablet only (since Sidebar shows logo on Desktop) */}

@@ -55,7 +55,10 @@ export default function Activity() {
       lastLogin: '-',
       studyTime: '0 Hours',
       activeDays: '0/30',
-      progress: '0%'
+      progress: '0%',
+      topCourse: '',
+      weeklyData: [0, 0, 0, 0, 0, 0, 0],
+      honorXp: 0
     },
     logs: [],
     attendance: [],
@@ -122,10 +125,10 @@ export default function Activity() {
   };
 
   const stats = [
-    { label: 'Last Active Session', value: formatLastLogin(data.stats.lastLogin), icon: Clock, color: 'text-blue-600 bg-blue-50 border-blue-100/50' },
-    { label: 'Total Study Time', value: data.stats.studyTime, icon: Monitor, color: 'text-purple-600 bg-purple-50 border-purple-100/50' },
-    { label: 'Active Days Count', value: data.stats.activeDays, icon: Calendar, color: 'text-emerald-600 bg-emerald-50 border-emerald-100/50' },
-    { label: 'Curriculum Progress', value: data.stats.progress, icon: TrendingUp, color: 'text-amber-600 bg-amber-50 border-amber-100/50' },
+    { label: 'Last Active Session', value: formatLastLogin(data.stats.lastLogin), icon: Clock, color: 'text-white bg-gradient-to-br from-blue-400 to-indigo-600 shadow-[0_4px_10px_rgba(79,70,229,0.3)] border-white/20' },
+    { label: 'Total Study Time', value: data.stats.studyTime, icon: Monitor, color: 'text-white bg-gradient-to-br from-purple-400 to-fuchsia-600 shadow-[0_4px_10px_rgba(192,38,211,0.3)] border-white/20' },
+    { label: 'Active Days Count', value: data.stats.activeDays, icon: Calendar, color: 'text-white bg-gradient-to-br from-emerald-400 to-teal-600 shadow-[0_4px_10px_rgba(20,184,166,0.3)] border-white/20' },
+    { label: 'Curriculum Progress', value: data.stats.progress, icon: TrendingUp, color: 'text-white bg-gradient-to-br from-amber-400 to-orange-500 shadow-[0_4px_10px_rgba(245,158,11,0.3)] border-white/20' },
   ];
 
   const getActivityIcon = (type) => {
@@ -158,6 +161,12 @@ export default function Activity() {
     };
     return labels[tab] || tab;
   };
+
+  const last7Days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    return d.toLocaleDateString('en-US', { weekday: 'short' });
+  });
 
   return (
     <motion.div 
@@ -198,14 +207,17 @@ export default function Activity() {
             <motion.div 
               key={idx} 
               variants={cardVariants}
-              whileHover={{ y: -4, scale: 1.01 }}
-              className="bg-white p-5 rounded-3xl border border-slate-100 hover:shadow-lg transition-all duration-300 group cursor-pointer"
+              whileHover={{ y: -6, scale: 1.02 }}
+              className="bg-white/60 backdrop-blur-2xl p-5 sm:p-6 rounded-3xl border border-white/80 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_15px_40px_rgba(79,70,229,0.1)] hover:bg-white/80 transition-all duration-300 group cursor-pointer relative overflow-hidden"
             >
-              <div className={`w-10 h-10 rounded-2xl flex items-center justify-center mb-4 border transition-transform duration-300 group-hover:scale-105 ${stat.color}`}>
-                <Icon className="w-5.5 h-5.5" />
+              {/* Subtle animated gradient background on hover */}
+              <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+              
+              <div className={`relative w-12 h-12 rounded-2xl flex items-center justify-center mb-5 border transition-transform duration-300 group-hover:scale-110 ${stat.color}`}>
+                <Icon className="w-6 h-6" />
               </div>
-              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1.5">{stat.label}</p>
-              <p className="text-lg font-black text-slate-850 truncate">{stat.value}</p>
+              <p className="relative text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-2 drop-shadow-sm">{stat.label}</p>
+              <p className="relative text-xl sm:text-2xl font-black text-slate-800 truncate drop-shadow-sm">{stat.value}</p>
             </motion.div>
           );
         })}
@@ -213,26 +225,26 @@ export default function Activity() {
 
       {/* Segmented Control tab buttons */}
       <motion.div variants={cardVariants} className="space-y-6">
-        <div className="w-full overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] flex py-1">
-          <div className="flex bg-slate-100/80 p-1 rounded-2xl border border-slate-200/40 w-max sm:w-fit backdrop-blur-sm gap-0.5 select-none relative">
+        <div className="w-full overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] flex py-2">
+          <div className="flex bg-white/40 p-1.5 rounded-full border border-white/60 shadow-[0_4px_20px_rgba(0,0,0,0.03)] w-max sm:w-fit backdrop-blur-xl gap-1 select-none relative">
             {['overview', 'learning activity', 'attendance', 'test results'].map((tab) => {
               const isActive = activeTab === tab;
               return (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className="relative px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer whitespace-nowrap active:scale-95 duration-200 focus:outline-none focus:ring-0 select-none z-10"
+                  className="relative px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer whitespace-nowrap active:scale-95 duration-200 focus:outline-none focus:ring-0 select-none z-10"
                   style={{ WebkitTapHighlightColor: 'transparent' }}
                 >
                   {isActive && (
                     <motion.div
                       layoutId="activeStudentTab"
-                      className="absolute inset-0 bg-white rounded-xl shadow-[0_4px_12px_rgba(79,70,229,0.08)] border border-slate-100/50"
+                      className="absolute inset-0 bg-gradient-to-r from-primary-600 to-indigo-600 rounded-full shadow-[0_4px_15px_rgba(79,70,229,0.4)]"
                       transition={{ type: "spring", stiffness: 380, damping: 30 }}
                     />
                   )}
-                  <span className={`relative z-20 transition-colors duration-200 ${
-                    isActive ? 'text-[#4F46E5]' : 'text-slate-400 hover:text-slate-700'
+                  <span className={`relative z-20 transition-colors duration-300 ${
+                    isActive ? 'text-white drop-shadow-md' : 'text-slate-500 hover:text-slate-800'
                   }`}>
                     {getTabLabel(tab)}
                   </span>
@@ -253,7 +265,7 @@ export default function Activity() {
                 className="space-y-6"
               >
                 {/* Premium Weekly Engagement Bar Chart */}
-                <div className="bg-white rounded-[32px] border border-slate-100 p-6 sm:p-8 shadow-[0_10px_30px_rgba(0,0,0,0.01)] relative overflow-hidden group">
+                <div className="bg-white/70 backdrop-blur-2xl rounded-[32px] border border-white/80 p-6 sm:p-8 shadow-[0_12px_40px_rgba(0,0,0,0.05)] relative overflow-hidden group hover:shadow-[0_20px_50px_rgba(79,70,229,0.08)] transition-all duration-500">
                   {/* Floating ambient gradient light */}
                   <div className="absolute top-0 right-0 w-36 h-36 bg-gradient-to-tr from-primary-500/10 to-indigo-500/5 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/2"></div>
                   <div className="absolute inset-0 bg-dot-pattern opacity-[0.05] pointer-events-none"></div>
@@ -286,12 +298,12 @@ export default function Activity() {
 
                     {/* Bars Container */}
                     <div className="flex-1 h-full pl-14 flex items-end justify-between gap-3 relative z-10 pb-6">
-                      {[40, 70, 45, 90, 65, 30, 80].map((height, i) => (
+                      {(data.stats.weeklyData || [0,0,0,0,0,0,0]).map((height, i) => (
                         <div key={i} className="flex-1 h-full flex flex-col items-center justify-end gap-3.5 group">
                           <div className="relative w-full flex-1 flex justify-center items-end">
                             <motion.div 
-                              initial={{ height: 0 }}
-                              animate={{ height: `${height}%` }}
+                              initial={{ height: "4%" }}
+                              animate={{ height: `${Math.max(4, Math.min(100, (height / 120) * 100))}%` }}
                               transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: i * 0.05 }}
                               className="w-full max-w-[24px] bg-[#EEF2FF] group-hover:bg-gradient-to-t group-hover:from-[#4F46E5] group-hover:to-[#6366F1] rounded-t-xl transition-all duration-300 relative shadow-inner cursor-pointer hover:shadow-[0_8px_20px_rgba(79,70,229,0.25)] border-t border-transparent group-hover:border-[#C7D2FE]/20" 
                             >
@@ -299,13 +311,13 @@ export default function Activity() {
                               <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-t-xl pointer-events-none"></div>
                               
                               {/* Premium Floating Tooltip */}
-                              <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap z-20 shadow-xl border border-white/15 scale-95 group-hover:scale-100 pointer-events-none">
+                              <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 whitespace-nowrap z-20 shadow-xl border border-white/15 scale-95 group-hover:scale-100 pointer-events-none">
                                 {height} Mins
                               </div>
                             </motion.div>
                           </div>
                           <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">
-                            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i]}
+                            {last7Days[i]}
                           </span>
                         </div>
                       ))}
@@ -315,27 +327,27 @@ export default function Activity() {
 
                 {/* Highlights Bento Card */}
                 <div className="grid sm:grid-cols-2 gap-6">
-                  <div className="bg-white p-6 rounded-[28px] border border-slate-100 shadow-[0_10px_30px_rgba(0,0,0,0.01)] hover:border-primary-100 transition-colors group">
-                    <h4 className="text-[10px] font-black text-slate-400 mb-5 uppercase tracking-widest leading-none">Active Module</h4>
+                  <div className="bg-white/60 backdrop-blur-xl p-6 rounded-[28px] border border-white/80 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_15px_40px_rgba(79,70,229,0.1)] hover:bg-white/80 transition-all duration-300 group">
+                    <h4 className="text-[10px] font-black text-slate-400 mb-5 uppercase tracking-widest leading-none drop-shadow-sm">Active Module</h4>
                     <div className="flex items-center gap-4">
-                      <div className="w-11 h-11 rounded-2xl bg-primary-50 flex items-center justify-center border border-primary-100/30">
-                        <BookOpen className="w-5.5 h-5.5 text-primary-600 group-hover:scale-105 transition-transform" />
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary-400 to-indigo-600 flex items-center justify-center border border-white/20 shadow-[0_4px_15px_rgba(79,70,229,0.3)] group-hover:scale-110 transition-transform duration-300">
+                        <BookOpen className="w-5.5 h-5.5 text-white" />
                       </div>
                       <div>
-                        <p className="text-sm font-black text-slate-800 uppercase leading-snug line-clamp-1">{data.stats.topCourse || 'Enrollment Open'}</p>
-                        <p className="text-[10px] text-slate-400 mt-0.5 font-bold uppercase tracking-wider">Keep advancing modules</p>
+                        <p className="text-sm font-black text-slate-800 uppercase leading-snug line-clamp-1 drop-shadow-sm">{data.stats.topCourse || 'Enrollment Open'}</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5 font-bold uppercase tracking-wider drop-shadow-sm">Keep advancing modules</p>
                       </div>
                     </div>
                   </div>
-                  <div className="bg-white p-6 rounded-[28px] border border-slate-100 shadow-[0_10px_30px_rgba(0,0,0,0.01)] hover:border-amber-100 transition-colors group">
-                    <h4 className="text-[10px] font-black text-slate-400 mb-5 uppercase tracking-widest leading-none">Rank Points</h4>
+                  <div className="bg-white/60 backdrop-blur-xl p-6 rounded-[28px] border border-white/80 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_15px_40px_rgba(245,158,11,0.1)] hover:bg-white/80 transition-all duration-300 group">
+                    <h4 className="text-[10px] font-black text-slate-400 mb-5 uppercase tracking-widest leading-none drop-shadow-sm">Rank Points</h4>
                     <div className="flex items-center gap-4">
-                      <div className="w-11 h-11 rounded-2xl bg-amber-50 flex items-center justify-center border border-amber-100/30">
-                        <Award className="w-5.5 h-5.5 text-amber-600 group-hover:scale-105 transition-transform animate-pulse" />
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center border border-white/20 shadow-[0_4px_15px_rgba(245,158,11,0.3)] group-hover:scale-110 transition-transform duration-300 animate-pulse">
+                        <Award className="w-5.5 h-5.5 text-white" />
                       </div>
                       <div>
-                        <p className="text-sm font-black text-slate-800 uppercase leading-none">1,250 Honor XP</p>
-                        <p className="text-[10px] text-slate-400 mt-1 font-bold uppercase tracking-widest">Cohort Top 10% honors</p>
+                        <p className="text-sm font-black text-slate-800 uppercase leading-none drop-shadow-sm">{(data.stats.honorXp || 0).toLocaleString()} Honor XP</p>
+                        <p className="text-[10px] text-slate-400 mt-1 font-bold uppercase tracking-widest drop-shadow-sm">Cohort Top 10% honors</p>
                       </div>
                     </div>
                   </div>
@@ -347,7 +359,7 @@ export default function Activity() {
               <motion.div 
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-[32px] border border-slate-100 overflow-hidden shadow-[0_12px_36px_rgba(0,0,0,0.02)]"
+                className="bg-white/70 backdrop-blur-2xl rounded-[32px] border border-white/80 overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.05)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] transition-all duration-500"
               >
                 <div className="divide-y divide-slate-50">
                   {data.logs.length > 0 ? data.logs.map((act, i) => {
@@ -389,7 +401,7 @@ export default function Activity() {
               <motion.div 
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-[32px] border border-slate-100 overflow-hidden shadow-[0_12px_36px_rgba(0,0,0,0.02)]"
+                className="bg-white/70 backdrop-blur-2xl rounded-[32px] border border-white/80 overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.05)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] transition-all duration-500"
               >
                 <div className="p-6 bg-slate-50/30 border-b border-slate-100 flex items-center justify-between">
                   <div>
@@ -436,7 +448,7 @@ export default function Activity() {
               <motion.div 
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-[32px] border border-slate-100 overflow-hidden shadow-[0_12px_36px_rgba(0,0,0,0.02)]"
+                className="bg-white/70 backdrop-blur-2xl rounded-[32px] border border-white/80 overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.05)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] transition-all duration-500"
               >
                 <div className="p-6 bg-slate-50/30 border-b border-slate-100">
                   <h3 className="text-sm font-black uppercase tracking-wider text-slate-855 leading-tight">Assessment score sheets</h3>
@@ -503,23 +515,23 @@ export default function Activity() {
           <div className="space-y-8">
             <motion.section variants={cardVariants}>
               <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4">Quick Insights</h3>
-              <div className="bg-white rounded-[28px] border border-slate-100 p-6 space-y-6 shadow-[0_10px_30px_rgba(0,0,0,0.01)]">
+              <div className="bg-white/60 backdrop-blur-xl rounded-[28px] border border-white/80 p-6 space-y-6 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_15px_40px_rgba(0,0,0,0.08)] transition-all duration-300">
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center shrink-0 border border-primary-100/30">
-                    <TrendingUp className="w-5 h-5 text-primary-600" />
+                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary-400 to-indigo-600 flex items-center justify-center shrink-0 border border-white/20 shadow-[0_4px_12px_rgba(79,70,229,0.3)]">
+                    <TrendingUp className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <p className="text-xs font-black text-slate-800 uppercase tracking-wide">Study time uptick</p>
-                    <p className="text-[9px] text-slate-400 mt-0.5 font-bold uppercase tracking-wider">15% increase recorded this week</p>
+                    <p className="text-xs font-black text-slate-800 uppercase tracking-wide drop-shadow-sm">Study time uptick</p>
+                    <p className="text-[9px] text-slate-500 mt-0.5 font-bold uppercase tracking-wider">15% increase recorded this week</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0 border border-emerald-100/30">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shrink-0 border border-white/20 shadow-[0_4px_12px_rgba(16,185,129,0.3)]">
+                    <CheckCircle2 className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <p className="text-xs font-black text-slate-800 uppercase tracking-wide">Goal reached</p>
-                    <p className="text-[9px] text-slate-400 mt-0.5 font-bold uppercase tracking-wider">Completed 3 key syllabus modules</p>
+                    <p className="text-xs font-black text-slate-800 uppercase tracking-wide drop-shadow-sm">Goal reached</p>
+                    <p className="text-[9px] text-slate-500 mt-0.5 font-bold uppercase tracking-wider">Completed 3 key syllabus modules</p>
                   </div>
                 </div>
               </div>

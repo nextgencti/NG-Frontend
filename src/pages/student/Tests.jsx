@@ -140,17 +140,17 @@ export default function Tests() {
       {/* Stats Row (Bento Tactile Blocks) */}
       <motion.div variants={cardVariants} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Assigned Tests', value: totalTests, icon: ClipboardList, color: 'text-primary-600 bg-primary-50 border-primary-100/50' },
-          { label: 'Upcoming', value: upcomingCount, icon: Clock, color: 'text-amber-600 bg-amber-50 border-amber-100/50' },
-          { label: 'Completed', value: completedCount, icon: CheckCircle2, color: 'text-emerald-600 bg-emerald-50 border-emerald-100/50' },
-          { label: 'Average Score', value: `${avgScore}%`, icon: BarChart2, color: 'text-indigo-600 bg-indigo-50 border-indigo-100/50' },
+          { label: 'Assigned Tests', value: totalTests, icon: ClipboardList, color: 'text-white bg-gradient-to-br from-primary-500 to-indigo-600 border-primary-500/20 shadow-[0_4px_12px_rgba(79,70,229,0.3)]' },
+          { label: 'Upcoming', value: upcomingCount, icon: Clock, color: 'text-white bg-gradient-to-br from-amber-400 to-orange-500 border-amber-500/20 shadow-[0_4px_12px_rgba(245,158,11,0.3)]' },
+          { label: 'Completed', value: completedCount, icon: CheckCircle2, color: 'text-white bg-gradient-to-br from-emerald-400 to-teal-500 border-emerald-500/20 shadow-[0_4px_12px_rgba(16,185,129,0.3)]' },
+          { label: 'Average Score', value: `${avgScore}%`, icon: BarChart2, color: 'text-white bg-gradient-to-br from-blue-400 to-cyan-500 border-blue-500/20 shadow-[0_4px_12px_rgba(59,130,246,0.3)]' },
         ].map((stat, i) => {
           const Icon = stat.icon;
           return (
             <motion.div 
               key={i} 
               whileHover={{ y: -4, scale: 1.01 }}
-              className="bg-white rounded-3xl border border-slate-100 p-5 flex items-center gap-4 hover:shadow-lg transition-all duration-300 group cursor-pointer"
+              className="bg-white/60 backdrop-blur-xl rounded-3xl border border-white/60 p-5 flex items-center gap-4 hover:shadow-[0_15px_40px_rgba(0,0,0,0.06)] hover:border-white transition-all duration-300 group cursor-pointer"
             >
               <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 border transition-transform duration-300 group-hover:scale-105 ${stat.color}`}>
                 <Icon className="w-5.5 h-5.5" />
@@ -295,10 +295,10 @@ export default function Tests() {
                   animate="show"
                   exit="hidden"
                   whileHover={{ y: -5, scale: 1.01 }}
-                  className="group relative p-6 bg-white rounded-[28px] border border-slate-100 hover:shadow-[0_20px_40px_rgba(79,70,229,0.05)] transition-all duration-300 flex flex-col justify-between"
+                  className="group relative p-6 bg-white/70 backdrop-blur-2xl rounded-[28px] border border-white/60 shadow-[0_12px_36px_rgba(79,70,229,0.035),0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-[0_20px_40px_rgba(79,70,229,0.08)] hover:border-white transition-all duration-300 flex flex-col justify-between"
                 >
                   {/* Subtle Grid Accent */}
-                  <div className="absolute inset-0 bg-dot-pattern opacity-[0.2] pointer-events-none"></div>
+                  <div className="absolute inset-0 bg-dot-pattern opacity-[0.25] pointer-events-none"></div>
 
                   <div className="space-y-5 relative z-10">
                     {/* Card Header */}
@@ -327,8 +327,8 @@ export default function Tests() {
                           {test.title}
                         </h4>
                       </div>
-                      <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center shrink-0 border border-slate-100 group-hover:scale-105 transition-transform shadow-inner">
-                        <ClipboardList className="w-5 h-5 text-slate-400 group-hover:text-primary-500 transition-colors" />
+                      <div className="w-10 h-10 bg-slate-50/80 rounded-xl flex items-center justify-center shrink-0 border border-slate-200/60 group-hover:scale-105 transition-transform shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]">
+                        <ClipboardList className="w-5 h-5 text-slate-400 group-hover:text-primary-600 transition-colors" />
                       </div>
                     </div>
 
@@ -341,9 +341,9 @@ export default function Tests() {
                         { icon: BarChart2, label: `${test.questions} Qs`, sub: 'Questions' },
                         { icon: Trophy, label: `${test.totalMarks} Marks`, sub: 'Max Score' }
                       ].filter(Boolean).map((item, idx) => (
-                        <div key={idx} className="flex items-center gap-2 bg-slate-50/50 p-2.5 rounded-2xl border border-slate-100/50 hover:bg-slate-50 transition-colors duration-250">
-                          <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center shrink-0 border border-slate-100 shadow-sm">
-                            <item.icon className="w-3.5 h-3.5 text-slate-400 group-hover:text-primary-550" />
+                        <div key={idx} className="flex items-center gap-2 bg-slate-50/60 p-2.5 rounded-2xl border border-slate-200/50 hover:bg-slate-100/40 transition-colors duration-250">
+                          <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center shrink-0 border border-slate-200/60 shadow-sm">
+                            <item.icon className="w-3.5 h-3.5 text-slate-400 group-hover:text-primary-600 transition-colors duration-300" />
                           </div>
                           <div className="min-w-0">
                             <span className="block text-[9px] font-black text-slate-800 truncate uppercase leading-none mb-0.5">{item.label}</span>
@@ -355,7 +355,7 @@ export default function Tests() {
                   </div>
 
                   {/* Footer Action items */}
-                  <div className="flex flex-wrap items-center justify-between pt-5 mt-5 border-t border-slate-50 gap-4 relative z-10">
+                  <div className="flex flex-wrap items-center justify-between pt-5 mt-5 border-t border-slate-200/55 gap-4 relative z-10">
                     {test.attemptsCount > 0 ? (
                       <div className="flex items-center gap-3">
                         <div className="text-left">
@@ -371,7 +371,7 @@ export default function Tests() {
                     ) : test.type === 'Practice' ? (
                       <div className="flex flex-col text-left">
                         <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Accessibility</p>
-                        <span className="text-[8px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-100/50 shadow-inner">UNLOCKED</span>
+                        <span className="text-[8px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200/60 shadow-inner">UNLOCKED</span>
                       </div>
                     ) : (
                       <div className="flex items-center gap-2">
@@ -389,7 +389,7 @@ export default function Tests() {
                       <div className="flex gap-2 w-full sm:w-auto">
                         <button 
                           onClick={() => navigate(`/dashboard/tests/${test.id}/take?view=result`)}
-                          className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white border border-primary-600 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shadow-md active:scale-95 cursor-pointer shrink-0"
+                          className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 text-white border border-primary-600 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shadow-md hover:shadow-lg hover:shadow-primary-500/10 active:scale-95 cursor-pointer shrink-0"
                         >
                           <TrendingUp className="w-3.5 h-3.5 text-white/80" />
                           View Result
@@ -413,8 +413,8 @@ export default function Tests() {
                         disabled={test.status !== 'published'}
                         className={`flex items-center justify-center gap-1.5 px-5 py-3 rounded-xl text-[9px] font-black uppercase tracking-[0.16em] transition-all shadow-sm active:scale-95 w-full sm:w-auto cursor-pointer ${
                           test.status === 'published'
-                            ? 'bg-primary-600 hover:bg-primary-700 text-white hover:shadow-md'
-                            : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-100/50 shadow-none'
+                            ? 'bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 text-white hover:shadow-md hover:shadow-primary-500/10'
+                            : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200/50 shadow-none'
                         }`}
                       >
                         {test.status === 'published' ? (
@@ -433,7 +433,7 @@ export default function Tests() {
           <motion.div 
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-[32px] border border-slate-100 shadow-[0_10px_30px_rgba(0,0,0,0.01)] py-16 px-6 flex flex-col items-center justify-center text-center max-w-md mx-auto"
+            className="bg-white/70 backdrop-blur-2xl rounded-[32px] border border-white/60 shadow-[0_10px_30px_rgba(0,0,0,0.02)] py-16 px-6 flex flex-col items-center justify-center text-center max-w-md mx-auto"
           >
             <div className="w-14 h-14 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-center shrink-0 mb-4 shadow-inner">
               <ClipboardList className="w-6 h-6 text-slate-300" />

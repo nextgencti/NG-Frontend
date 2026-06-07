@@ -6,6 +6,11 @@ import Logo from '../../components/Logo';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import heroImage from '../../assets/image.png';
+import studentMascot from '../../assets/student_mascot.png';
+import expertGuidanceImg from '../../assets/expert_guidance.png';
+import studentPortalImg from '../../assets/student_portal.png';
+import onlineTestsImg from '../../assets/online_tests.png';
+import verifiedCertificatesImg from '../../assets/verified_certificates.png';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'https://ng-backend-91oz.onrender.com/api';
 
@@ -202,15 +207,28 @@ export default function Home() {
             ))}
             
             <div className={`mt-8 space-y-8 transition-all duration-700 delay-300 ${isMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-              <button 
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  navigate('/login');
-                }}
-                className="w-full bg-[#4F46E5] hover:bg-[#4338CA] text-white py-4 rounded-full font-bold text-base shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-3 active:scale-[0.98] transition-all"
-              >
-                Sign in to Dashboard <ArrowRight className="w-4 h-4" />
-              </button>
+              {!currentUser ? (
+                <button 
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    navigate('/login');
+                  }}
+                  className="w-full bg-[#4F46E5] hover:bg-[#4338CA] text-white py-4 rounded-full font-bold text-base shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-3 active:scale-[0.98] transition-all cursor-pointer"
+                >
+                  Sign in to Dashboard <ArrowRight className="w-4 h-4" />
+                </button>
+              ) : (
+                <button 
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    logout();
+                    navigate('/login');
+                  }}
+                  className="w-full bg-rose-600/10 hover:bg-rose-600/20 border border-rose-500/20 text-rose-400 py-4 rounded-full font-bold text-base flex items-center justify-center gap-3 active:scale-[0.98] transition-all cursor-pointer"
+                >
+                  <LogOut className="w-4 h-4" /> Logout
+                </button>
+              )}
               
               <div className="flex flex-col items-center gap-4">
                 <div className="h-px w-12 bg-indigo-950"></div>
@@ -363,72 +381,119 @@ export default function Home() {
 
         {/* Main Page Content */}
         <main className="relative z-10 max-w-7xl mx-auto px-6 py-20">
-        {/* Feature Highlights Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 w-full animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-500 text-left">
-          {/* Expert Guidance Card */}
-          <div className="group bg-indigo-50/75 hover:bg-indigo-50/95 p-8 rounded-[2.5rem] border border-indigo-100/80 shadow-xl shadow-slate-100/30 relative overflow-hidden transition-all duration-500 hover:-translate-y-2.5 hover:shadow-2xl hover:shadow-indigo-500/10 hover:border-indigo-200/50">
-            {/* Ambient glowing corner blob */}
-            <div className="absolute -top-12 -right-12 w-28 h-28 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-full blur-xl group-hover:scale-125 transition-transform duration-700 pointer-events-none -z-10"></div>
-            
-            {/* Dynamic Icon container */}
-            <div className="w-14 h-14 bg-gradient-to-tr from-indigo-500/10 to-purple-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-6 group-hover:from-indigo-700 group-hover:to-indigo-500 transition-all duration-500 shadow-inner border border-indigo-200/50 group-hover:border-transparent">
-              <Users className="w-6 h-6 text-indigo-700 group-hover:text-white transition-colors duration-500" />
-            </div>
-            
-            <h3 className="text-xl font-NeueMachina-Medium font-semibold text-slate-800 mb-3 tracking-tight group-hover:text-indigo-700 transition-colors duration-300">Expert Guidance</h3>
-            <p className="text-slate-500 text-[13px] font-medium leading-relaxed">
-              Our experienced faculty provides personalized attention to help you master every concept with ease.
-            </p>
-          </div>
+        <style dangerouslySetInnerHTML={{__html: `
+          @keyframes float-card {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+          }
+          @keyframes float-mascot {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-10px) scale(1.03); }
+          }
+          .animate-float-1 { animation: float-card 4s ease-in-out infinite; }
+          .animate-float-2 { animation: float-card 5s ease-in-out infinite 0.5s; }
+          .animate-float-3 { animation: float-card 4.5s ease-in-out infinite 1s; }
+          .animate-float-4 { animation: float-card 5.5s ease-in-out infinite 1.5s; }
+          .animate-float-mascot { animation: float-mascot 6s ease-in-out infinite; }
+        `}} />
+        
+        {/* Feature Highlights - Alternating Rows */}
+        <div className="flex flex-col gap-12 sm:gap-16 md:gap-24 w-full animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-500 text-left">
           
-          {/* Student Portal Card */}
-          <div className="group bg-sky-50/75 hover:bg-sky-50/95 p-8 rounded-[2.5rem] border border-sky-100/80 shadow-xl shadow-slate-100/30 relative overflow-hidden transition-all duration-500 hover:-translate-y-2.5 hover:shadow-2xl hover:shadow-sky-500/10 hover:border-sky-200/50">
-            {/* Ambient glowing corner blob */}
-            <div className="absolute -top-12 -right-12 w-28 h-28 bg-gradient-to-br from-sky-500/10 to-cyan-500/10 rounded-full blur-xl group-hover:scale-125 transition-transform duration-700 pointer-events-none -z-10"></div>
-            
-            {/* Dynamic Icon container */}
-            <div className="w-14 h-14 bg-gradient-to-tr from-sky-500/10 to-cyan-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-6 group-hover:from-sky-600 group-hover:to-sky-500 transition-all duration-500 shadow-inner border border-sky-200/50 group-hover:border-transparent">
-              <Monitor className="w-6 h-6 text-sky-600 group-hover:text-white transition-colors duration-500" />
+          {/* Row 1: Expert Guidance (Card Left, Image Right) */}
+          <div className="grid grid-cols-2 gap-4 sm:gap-8 md:gap-16 items-center">
+            {/* Card */}
+            <div className="group p-2 sm:p-6 md:p-8 flex flex-col justify-center">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-[#E3D8FF] rounded-[1rem] sm:rounded-[1.2rem] flex items-center justify-center mb-3 sm:mb-6 group-hover:scale-110 transition-all duration-500">
+                <Users className="w-5 h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 text-[#5842C3]" />
+              </div>
+              <h3 className="text-base sm:text-2xl md:text-3xl font-black text-slate-800 mb-2 sm:mb-4 tracking-tight">Expert Guidance</h3>
+              <p className="text-slate-600 text-xs sm:text-sm md:text-base font-medium leading-relaxed">
+                Our experienced faculty provides personalized attention to help you master every concept with ease.
+              </p>
             </div>
-            
-            <h3 className="text-xl font-NeueMachina-Medium font-semibold text-slate-800 mb-3 tracking-tight group-hover:text-sky-600 transition-colors duration-300">Student Portal</h3>
-            <p className="text-slate-500 text-[13px] font-medium leading-relaxed">
-              Access your course materials, track attendance, and manage fees effortlessly through our portal.
-            </p>
+            {/* Image */}
+            <div className="flex justify-center items-center relative group p-2 animate-float-2">
+              <div className="absolute w-28 h-28 sm:w-48 sm:h-48 md:w-64 md:h-64 bg-indigo-500/10 rounded-full blur-2xl sm:blur-3xl group-hover:bg-indigo-500/15 transition-all duration-500 pointer-events-none -z-10"></div>
+              <img 
+                src={expertGuidanceImg} 
+                alt="Expert Guidance Illustration" 
+                className="w-full max-w-[150px] sm:max-w-[280px] md:max-w-[320px] lg:max-w-[380px] h-auto object-contain drop-shadow-[0_10px_20px_rgba(99,102,241,0.2)] sm:drop-shadow-[0_15px_30px_rgba(99,102,241,0.25)] hover:scale-105 transition-transform duration-500"
+              />
+            </div>
           </div>
 
-          {/* Online Tests Card */}
-          <div className="group bg-purple-50/75 hover:bg-purple-50/95 p-8 rounded-[2.5rem] border border-purple-100/80 shadow-xl shadow-slate-100/30 relative overflow-hidden transition-all duration-500 hover:-translate-y-2.5 hover:shadow-2xl hover:shadow-purple-500/10 hover:border-purple-200/50">
-            {/* Ambient glowing corner blob */}
-            <div className="absolute -top-12 -right-12 w-28 h-28 bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-full blur-xl group-hover:scale-125 transition-transform duration-700 pointer-events-none -z-10"></div>
-            
-            {/* Dynamic Icon container */}
-            <div className="w-14 h-14 bg-gradient-to-tr from-purple-500/10 to-pink-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-6 group-hover:from-purple-600 group-hover:to-purple-500 transition-all duration-500 shadow-inner border border-purple-200/50 group-hover:border-transparent">
-              <Zap className="w-6 h-6 text-purple-600 group-hover:text-white transition-colors duration-500" />
+          {/* Row 2: Student Portal (Image Left, Card Right) */}
+          <div className="grid grid-cols-2 gap-4 sm:gap-8 md:gap-16 items-center">
+            {/* Image */}
+            <div className="flex justify-center items-center relative group p-2 animate-float-4">
+              <div className="absolute w-28 h-28 sm:w-48 sm:h-48 md:w-64 md:h-64 bg-blue-500/10 rounded-full blur-2xl sm:blur-3xl group-hover:bg-blue-500/15 transition-all duration-500 pointer-events-none -z-10"></div>
+              <img 
+                src={studentPortalImg} 
+                alt="Student Portal Illustration" 
+                className="w-full max-w-[150px] sm:max-w-[280px] md:max-w-[320px] lg:max-w-[380px] h-auto object-contain drop-shadow-[0_10px_20px_rgba(59,130,246,0.2)] sm:drop-shadow-[0_15px_30px_rgba(59,130,246,0.25)] hover:scale-105 transition-transform duration-500"
+              />
             </div>
-            
-            <h3 className="text-xl font-NeueMachina-Medium font-semibold text-slate-800 mb-3 tracking-tight group-hover:text-purple-600 transition-colors duration-300">Online Tests</h3>
-            <p className="text-slate-500 text-[13px] font-medium leading-relaxed">
-              Prepare for success with chapter-wise practice tests and real-time performance analytics.
-            </p>
-          </div>
-          
-          {/* Verified Certificates Card */}
-          <div className="group bg-emerald-50/75 hover:bg-emerald-50/95 p-8 rounded-[2.5rem] border border-emerald-100/80 shadow-xl shadow-slate-100/30 relative overflow-hidden transition-all duration-500 hover:-translate-y-2.5 hover:shadow-2xl hover:shadow-emerald-500/10 hover:border-emerald-200/50">
-            {/* Ambient glowing corner blob */}
-            <div className="absolute -top-12 -right-12 w-28 h-28 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 rounded-full blur-xl group-hover:scale-125 transition-transform duration-700 pointer-events-none -z-10"></div>
-            
-            {/* Dynamic Icon container */}
-            <div className="w-14 h-14 bg-gradient-to-tr from-emerald-500/10 to-teal-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-6 group-hover:from-emerald-600 group-hover:to-emerald-500 transition-all duration-500 shadow-inner border border-emerald-200/50 group-hover:border-transparent">
-              <Award className="w-6 h-6 text-emerald-600 group-hover:text-white transition-colors duration-500" />
+            {/* Card */}
+            <div className="group p-2 sm:p-6 md:p-8 flex flex-col justify-center">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-[#D4E9FB] rounded-[1rem] sm:rounded-[1.2rem] flex items-center justify-center mb-3 sm:mb-6 group-hover:scale-110 transition-all duration-500">
+                <Monitor className="w-5 h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 text-[#0066CC]" />
+              </div>
+              <h3 className="text-base sm:text-2xl md:text-3xl font-black text-slate-800 mb-2 sm:mb-4 tracking-tight">Student Portal</h3>
+              <p className="text-slate-600 text-xs sm:text-sm md:text-base font-medium leading-relaxed">
+                Access your course materials, track attendance, and manage fees effortlessly through our portal.
+              </p>
             </div>
-            
-            <h3 className="text-xl font-NeueMachina-Medium font-semibold text-slate-800 mb-3 tracking-tight group-hover:text-emerald-600 transition-colors duration-300">Verified Certificates</h3>
-            <p className="text-slate-500 text-[13px] font-medium leading-relaxed">
-              Earn industry-recognized and verifiable certificates that add value to your professional career.
-            </p>
           </div>
+
+          {/* Row 3: Online Tests (Card Left, Image Right) */}
+          <div className="grid grid-cols-2 gap-4 sm:gap-8 md:gap-16 items-center">
+            {/* Card */}
+            <div className="group p-2 sm:p-6 md:p-8 flex flex-col justify-center">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-[#FAD4EF] rounded-[1rem] sm:rounded-[1.2rem] flex items-center justify-center mb-3 sm:mb-6 group-hover:scale-110 transition-all duration-500">
+                <Zap className="w-5 h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 text-[#A020F0]" />
+              </div>
+              <h3 className="text-base sm:text-2xl md:text-3xl font-black text-slate-800 mb-2 sm:mb-4 tracking-tight">Online Tests</h3>
+              <p className="text-slate-600 text-xs sm:text-sm md:text-base font-medium leading-relaxed">
+                Prepare for success with chapter-wise practice tests and real-time performance analytics.
+              </p>
+            </div>
+            {/* Image */}
+            <div className="flex justify-center items-center relative group p-2 animate-float-2">
+              <div className="absolute w-28 h-28 sm:w-48 sm:h-48 md:w-64 md:h-64 bg-fuchsia-500/10 rounded-full blur-2xl sm:blur-3xl group-hover:bg-fuchsia-500/15 transition-all duration-500 pointer-events-none -z-10"></div>
+              <img 
+                src={onlineTestsImg} 
+                alt="Online Tests Illustration" 
+                className="w-full max-w-[150px] sm:max-w-[280px] md:max-w-[320px] lg:max-w-[380px] h-auto object-contain drop-shadow-[0_10px_20px_rgba(217,70,239,0.2)] sm:drop-shadow-[0_15px_30px_rgba(217,70,239,0.25)] hover:scale-105 transition-transform duration-500"
+              />
+            </div>
+          </div>
+
+          {/* Row 4: Verified Certificates (Image Left, Card Right) */}
+          <div className="grid grid-cols-2 gap-4 sm:gap-8 md:gap-16 items-center">
+            {/* Image */}
+            <div className="flex justify-center items-center relative group p-2 animate-float-4">
+              <div className="absolute w-28 h-28 sm:w-48 sm:h-48 md:w-64 md:h-64 bg-emerald-500/10 rounded-full blur-2xl sm:blur-3xl group-hover:bg-emerald-500/15 transition-all duration-500 pointer-events-none -z-10"></div>
+              <img 
+                src={verifiedCertificatesImg} 
+                alt="Verified Certificates Illustration" 
+                className="w-full max-w-[150px] sm:max-w-[280px] md:max-w-[320px] lg:max-w-[380px] h-auto object-contain drop-shadow-[0_10px_20px_rgba(16,185,129,0.2)] sm:drop-shadow-[0_15px_30px_rgba(16,185,129,0.25)] hover:scale-105 transition-transform duration-500"
+              />
+            </div>
+            {/* Card */}
+            <div className="group p-2 sm:p-6 md:p-8 flex flex-col justify-center">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-[#D4F0E0] rounded-[1rem] sm:rounded-[1.2rem] flex items-center justify-center mb-3 sm:mb-6 group-hover:scale-110 transition-all duration-500">
+                <Award className="w-5 h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 text-[#059669]" />
+              </div>
+              <h3 className="text-base sm:text-2xl md:text-3xl font-black text-slate-800 mb-2 sm:mb-4 tracking-tight">Verified Certificates</h3>
+              <p className="text-slate-600 text-xs sm:text-sm md:text-base font-medium leading-relaxed">
+                Earn industry-recognized and verifiable certificates that add value to your professional career.
+              </p>
+            </div>
+          </div>
+
         </div>
+
 
         {/* Popular Courses Section */}
         <div className="mt-32">

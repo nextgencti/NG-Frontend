@@ -117,10 +117,10 @@ export default function MyCourses() {
               key={course.id} 
               variants={cardVariants}
               whileHover={{ y: -6, scale: 1.01 }}
-              className="bg-white rounded-[28px] border border-slate-100 overflow-hidden group hover:shadow-[0_24px_48px_-12px_rgba(79,70,229,0.05)] transition-all duration-300 flex flex-col h-full relative"
+              className="bg-white/70 backdrop-blur-2xl rounded-[28px] border border-white/60 shadow-[0_12px_36px_rgba(79,70,229,0.035),0_2px_8px_rgba(0,0,0,0.02)] overflow-hidden group hover:shadow-[0_24px_48px_-12px_rgba(79,70,229,0.08)] hover:border-white transition-all duration-300 flex flex-col h-full relative"
             >
               {/* Thumbnail Container */}
-              <div className="relative h-40 overflow-hidden bg-slate-50 border-b border-slate-100">
+              <div className="relative h-40 overflow-hidden bg-slate-50 border-b border-slate-200/60">
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent z-10"></div>
                 {course.thumbnailUrl || course.image ? (
                   <img 
@@ -179,7 +179,7 @@ export default function MyCourses() {
                     <span className="font-bold text-slate-400 uppercase tracking-widest">Syllabus Covered</span>
                     <span className="font-black text-primary-600">{course.progress || 0}%</span>
                   </div>
-                  <div className="h-2 w-full bg-slate-50 border border-slate-100 rounded-full overflow-hidden">
+                  <div className="h-2 w-full bg-slate-50 border border-slate-200/50 rounded-full overflow-hidden">
                     <motion.div 
                       initial={{ width: 0 }}
                       animate={{ width: `${course.progress || 0}%` }}
@@ -190,8 +190,8 @@ export default function MyCourses() {
                 </div>
 
                 {/* Stats Blocks */}
-                <div className="grid grid-cols-2 gap-3 mb-5 pb-5 border-b border-slate-50">
-                  <div className="bg-slate-50/50 rounded-2xl p-3 border border-slate-100/50 hover:bg-slate-50 transition-colors duration-200 flex items-center gap-2.5">
+                <div className="grid grid-cols-2 gap-3 mb-5 pb-5 border-b border-slate-200/55">
+                  <div className="bg-white/40 backdrop-blur-sm rounded-2xl p-3 border border-white/50 hover:bg-white/60 shadow-sm transition-colors duration-200 flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-xl bg-primary-50 flex items-center justify-center text-primary-600 shrink-0 border border-primary-100/30">
                       <BookOpen className="w-4 h-4" />
                     </div>
@@ -202,7 +202,7 @@ export default function MyCourses() {
                       </p>
                     </div>
                   </div>
-                  <div className="bg-slate-50/50 rounded-2xl p-3 border border-slate-100/50 hover:bg-slate-50 transition-colors duration-200 flex items-center gap-2.5">
+                  <div className="bg-white/40 backdrop-blur-sm rounded-2xl p-3 border border-white/50 hover:bg-white/60 shadow-sm transition-colors duration-200 flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0 border border-indigo-100/30">
                       <Calendar className="w-4 h-4" />
                     </div>
@@ -219,7 +219,7 @@ export default function MyCourses() {
                 <button 
                   disabled={course.enrollmentStatus === 'pending'}
                   onClick={() => course.enrollmentStatus !== 'pending' && navigate(`/dashboard/courses/${course.id}/classroom`)}
-                  className="w-full py-3 bg-primary-600 hover:bg-primary-700 disabled:bg-slate-100 disabled:text-slate-400 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.16em] transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 group/btn cursor-pointer shadow-md shadow-primary-500/10 hover:shadow-primary-500/20"
+                  className="w-full py-3 bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 disabled:from-slate-100 disabled:to-slate-100 disabled:text-slate-400 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.16em] transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 group/btn cursor-pointer shadow-md shadow-primary-500/10 hover:shadow-primary-500/20"
                 >
                   {course.enrollmentStatus === 'pending' ? 'Pending Approval' : (
                     <>
@@ -236,7 +236,7 @@ export default function MyCourses() {
         <motion.div 
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="flex flex-col items-center justify-center py-24 px-6 text-center bg-white rounded-[32px] border border-slate-100 shadow-[0_10px_30px_rgba(0,0,0,0.01)]"
+          className="flex flex-col items-center justify-center py-24 px-6 text-center bg-white/70 backdrop-blur-2xl rounded-[32px] border border-white/60 shadow-[0_10px_30px_rgba(0,0,0,0.02)]"
         >
           <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 border border-slate-100">
             <BookOpen className="w-6.5 h-6.5 text-slate-300" />

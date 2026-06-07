@@ -4,6 +4,7 @@ import { Clock, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, Loader2, S
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../lib/axios';
 import toast from 'react-hot-toast';
+import useStudyTracker from '../../hooks/useStudyTracker';
 
 export default function TakeTest() {
   const { testId } = useParams();
@@ -24,6 +25,9 @@ export default function TakeTest() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef(null);
+
+  // Track study time while attempting the test — stops when finished
+  useStudyTracker('test', testId, test?.title || '', !isFinished && !isLoading);
 
   // Robust, cross-browser Fullscreen toggle logic (supports iOS/Safari, Firefox, and IE/Edge)
   const toggleFullscreen = () => {
@@ -246,7 +250,7 @@ export default function TakeTest() {
         animate={{ opacity: 1 }}
         className={`min-h-screen transition-colors duration-500 flex flex-col items-center py-10 px-4 bg-dashboard-grid bg-repeat ${isDarkMode ? 'bg-slate-950' : 'bg-slate-50'}`}
       >
-        <div className={`${isDarkMode ? 'glass-dark bg-slate-900 border-white/5' : 'bg-white shadow-[0_24px_50px_rgba(0,0,0,0.02)]'} rounded-[36px] p-6 md:p-10 max-w-3xl w-full space-y-8 border ${isDarkMode ? '' : 'border-slate-100'} relative`}>
+        <div className={`${isDarkMode ? 'glass-dark bg-slate-900/70 backdrop-blur-2xl border-white/10 shadow-[0_24px_50px_rgba(0,0,0,0.2)]' : 'bg-white/70 backdrop-blur-2xl border-white/60 shadow-[0_24px_50px_rgba(0,0,0,0.03)]'} rounded-[36px] p-6 md:p-10 max-w-3xl w-full space-y-8 border relative`}>
           
           <style dangerouslySetInnerHTML={{__html: `
             @media print {
@@ -317,15 +321,15 @@ export default function TakeTest() {
               <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'} mt-1 font-medium`}>Assessment scorecard has been generated successfully.</p>
             </div>
             
-            <div className={`${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-slate-50 border-slate-100'} rounded-3xl border p-6 space-y-4 max-w-md mx-auto`}>
+            <div className={`${isDarkMode ? 'bg-white/5 border-white/10 backdrop-blur-md' : 'bg-white/40 border-white/60 backdrop-blur-md shadow-sm'} rounded-3xl border p-6 space-y-4 max-w-md mx-auto`}>
               <div className="grid grid-cols-2 gap-4">
-                <div className={`${isDarkMode ? 'bg-slate-800 border border-white/5' : 'bg-white border border-slate-100'} rounded-2xl p-4 text-center shadow-sm`}>
+                <div className={`${isDarkMode ? 'bg-slate-800/50 backdrop-blur-md border border-white/10' : 'bg-white/60 backdrop-blur-md border border-white/80'} rounded-2xl p-4 text-center shadow-sm`}>
                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 leading-none">Final Score</p>
                   <p className={`text-2xl sm:text-3xl font-black ${isDarkMode ? 'text-white' : 'text-primary-600'}`}>
                     {result.score ?? 0} <span className="text-xs sm:text-sm text-slate-400 font-medium">/ {result.totalMarks ?? 100}</span>
                   </p>
                 </div>
-                <div className={`${isDarkMode ? 'bg-slate-800 border border-white/5' : 'bg-white border border-slate-100'} rounded-2xl p-4 text-center shadow-sm`}>
+                <div className={`${isDarkMode ? 'bg-slate-800/50 backdrop-blur-md border border-white/10' : 'bg-white/60 backdrop-blur-md border border-white/80'} rounded-2xl p-4 text-center shadow-sm`}>
                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 leading-none">Passing Grade</p>
                   <p className="text-2xl sm:text-3xl font-black text-emerald-500 leading-none">{result.grade || 'A'}</p>
                 </div>
@@ -453,8 +457,8 @@ export default function TakeTest() {
       className={`min-h-screen transition-colors duration-500 flex flex-col font-sans select-none ${isDarkMode ? 'bg-slate-950 text-white' : 'bg-[#F8FAFC]'}`}
     >
       {/* Immersive distraction-free header bar */}
-      <header className={`border-b sticky top-0 z-30 transition-colors duration-500 backdrop-blur-md shadow-sm ${
-        isDarkMode ? 'bg-slate-900/80 border-white/5' : 'bg-white/95 border-slate-100'
+      <header className={`border-b sticky top-0 z-30 transition-colors duration-500 backdrop-blur-2xl shadow-sm ${
+        isDarkMode ? 'bg-slate-900/70 border-white/10' : 'bg-white/70 border-white/60'
       }`}>
         <div className="max-w-7xl px-3 sm:px-6 lg:px-8 mx-auto h-20 flex items-center justify-between gap-3 sm:gap-6">
           <div className="flex items-center gap-2 sm:gap-5 min-w-0 flex-1">
@@ -522,7 +526,7 @@ export default function TakeTest() {
         {/* Left Side: Desktop Question Navigator Grid */}
         <div className="hidden lg:block w-64 shrink-0">
           <div 
-            className={`rounded-[28px] border p-5 sticky top-28 transition-colors duration-500 flex flex-col ${isDarkMode ? 'glass-dark border-white/5' : 'bg-white border-slate-100 shadow-sm'}`}
+            className={`rounded-[28px] border p-5 sticky top-28 transition-colors duration-500 flex flex-col ${isDarkMode ? 'glass-dark bg-slate-900/50 backdrop-blur-xl border-white/10' : 'bg-white/70 backdrop-blur-2xl border-white/60 shadow-[0_8px_30px_rgba(0,0,0,0.03)]'}`}
             style={{ maxHeight: 'calc(100vh - 160px)' }}
           >
             <h3 className={`text-[9px] font-black uppercase tracking-widest mb-4.5 shrink-0 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Questions Matrix</h3>
@@ -566,14 +570,14 @@ export default function TakeTest() {
         {/* Right Side: Questions Viewer */}
         <div className="flex-1">
           {questions.length === 0 ? (
-            <div className={`rounded-3xl border p-16 text-center flex flex-col items-center justify-center ${isDarkMode ? 'glass-dark border-white/5' : 'bg-white border-slate-100 shadow-sm'}`}>
+            <div className={`rounded-3xl border p-16 text-center flex flex-col items-center justify-center ${isDarkMode ? 'glass-dark bg-slate-900/50 backdrop-blur-xl border-white/10' : 'bg-white/70 backdrop-blur-2xl border-white/60 shadow-[0_8px_30px_rgba(0,0,0,0.03)]'}`}>
               <AlertCircle className="w-12 h-12 mb-4 text-slate-350" />
               <p className="font-black text-slate-700 uppercase tracking-wide text-xs">No questions loaded for this assessment.</p>
             </div>
           ) : (
             <div className="flex flex-col h-full justify-between">
               
-              <div className={`rounded-[32px] border overflow-hidden flex flex-col transition-colors duration-500 ${isDarkMode ? 'glass-dark border-white/5' : 'bg-white border-slate-100 shadow-sm'}`}>
+              <div className={`rounded-[32px] border overflow-hidden flex flex-col transition-colors duration-500 ${isDarkMode ? 'glass-dark bg-slate-900/50 backdrop-blur-xl border-white/10' : 'bg-white/70 backdrop-blur-2xl border-white/60 shadow-[0_12px_36px_rgba(0,0,0,0.03)]'}`}>
                 
                 {/* Meta Bar */}
                 <div className={`px-6 py-4.5 border-b flex justify-between items-center ${isDarkMode ? 'border-white/5 bg-slate-900/50' : 'border-slate-50 bg-slate-50/20'}`}>

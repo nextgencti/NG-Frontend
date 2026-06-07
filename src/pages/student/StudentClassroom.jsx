@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft, 
   BookOpen, 
@@ -23,11 +23,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../lib/axios';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
+import useStudyTracker from '../../hooks/useStudyTracker';
 
 export default function StudentClassroom() {
   const { courseId } = useParams();
   const navigate = useNavigate();
   const { currentUser } = useAuth();
+  const [searchParams] = useSearchParams();
+  const lessonIdParam = searchParams.get('lessonId');
+  const moduleIdParam = searchParams.get('moduleId');
 
   const [course, setCourse] = useState(null);
   const [curriculum, setCurriculum] = useState([]);
@@ -41,6 +45,9 @@ export default function StudentClassroom() {
   const [activeModuleId, setActiveModuleId] = useState(null);
   const [activeLesson, setActiveLesson] = useState(null);
   const [expandedModules, setExpandedModules] = useState({});
+
+  // Track study time — heartbeat every 60 seconds while on this page
+  useStudyTracker('classroom', courseId, course?.name || '', !loading);
 
   const allLessons = useMemo(() => {
     const list = [];
@@ -76,24 +83,54 @@ export default function StudentClassroom() {
 
         const mods = res.data.curriculum || [];
         const completed = res.data.completedLessons || [];
-        let found = false;
-        for (const mod of mods) {
-          for (const lesson of (mod.lessons || [])) {
-            if (!completed.includes(lesson.id)) {
-              setActiveLesson({ ...lesson, moduleId: mod.id, moduleTitle: mod.title });
-              setActiveModuleId(mod.id);
-              setExpandedModules(prev => ({ ...prev, [mod.id]: true }));
-              found = true;
+        
+        let initialLesson = null;
+        let initialModuleId = null;
+
+        // Check if query params specify lessonId or moduleId
+        if (lessonIdParam) {
+          for (const mod of mods) {
+            const match = (mod.lessons || []).find(l => l.id === lessonIdParam);
+            if (match) {
+              initialLesson = { ...match, moduleId: mod.id, moduleTitle: mod.title };
+              initialModuleId = mod.id;
               break;
             }
           }
-          if (found) break;
         }
-        if (!found && mods.length > 0 && mods[0].lessons?.length > 0) {
-          const fl = mods[0].lessons[0];
-          setActiveLesson({ ...fl, moduleId: mods[0].id, moduleTitle: mods[0].title });
-          setActiveModuleId(mods[0].id);
-          setExpandedModules({ [mods[0].id]: true });
+
+        if (!initialLesson && moduleIdParam) {
+          const mod = mods.find(m => m.id === moduleIdParam);
+          if (mod && mod.lessons?.length > 0) {
+            initialLesson = { ...mod.lessons[0], moduleId: mod.id, moduleTitle: mod.title };
+            initialModuleId = mod.id;
+          }
+        }
+
+        if (initialLesson) {
+          setActiveLesson(initialLesson);
+          setActiveModuleId(initialModuleId);
+          setExpandedModules(prev => ({ ...prev, [initialModuleId]: true }));
+        } else {
+          let found = false;
+          for (const mod of mods) {
+            for (const lesson of (mod.lessons || [])) {
+              if (!completed.includes(lesson.id)) {
+                setActiveLesson({ ...lesson, moduleId: mod.id, moduleTitle: mod.title });
+                setActiveModuleId(mod.id);
+                setExpandedModules(prev => ({ ...prev, [mod.id]: true }));
+                found = true;
+                break;
+              }
+            }
+            if (found) break;
+          }
+          if (!found && mods.length > 0 && mods[0].lessons?.length > 0) {
+            const fl = mods[0].lessons[0];
+            setActiveLesson({ ...fl, moduleId: mods[0].id, moduleTitle: mods[0].title });
+            setActiveModuleId(mods[0].id);
+            setExpandedModules({ [mods[0].id]: true });
+          }
         }
       }
     } catch (err) {
@@ -183,7 +220,7 @@ export default function StudentClassroom() {
 
   // ─── SIDEBAR CONTENT ───
   const SidebarContent = () => (
-    <div className="flex flex-col h-full bg-white relative">
+    <div className="flex flex-col h-full bg-white/80 backdrop-blur-xl relative">
       {/* Back Button */}
       <button
         onClick={() => navigate('/dashboard/courses')}
@@ -349,14 +386,14 @@ export default function StudentClassroom() {
       </AnimatePresence>
 
       {/* ═══ DESKTOP SIDEBAR ═══ */}
-      <aside className="w-[260px] min-w-[260px] bg-white border-r border-slate-100 flex flex-col h-full overflow-hidden hidden xl:flex">
+      <aside className="w-[260px] min-w-[260px] bg-white/80 backdrop-blur-2xl border-r border-white/60 flex flex-col h-full overflow-hidden hidden xl:flex">
         <SidebarContent />
       </aside>
 
       {/* ═══ MAIN CONTENT ═══ */}
       <main className="flex-1 flex flex-col overflow-hidden min-w-0 bg-[#F8FAFC]">
         {/* Mobile Top Bar */}
-        <div className="xl:hidden flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-white shrink-0 shadow-sm">
+        <div className="xl:hidden flex items-center justify-between px-4 py-3 border-b border-white/60 bg-white/80 backdrop-blur-xl shrink-0 shadow-sm">
           <div className="flex items-center gap-3">
             <motion.button 
               whileTap={{ scale: 0.92 }}
@@ -414,7 +451,7 @@ export default function StudentClassroom() {
                 className="space-y-6"
               >
                 {/* Lesson Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white rounded-3xl p-5 border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.01)]">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/70 backdrop-blur-2xl rounded-3xl p-5 border border-white/60 shadow-[0_8px_30px_rgba(0,0,0,0.03)] hover:shadow-[0_15px_40px_rgba(0,0,0,0.06)] hover:border-white transition-all duration-300">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <span className={`px-2.5 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest shrink-0 border ${
@@ -461,7 +498,7 @@ export default function StudentClassroom() {
                 </div>
 
                 {/* ═══ CONTENT VIEWER ═══ */}
-                <div className="bg-white rounded-[32px] border border-slate-100 overflow-hidden shadow-[0_12px_36px_rgba(0,0,0,0.02)]">
+                <div className="bg-white/70 backdrop-blur-2xl rounded-[32px] border border-white/60 overflow-hidden shadow-[0_12px_36px_rgba(0,0,0,0.03)]">
                   {activeLesson.type === 'pdf' && activeLesson.url && (
                     <div className="flex flex-col">
                       <div className="flex items-center px-6 py-3.5 bg-slate-50/50 border-b border-slate-100">
@@ -559,7 +596,7 @@ export default function StudentClassroom() {
                 </div>
               </motion.div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-24 text-center bg-white rounded-[32px] border border-slate-100 shadow-sm">
+              <div className="flex flex-col items-center justify-center py-24 text-center bg-white/70 backdrop-blur-2xl rounded-[32px] border border-white/60 shadow-[0_10px_30px_rgba(0,0,0,0.02)]">
                 <BookOpen className="w-10 h-10 text-slate-200 mb-4" />
                 <h3 className="text-base font-black text-slate-700 mb-1.5 uppercase tracking-wider">No Content Configured</h3>
                 <p className="text-slate-400 text-xs font-medium">This course syllabus does not contain active files.</p>
