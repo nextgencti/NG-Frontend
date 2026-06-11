@@ -32,6 +32,13 @@ const Home = lazy(() => import('./pages/public/Home'));
 const StudentSignup = lazy(() => import('./pages/public/StudentSignup'));
 const InstituteSignup = lazy(() => import('./pages/public/InstituteSignup'));
 const PublicTestRunner = lazy(() => import('./pages/public/PublicTestRunner'));
+const About = lazy(() => import('./pages/public/About'));
+const Services = lazy(() => import('./pages/public/Services'));
+const Tools = lazy(() => import('./pages/public/Tools'));
+const TypingTest = lazy(() => import('./pages/public/TypingTest'));
+const AgeCalculator = lazy(() => import('./pages/public/AgeCalculator'));
+const PercentageCalculator = lazy(() => import('./pages/public/PercentageCalculator'));
+const WordCounter = lazy(() => import('./pages/public/WordCounter'));
 
 // Layouts (Lazy)
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'));
@@ -64,6 +71,7 @@ const SuperAdminInstitutes = lazy(() => import('./pages/superadmin/SuperAdminIns
 const SuperAdminAdmins = lazy(() => import('./pages/superadmin/SuperAdminAdmins'));
 const PublicLeads = lazy(() => import('./pages/superadmin/PublicLeads'));
 const SuperAdminPin = lazy(() => import('./pages/superadmin/SuperAdminPin'));
+const SuperAdminControls = lazy(() => import('./pages/superadmin/SuperAdminControls'));
 
 import { useAuth } from './context/AuthContext';
 
@@ -98,11 +106,18 @@ function App() {
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Home />} />
+            <Route path="/about" element={<About />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<StudentSignup />} />
             <Route path="/register-institute" element={<InstituteSignup />} />
             <Route path="/verify-otp" element={<VerifyOTP />} />
             <Route path="/tests/public/:testId" element={<PublicTestRunner />} />
+            <Route path="/services" element={<Services />} />
+            <Route path="/tools" element={<Tools />} />
+            <Route path="/tools/typing-test" element={<TypingTest />} />
+            <Route path="/tools/age-calculator" element={<AgeCalculator />} />
+            <Route path="/tools/percentage-calculator" element={<PercentageCalculator />} />
+            <Route path="/tools/word-counter" element={<WordCounter />} />
 
             {/* Protected Routes */}
             <Route element={<ProtectedRoute />}>
@@ -156,6 +171,7 @@ function App() {
                   <Route path="institutes" element={<SuperAdminInstitutes />} />
                   <Route path="admins" element={<SuperAdminAdmins />} />
                   <Route path="leads" element={<PublicLeads />} />
+                  <Route path="controls" element={<SuperAdminControls />} />
                 </Route>
               </Route>
             </Route>

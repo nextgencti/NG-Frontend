@@ -40,17 +40,31 @@ export default function StudentOverview() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   
-  const [dashboardData, setDashboardData] = useState({
-    activeCourses: 0,
-    attendancePercent: '0%',
-    firstCourseId: null,
-    courses: [],
-    activeCourse: null,
-    tests: [],
-    classroomData: null,
-    stats: {},
-    activityLogs: [],
-    isLoading: true
+  const [dashboardData, setDashboardData] = useState(() => {
+    try {
+      const cached = localStorage.getItem('student_dashboard_data');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        return {
+          ...parsed,
+          isLoading: false // Render instantly with cached data
+        };
+      }
+    } catch (e) {
+      console.error('Failed to parse cached student dashboard data:', e);
+    }
+    return {
+      activeCourses: 0,
+      attendancePercent: '0%',
+      firstCourseId: null,
+      courses: [],
+      activeCourse: null,
+      tests: [],
+      classroomData: null,
+      stats: {},
+      activityLogs: [],
+      isLoading: true
+    };
   });
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -84,7 +98,7 @@ export default function StudentOverview() {
           }
         }
 
-        setDashboardData({
+        const freshData = {
           activeCourses,
           attendancePercent,
           firstCourseId,
@@ -95,7 +109,10 @@ export default function StudentOverview() {
           stats: attendanceRes.data.success ? attendanceRes.data.stats : {},
           activityLogs: attendanceRes.data.success ? attendanceRes.data.logs : [],
           isLoading: false
-        });
+        };
+
+        setDashboardData(freshData);
+        localStorage.setItem('student_dashboard_data', JSON.stringify(freshData));
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
         toast.error('Failed to load dashboard data');

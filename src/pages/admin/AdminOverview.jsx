@@ -3,14 +3,27 @@ import { Users, BookOpen, CreditCard, TrendingUp, CalendarCheck, ArrowRight } fr
 import api from '../../lib/axios';
 
 export default function AdminOverview() {
-  const [statsData, setStatsData] = useState({ totalStudents: 0, activeCourses: 0, totalRevenue: '₹0' });
-  const [loading, setLoading] = useState(true);
+  const [statsData, setStatsData] = useState(() => {
+    try {
+      const cached = localStorage.getItem('admin_stats');
+      if (cached) return JSON.parse(cached);
+    } catch (e) {
+      console.error('Failed to parse cached admin stats:', e);
+    }
+    return { totalStudents: 0, activeCourses: 0, totalRevenue: '₹0' };
+  });
+  const [loading, setLoading] = useState(() => {
+    return !localStorage.getItem('admin_stats');
+  });
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
         const response = await api.get('/admin/stats');
-        setStatsData(response.data.stats);
+        if (response.data.stats) {
+          setStatsData(response.data.stats);
+          localStorage.setItem('admin_stats', JSON.stringify(response.data.stats));
+        }
       } catch (error) {
         console.error('Error fetching admin stats:', error);
       } finally {

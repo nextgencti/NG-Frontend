@@ -4,13 +4,23 @@ import { Link } from 'react-router-dom';
 import api from '../../lib/axios';
 
 export default function SuperAdminOverview() {
-  const [stats, setStats] = useState({ 
-    totalStudents: 0, 
-    activeCourses: 0, 
-    totalRevenue: '₹0',
-    totalAdmins: 0
+  const [stats, setStats] = useState(() => {
+    try {
+      const cached = localStorage.getItem('superadmin_stats');
+      if (cached) return JSON.parse(cached);
+    } catch (e) {
+      console.error('Failed to parse cached superadmin stats:', e);
+    }
+    return { 
+      totalStudents: 0, 
+      activeCourses: 0, 
+      totalRevenue: '₹0',
+      totalAdmins: 0
+    };
   });
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => {
+    return !localStorage.getItem('superadmin_stats');
+  });
 
   useEffect(() => {
     fetchStats();
@@ -23,10 +33,12 @@ export default function SuperAdminOverview() {
         api.get('/superadmin/stats')
       ]);
 
-      setStats({
+      const freshStats = {
         ...adminRes.data.stats,
         totalAdmins: saRes.data.stats.totalAdmins
-      });
+      };
+      setStats(freshStats);
+      localStorage.setItem('superadmin_stats', JSON.stringify(freshStats));
     } catch (error) {
       console.error('Failed to fetch stats:', error);
     } finally {

@@ -132,6 +132,9 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('user');
       localStorage.removeItem('sa_verified');
       localStorage.removeItem('admin_verified');
+      localStorage.removeItem('student_dashboard_data');
+      localStorage.removeItem('admin_stats');
+      localStorage.removeItem('superadmin_stats');
       setCurrentUser(null);
       setIsSuperAdminVerified(false);
       setIsAdminVerified(false);

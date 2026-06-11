@@ -77,6 +77,7 @@ export default function DashboardLayout() {
     { name: 'Finance', path: '/admin/finance', icon: CreditCard },
     { name: 'Staff Members', path: '/superadmin/admins', icon: Shield },
     { name: 'Institute Profile', path: '/superadmin/institutes', icon: Building2 },
+    { name: 'Web Controls', path: '/superadmin/controls', icon: Settings },
   ];
 
   const sidebarLinks = isSuperAdmin ? superAdminLinks : (isAdmin ? adminLinks : studentLinks);
@@ -94,7 +95,8 @@ export default function DashboardLayout() {
       'Fees & Revenue': 'Fees',
       'Institute Profile': 'Profile',
       'Staff Members': 'Staff',
-      'Public Leads': 'Leads'
+      'Public Leads': 'Leads',
+      'Web Controls': 'Controls'
     };
     return mapping[name] || name;
   };
@@ -117,6 +119,7 @@ export default function DashboardLayout() {
     if (path === '/superadmin') return 'SuperAdmin Dashboard';
     if (path === '/superadmin/admins') return 'Staff Administration';
     if (path === '/superadmin/institutes') return 'Institute Directory';
+    if (path === '/superadmin/controls') return 'Webpage Controls';
     return 'Portal';
   };
 
