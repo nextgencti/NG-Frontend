@@ -517,7 +517,7 @@ export default function StudentOverview() {
                         onClick={() => navigate(`/dashboard/courses/${dashboardData.activeCourse.id}/classroom`)}
                         className="w-10 h-10 flex items-center justify-center bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-primary-600 rounded-xl shadow-sm transition-colors cursor-pointer shrink-0"
                       >
-                        <PlayCircle className="w-4.5 h-4.5" />
+                        <PlayCircle className="w-5 h-5" />
                       </button>
                     </div>
                   </div>
@@ -695,7 +695,7 @@ export default function StudentOverview() {
                     >
                       <div className="flex items-center gap-3.5 min-w-0 flex-1">
                         <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border transition-transform duration-300 group-hover:scale-105 ${act.color}`}>
-                          <Icon className="w-4.5 h-4.5" />
+                          <Icon className="w-5 h-5" />
                         </div>
                         <div className="min-w-0 flex-1">
                           <h4 className="text-xs font-black text-slate-800 group-hover:text-primary-600 transition-colors truncate">{act.title}</h4>

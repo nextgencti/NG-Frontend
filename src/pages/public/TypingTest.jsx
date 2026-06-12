@@ -40,6 +40,97 @@ const playKeyClick = (key, isSoundEnabled) => {
   }
 };
 
+const MemoizedWord = React.memo(({
+  word,
+  wordIdx,
+  isLastWord,
+  wordStartIndex,
+  typedWordSegment,
+  isCursorInWord,
+  isFocused,
+  isEyeActive,
+  showLiveWPM,
+  liveWpmVal,
+  isStarted
+}) => {
+  const chars = word.split('');
+
+  return (
+    <div className="inline-block mr-0.5 mb-1.5 relative select-none">
+      {chars.map((char, charIdx) => {
+        const charAbsIndex = wordStartIndex + charIdx;
+        const relativeCharIdx = charIdx;
+        const isCharTyped = relativeCharIdx < typedWordSegment.length;
+        const isCharCorrect = isCharTyped && typedWordSegment[relativeCharIdx] === char;
+        const isCursorHere = isCursorInWord && (relativeCharIdx === typedWordSegment.length);
+
+        let charColorClass = 'text-slate-500/60';
+        if (isCharTyped) {
+          charColorClass = isCharCorrect ? 'text-slate-200' : 'text-rose-500 underline decoration-rose-500/65 decoration-2';
+        }
+
+        return (
+          <span key={charIdx} className={`relative font-mono transition-colors duration-100 ${charColorClass}`}>
+            {isCursorHere && isFocused && (
+              <>
+                {/* Blinking Cursor caret */}
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-[1.2em] bg-indigo-400 caret-blink rounded-sm" />
+                
+                {/* Floating live WPM badge above cursor */}
+                {showLiveWPM && isStarted && (
+                  <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-transparent text-indigo-400 text-xs font-bold px-0.5 py-0 pointer-events-none whitespace-nowrap animate-in fade-in zoom-in-75 duration-200">
+                    {liveWpmVal} wpm
+                  </span>
+                )}
+              </>
+            )}
+            {isEyeActive ? char : '*'}
+            {isCharTyped && !isCharCorrect && (
+              <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[10px] text-rose-500 font-bold opacity-80 pointer-events-none select-none">
+                {typedWordSegment[relativeCharIdx] === ' ' ? '_' : typedWordSegment[relativeCharIdx]}
+              </span>
+            )}
+          </span>
+        );
+      })}
+      
+      {/* Space rendering */}
+      {!isLastWord && (() => {
+        const relativeSpaceIdx = word.length;
+        const isSpaceTyped = relativeSpaceIdx < typedWordSegment.length;
+        const isSpaceCorrect = isSpaceTyped && typedWordSegment[relativeSpaceIdx] === ' ';
+        const isCursorAtSpace = isCursorInWord && (relativeSpaceIdx === typedWordSegment.length);
+
+        let spaceColorClass = 'text-transparent';
+        if (isSpaceTyped && !isSpaceCorrect) {
+          spaceColorClass = 'bg-rose-500/20 text-rose-500 underline decoration-rose-500/65 decoration-2';
+        }
+
+        return (
+          <span key="space" className={`font-mono relative ${spaceColorClass}`}>
+            {isCursorAtSpace && isFocused && (
+              <>
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-[1.2em] bg-indigo-400 caret-blink rounded-sm" />
+                {showLiveWPM && isStarted && (
+                  <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-transparent text-indigo-400 text-xs font-bold px-0.5 py-0 pointer-events-none whitespace-nowrap animate-in fade-in zoom-in-75 duration-200">
+                    {liveWpmVal} wpm
+                  </span>
+                )}
+              </>
+            )}
+            &nbsp;
+            {isSpaceTyped && !isSpaceCorrect && (
+              <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[10px] text-rose-500 font-bold opacity-80 pointer-events-none select-none">
+                {typedWordSegment[relativeSpaceIdx] === ' ' ? '_' : typedWordSegment[relativeSpaceIdx]}
+              </span>
+            )}
+          </span>
+        );
+      })()}
+    </div>
+  );
+});
+
 const WORD_DATABASES = {
   english: {
     normal: [
@@ -327,10 +418,15 @@ export default function TypingTest() {
     }
   };
 
-  // Global keyboard shortcuts (F1 - F4)
+  // Global keyboard shortcuts (F1 - F4 and Tab)
   useEffect(() => {
     const handleGlobalShortcuts = (e) => {
-      if (e.key === 'F1') {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        if (inputRef.current && document.activeElement !== inputRef.current) {
+          inputRef.current.focus();
+        }
+      } else if (e.key === 'F1') {
         e.preventDefault();
         resetTest();
       } else if (e.key === 'F2') {
@@ -398,71 +494,30 @@ export default function TypingTest() {
 
     return words.map((word, wordIdx) => {
       const wordStartIndex = absoluteCharCounter;
-      absoluteCharCounter += word.length + 1; // Count word letters + 1 for space separator
-      const chars = word.split('');
+      const wordLenWithSpace = word.length + 1;
+      absoluteCharCounter += wordLenWithSpace;
+      
+      const isLastWord = wordIdx === words.length - 1;
+      const wordEndIndex = wordStartIndex + (isLastWord ? word.length : wordLenWithSpace);
+
+      const typedWordSegment = typedText.substring(wordStartIndex, wordEndIndex);
+      const isCursorInWord = typedText.length >= wordStartIndex && typedText.length < wordEndIndex + (isLastWord ? 1 : 0);
 
       return (
-        <div key={wordIdx} className="inline-block mr-2.5 mb-1.5 relative select-none">
-          {chars.map((char, charIdx) => {
-            const charAbsIndex = wordStartIndex + charIdx;
-            const isCharTyped = charAbsIndex < typedText.length;
-            const isCharCorrect = isCharTyped && typedText[charAbsIndex] === char;
-            const isCursorHere = charAbsIndex === typedText.length;
-
-            let charColorClass = 'text-slate-500/60';
-            if (isCharTyped) {
-              charColorClass = isCharCorrect ? 'text-slate-200' : 'text-rose-500 underline decoration-rose-500/65 decoration-2';
-            }
-
-            return (
-              <span key={charIdx} className={`relative font-mono transition-colors duration-100 ${charColorClass}`}>
-                {isCursorHere && isFocused && (
-                  <>
-                    {/* Blinking Cursor caret */}
-                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-[1.2em] bg-indigo-400 caret-blink rounded-sm" />
-                    
-                    {/* Floating live WPM badge above cursor */}
-                    {showLiveWPM && isStarted && (
-                      <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-indigo-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-lg backdrop-blur-sm pointer-events-none whitespace-nowrap animate-in fade-in zoom-in-75 duration-200">
-                        {liveWpmVal} wpm
-                      </span>
-                    )}
-                  </>
-                )}
-                {isEyeActive ? char : '*'}
-              </span>
-            );
-          })}
-          
-          {/* Space rendering */}
-          {wordIdx < words.length - 1 && (() => {
-            const spaceIndex = wordStartIndex + word.length;
-            const isSpaceTyped = spaceIndex < typedText.length;
-            const isSpaceCorrect = isSpaceTyped && typedText[spaceIndex] === ' ';
-            const isCursorAtSpace = spaceIndex === typedText.length;
-
-            let spaceColorClass = 'text-transparent';
-            if (isSpaceTyped && !isSpaceCorrect) {
-              spaceColorClass = 'bg-rose-500/20 text-rose-500 underline decoration-rose-500/65 decoration-2';
-            }
-
-            return (
-              <span key="space" className={`font-mono relative ${spaceColorClass}`}>
-                {isCursorAtSpace && isFocused && (
-                  <>
-                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-[1.2em] bg-indigo-400 caret-blink rounded-sm" />
-                    {showLiveWPM && isStarted && (
-                      <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-indigo-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-lg backdrop-blur-sm pointer-events-none whitespace-nowrap animate-in fade-in zoom-in-75 duration-200">
-                        {liveWpmVal} wpm
-                      </span>
-                    )}
-                  </>
-                )}
-                &nbsp;
-              </span>
-            );
-          })()}
-        </div>
+        <MemoizedWord 
+          key={wordIdx}
+          word={word}
+          wordIdx={wordIdx}
+          isLastWord={isLastWord}
+          wordStartIndex={wordStartIndex}
+          typedWordSegment={typedWordSegment}
+          isCursorInWord={isCursorInWord}
+          isFocused={isCursorInWord ? isFocused : false}
+          isEyeActive={isEyeActive}
+          showLiveWPM={showLiveWPM}
+          liveWpmVal={isCursorInWord ? liveWpmVal : 0}
+          isStarted={isCursorInWord ? isStarted : false}
+        />
       );
     });
   };
@@ -551,7 +606,7 @@ export default function TypingTest() {
               d={lineD} 
               fill="none" 
               stroke="#818CF8" 
-              strokeWidth="2.5" 
+              strokeWidth="1" 
               strokeLinecap="round"
               strokeLinejoin="round"
               className="drop-shadow-[0_2px_8px_rgba(99,102,241,0.4)]"
@@ -638,7 +693,7 @@ export default function TypingTest() {
         <div className="w-[95%] max-w-[1600px] mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3 cursor-pointer select-none" onClick={() => navigate('/')}>
             <div className="bg-white p-1.5 rounded-xl shadow-sm border border-white/10 flex items-center justify-center shrink-0">
-              <Logo className="w-7.5 h-7.5" showText={false} />
+              <Logo className="w-8 h-8" showText={false} />
             </div>
             <div className="flex flex-col">
               <h2 className="text-[25px] sm:text-[30px] font-helvetica-light tracking-wide leading-none flex items-center">

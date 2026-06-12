@@ -181,7 +181,7 @@ export default function Services() {
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3 cursor-pointer select-none" onClick={() => navigate('/')}>
             <div className="bg-white p-1.5 rounded-xl shadow-sm border border-white/10 flex items-center justify-center shrink-0">
-              <Logo className="w-7.5 h-7.5" showText={false} />
+              <Logo className="w-8 h-8" showText={false} />
             </div>
             <div className="flex flex-col">
               <h2 className="text-[25px] sm:text-[30px] font-helvetica-light tracking-wide leading-none flex items-center">
@@ -281,7 +281,7 @@ export default function Services() {
                         {service.imageUrl ? (
                           <img src={service.imageUrl} alt={service.name} className="w-full h-full object-cover" />
                         ) : (
-                          <ServiceIcon className="w-4.5 h-4.5" />
+                          <ServiceIcon className="w-5 h-5" />
                         )}
                       </div>
                       <span className="bg-indigo-50 border border-indigo-100 text-indigo-700 text-[9px] font-black uppercase px-2 py-0.5 rounded">

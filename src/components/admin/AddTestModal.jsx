@@ -141,7 +141,7 @@ export default function AddTestModal({ isOpen, onClose, onTestAdded }) {
           <div className="space-y-2">
             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Test Title <span className="text-rose-500">*</span></label>
             <div className="relative group">
-              <ClipboardList className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 group-focus-within:text-primary-600 transition-colors" />
+              <ClipboardList className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-primary-600 transition-colors" />
               <input
                 name="title" required value={form.title} onChange={handleChange}
                 placeholder="e.g. JavaScript Fundamentals Quiz"
@@ -154,7 +154,7 @@ export default function AddTestModal({ isOpen, onClose, onTestAdded }) {
           <div className="space-y-2">
             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Select Course <span className="text-rose-500">*</span></label>
             <div className="relative group">
-              <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 group-focus-within:text-primary-600 transition-colors" />
+              <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-primary-600 transition-colors" />
               <select
                 name="course" required value={form.course} onChange={handleChange}
                 className="w-full pl-11 pr-5 py-3 bg-slate-50 border border-slate-200 rounded-[14px] text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all appearance-none cursor-pointer disabled:opacity-50 uppercase font-bold"
@@ -205,7 +205,7 @@ export default function AddTestModal({ isOpen, onClose, onTestAdded }) {
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Test Date <span className="text-rose-500">*</span></label>
                 <div className="relative group">
-                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 group-focus-within:text-primary-600 transition-colors" />
+                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-primary-600 transition-colors" />
                   <input
                     type="date" name="date" required value={form.date} onChange={handleChange}
                     className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-[14px] text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
@@ -215,7 +215,7 @@ export default function AddTestModal({ isOpen, onClose, onTestAdded }) {
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Start Time <span className="text-rose-500">*</span></label>
                 <div className="relative group">
-                  <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 group-focus-within:text-primary-600 transition-colors" />
+                  <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-primary-600 transition-colors" />
                   <input
                     type="time" name="time" required value={form.time} onChange={handleChange}
                     className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-[14px] text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
@@ -288,7 +288,7 @@ export default function AddTestModal({ isOpen, onClose, onTestAdded }) {
           <div className="space-y-2">
             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Description <span className="text-slate-500 font-normal lowercase">(optional)</span></label>
             <div className="relative group">
-              <AlignLeft className="absolute left-4 top-3 w-4.5 h-4.5 text-slate-400 group-focus-within:text-primary-600 transition-colors" />
+              <AlignLeft className="absolute left-4 top-3 w-5 h-5 text-slate-400 group-focus-within:text-primary-600 transition-colors" />
               <textarea
                 name="description" rows="2" value={form.description} onChange={handleChange}
                 placeholder="Brief details about this test..."

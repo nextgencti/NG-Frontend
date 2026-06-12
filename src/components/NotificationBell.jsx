@@ -138,26 +138,26 @@ export default function NotificationBell() {
       case 'course':
         return (
           <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-[#4F46E5] shrink-0">
-            <Sparkles className="w-4.5 h-4.5" />
+            <Sparkles className="w-5 h-5" />
           </div>
         );
       case 'lesson':
       case 'topic':
         return (
           <div className="w-9 h-9 rounded-xl bg-sky-50 border border-sky-100 flex items-center justify-center text-sky-600 shrink-0">
-            <BookOpen className="w-4.5 h-4.5" />
+            <BookOpen className="w-5 h-5" />
           </div>
         );
       case 'test':
         return (
           <div className="w-9 h-9 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600 shrink-0">
-            <CheckSquare className="w-4.5 h-4.5" />
+            <CheckSquare className="w-5 h-5" />
           </div>
         );
       default:
         return (
           <div className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 shrink-0">
-            <Bell className="w-4.5 h-4.5" />
+            <Bell className="w-5 h-5" />
           </div>
         );
     }
@@ -180,7 +180,7 @@ export default function NotificationBell() {
             : 'bg-white/5 hover:bg-white/10 border-white/10 text-white/80 hover:text-white shadow-sm'
         }`}
       >
-        <Bell className={`w-4.5 h-4.5 transition-transform duration-500 ${isOpen ? 'rotate-12' : 'hover:animate-[bounce_0.8s_infinite]'}`} />
+        <Bell className={`w-5 h-5 transition-transform duration-500 ${isOpen ? 'rotate-12' : 'hover:animate-[bounce_0.8s_infinite]'}`} />
         
         {unreadCount > 0 && (
           <>

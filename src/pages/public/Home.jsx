@@ -344,7 +344,7 @@ export default function Home() {
           {/* Brand/Logo */}
           <div className="flex items-center gap-3 cursor-pointer select-none shrink-0" onClick={() => navigate('/')}>
             <div className="bg-white p-1.5 rounded-xl shadow-sm flex items-center justify-center shrink-0 border border-white/10">
-              <Logo className="w-6 h-6 sm:w-7.5 sm:h-7.5" showText={false} />
+              <Logo className="w-6 h-6 sm:w-8 sm:h-8" showText={false} />
             </div>
             <div className="flex flex-col">
               <h2 className="text-[25px] sm:text-[30px] font-helvetica-light tracking-wide leading-none flex items-center">
@@ -638,7 +638,7 @@ export default function Home() {
               
               {/* Floating Badge 1 - Active Learners */}
               <div className="absolute top-1/2 left-2 sm:-left-6 -translate-y-1/2 p-3 bg-slate-900/85 backdrop-blur-md border border-indigo-500/20 rounded-2xl flex items-center gap-2.5 shadow-2xl shadow-indigo-950/50 z-20 hover:scale-105 transition-transform duration-300">
-                <div className="w-8.5 h-8.5 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center shadow-md shadow-indigo-500/10">
+                <div className="w-9 h-9 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center shadow-md shadow-indigo-500/10">
                    <Users className="w-4 h-4 text-white" />
                 </div>
                 <div>
@@ -649,7 +649,7 @@ export default function Home() {
 
               {/* Floating Badge 2 - Interactive Courses / Verified */}
               <div className="absolute bottom-6 right-2 sm:right-6 p-3 bg-slate-900/85 backdrop-blur-md border border-indigo-500/20 rounded-2xl flex items-center gap-2.5 shadow-2xl shadow-indigo-950/50 z-20 hover:scale-105 transition-transform duration-300">
-                <div className="w-8.5 h-8.5 bg-gradient-to-tr from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-md shadow-purple-500/10">
+                <div className="w-9 h-9 bg-gradient-to-tr from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-md shadow-purple-500/10">
                    <BookOpen className="w-4 h-4 text-white" />
                 </div>
                 <div>
@@ -863,7 +863,7 @@ export default function Home() {
                   <div className="space-y-2.5">
                     {features[activeTab].bullets.map((bullet, bIdx) => (
                       <div key={bIdx} className="flex items-center gap-2.5 text-slate-600 text-xs sm:text-sm font-semibold">
-                        <div className="w-4.5 h-4.5 rounded-full bg-indigo-50 flex items-center justify-center border border-indigo-200/30 text-indigo-600 shrink-0">
+                        <div className="w-5 h-5 rounded-full bg-indigo-50 flex items-center justify-center border border-indigo-200/30 text-indigo-600 shrink-0">
                           <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3.5">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                           </svg>
@@ -1251,7 +1251,7 @@ export default function Home() {
                       <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 z-20" />
 
                       {/* Icon / Image Container */}
-                      <div className="w-7.5 h-7.5 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-400 shrink-0 border border-indigo-500/20 shadow-inner overflow-hidden">
+                      <div className="w-8 h-8 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-400 shrink-0 border border-indigo-500/20 shadow-inner overflow-hidden">
                         {item.imageUrl ? (
                           <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover group-hover/card:scale-110 transition-transform duration-300" />
                         ) : (
@@ -1343,7 +1343,7 @@ export default function Home() {
                     <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 z-20" />
 
                     {/* Icon Container */}
-                    <div className="w-7.5 h-7.5 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-400 shrink-0 border border-indigo-500/20">
+                    <div className="w-8 h-8 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-400 shrink-0 border border-indigo-500/20">
                       <ToolIcon className="w-3.5 h-3.5 group-hover/card:scale-110 transition-transform duration-300" />
                     </div>
 

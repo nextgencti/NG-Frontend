@@ -38,7 +38,7 @@ export default function About() {
           {/* Brand/Logo */}
           <div className="flex items-center gap-3 cursor-pointer select-none shrink-0" onClick={() => navigate('/')}>
             <div className="bg-white p-1.5 rounded-xl shadow-sm flex items-center justify-center shrink-0 border border-white/10">
-              <Logo className="w-6 h-6 sm:w-7.5 sm:h-7.5" showText={false} />
+              <Logo className="w-6 h-6 sm:w-8 sm:h-8" showText={false} />
             </div>
             <div className="flex flex-col">
               <h2 className="text-[25px] sm:text-[30px] font-helvetica-light tracking-wide leading-none flex items-center">

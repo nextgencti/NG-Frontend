@@ -1,100 +1,64 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@font-face {
-  font-family: 'HelveticaNowDisplay';
-  src: url('./assets/Fonts/HelveticaNowDisplay-Regular_5Mzhp8KlA8_CAVTbnsPOM.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
+@layer base {
+  @font-face {
+    font-family: 'HelveticaNowDisplay';
+    src: url('./assets/Fonts/HelveticaNowDisplay-Light_M4nzWhve6k_k7HolyzL10.woff2') format('woff2');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+  }
 
-@font-face {
-  font-family: 'HelveticaNowDisplay';
-  src: url('./assets/Fonts/HelveticaNowDisplay-Medium_2wEhlmo-TD_wsqqEEwmJC.woff2') format('woff2');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
+  @font-face {
+    font-family: 'HelveticaNowDisplay';
+    src: url('./assets/Fonts/HelveticaNowDisplay-Regular_5Mzhp8KlA8_CAVTbnsPOM.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
 
-@font-face {
-  font-family: 'HelveticaNowDisplay';
-  src: url('./assets/Fonts/HelveticaNowDisplay-ExtraBold_Qqt_sGOvuc_Z0ZOJEQucI.woff2') format('woff2');
-  font-weight: 800;
-  font-style: normal;
-  font-display: swap;
-}
+  @font-face {
+    font-family: 'HelveticaNowDisplay';
+    src: url('./assets/Fonts/HelveticaNowDisplay-Medium_2wEhlmo-TD_wsqqEEwmJC.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+  }
 
-@font-face {
-  font-family: 'HelveticaNowDisplay-Light';
-  src: url('./assets/Fonts/HelveticaNowDisplay-Light_M4nzWhve6k_k7HolyzL10.woff2') format('woff2');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
+  @font-face {
+    font-family: 'HelveticaNowDisplay';
+    src: url('./assets/Fonts/HelveticaNowDisplay-ExtraBold_Qqt_sGOvuc_Z0ZOJEQucI.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+  }
 
-@font-face {
-  font-family: 'NeueMachina-Ultrabold';
-  src: url('./assets/Fonts/NeueMachina-Regular_DQCmjH1st.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
+  @font-face {
+    font-family: 'NeueMachina-Ultrabold';
+    src: url('./assets/Fonts/NeueMachina-Regular_DQCmjH1st.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+  }
 
-@font-face {
-  font-family: 'NeueMachina-Medium';
-  src: url('./assets/Fonts/NeueMachina-Light_gwWCZxVuQl.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
+  @font-face {
+    font-family: 'NeueMachina-Medium';
+    src: url('./assets/Fonts/NeueMachina-Light_gwWCZxVuQl.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+  }
 
-@font-face {
-  font-family: 'Juana-Regular';
-  src: url('./assets/Fonts/Fontspring-DEMO-juana-extralightit_toKzXEsfr (1).ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
-@theme {
-  /* Colors - Strict SaaS System */
-  --color-primary-50: #EEF2FF;
-  --color-primary-100: #E0E7FF;
-  --color-primary-500: #6366F1;
-  --color-primary-600: #4F46E5;
-  --color-primary-700: #4338CA;
-
-  --color-accent-50: #EEF2FF;
-  --color-accent-100: #E0E7FF;
-  --color-accent-400: #818CF8;
-  --color-accent-500: #6366F1;
-  --color-accent-600: #4F46E5;
-  --color-accent-700: #4338CA;
-  
-  --color-surface: #FFFFFF;
-  --color-surface-muted: #F8FAFC;
-  
-  --color-text-main: #111827;
-  --color-text-muted: #6B7280;
-  
-  --color-border-main: #E5E7EB;
-
-  --color-success: #16A34A;
-  --color-danger: #DC2626;
-  --color-warning: #F59E0B;
-
-  --font-sans: 'Plus Jakarta Sans', 'Inter', sans-serif;
-  --font-manrope: 'Manrope', sans-serif;
-  --font-poppins: 'Poppins', sans-serif;
-  --font-helvetica-light: 'Plus Jakarta Sans', sans-serif;
-  --font-neue-machina-ultrabold: 'Outfit', sans-serif;
-  --font-neue-machina-medium: 'Plus Jakarta Sans', sans-serif;
-  --font-juana-regular: 'Outfit', sans-serif;
-  
-  /* Shadows - Soft Style */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-soft: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  @font-face {
+    font-family: 'Juana-Regular';
+    src: url('./assets/Fonts/Fontspring-DEMO-juana-extralightit_toKzXEsfr (1).ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+  }
 }
 
 @layer base {
@@ -198,6 +162,31 @@
   }
   .font-juana-regular {
     font-family: 'Manrope', sans-serif !important;
+  }
+
+  /* Global Font Weight Reductions - Light UI Mode */
+  body, p, span, div {
+    font-weight: 300;
+  }
+  
+  .font-black, 
+  .font-extrabold {
+    font-weight: 500 !important;
+    letter-spacing: -0.01em !important;
+  }
+  
+  .font-bold {
+    font-weight: 400 !important;
+    letter-spacing: -0.005em !important;
+  }
+  
+  .font-semibold {
+    font-weight: 400 !important;
+  }
+  
+  .font-medium,
+  .font-normal {
+    font-weight: 300 !important;
   }
 
   /* Premium thin custom scrollbars */

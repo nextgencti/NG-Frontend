@@ -336,7 +336,7 @@ export default function StudentClassroom() {
       {/* Need Help Onboarding */}
       <div className="p-4 border-t border-slate-100 shrink-0 bg-white">
         <div className="bg-slate-50 rounded-2xl p-4 text-center border border-slate-100/60">
-          <HelpCircle className="w-4.5 h-4.5 text-slate-400 mx-auto mb-1.5" />
+          <HelpCircle className="w-5 h-5 text-slate-400 mx-auto mb-1.5" />
           <p className="text-[10px] font-black text-slate-700 uppercase tracking-wider">Assistance Menu</p>
           <p className="text-[9px] text-slate-400 mb-3">Facing any issues with modules? contact support.</p>
           <button
@@ -374,7 +374,7 @@ export default function StudentClassroom() {
               <div className="flex items-center justify-between px-4 py-3.5 border-b border-slate-100 shrink-0">
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Chapters Menu</span>
                 <button onClick={() => setMobileSidebar(false)} className="p-1 text-slate-400 hover:text-slate-700 cursor-pointer">
-                  <X className="w-4.5 h-4.5" />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
               <div className="flex-1 overflow-hidden">

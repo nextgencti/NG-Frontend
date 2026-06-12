@@ -644,7 +644,7 @@ export default function AdminEditTest() {
                         : 'bg-slate-50/50 border-slate-100 hover:bg-slate-50'
                     }`}
                   >
-                    <div className={`w-4.5 h-4.5 rounded-full border-2 mt-0.5 flex items-center justify-center shrink-0 ${
+                    <div className={`w-5 h-5 rounded-full border-2 mt-0.5 flex items-center justify-center shrink-0 ${
                       pptMode === 'exam' ? 'border-primary-600 bg-primary-600' : 'border-slate-300'
                     }`}>
                       {pptMode === 'exam' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
@@ -664,7 +664,7 @@ export default function AdminEditTest() {
                         : 'bg-slate-50/50 border-slate-100 hover:bg-slate-50'
                     }`}
                   >
-                    <div className={`w-4.5 h-4.5 rounded-full border-2 mt-0.5 flex items-center justify-center shrink-0 ${
+                    <div className={`w-5 h-5 rounded-full border-2 mt-0.5 flex items-center justify-center shrink-0 ${
                       pptMode === 'teaching' ? 'border-primary-600 bg-primary-600' : 'border-slate-300'
                     }`}>
                       {pptMode === 'teaching' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}

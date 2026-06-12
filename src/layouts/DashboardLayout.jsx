@@ -192,7 +192,7 @@ export default function DashboardLayout() {
                 >
                   {({ isActive }) => (
                     <>
-                      <Icon className={`w-4.5 h-4.5 shrink-0 transition-transform group-hover:scale-110 duration-300 ${isActive ? 'text-white drop-shadow-sm' : 'text-slate-400 group-hover:text-primary-500'}`} />
+                      <Icon className={`w-5 h-5 shrink-0 transition-transform group-hover:scale-110 duration-300 ${isActive ? 'text-white drop-shadow-sm' : 'text-slate-400 group-hover:text-primary-500'}`} />
                       {!isCollapsed && (
                         <span className="whitespace-nowrap transition-colors tracking-wide">
                           {link.name}
@@ -212,7 +212,7 @@ export default function DashboardLayout() {
             className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 rounded-2xl font-black text-[11px] uppercase tracking-widest text-slate-500 hover:bg-rose-50 hover:text-rose-600 hover:shadow-sm border border-transparent hover:border-rose-100 transition-all group w-full cursor-pointer`}
             title={isCollapsed ? "Logout" : ""}
           >
-            <LogOut className={`w-4.5 h-4.5 shrink-0 transition-transform ${isCollapsed ? 'text-slate-400' : 'group-hover:-translate-x-1 group-hover:text-rose-500'}`} />
+            <LogOut className={`w-5 h-5 shrink-0 transition-transform ${isCollapsed ? 'text-slate-400' : 'group-hover:-translate-x-1 group-hover:text-rose-500'}`} />
             {!isCollapsed && (
               <span className="animate-in fade-in duration-300">Logout</span>
             )}
@@ -227,7 +227,7 @@ export default function DashboardLayout() {
           {/* Logo - Mobile/Tablet only (since Sidebar shows logo on Desktop) */}
           <div className="flex items-center gap-2.5 sm:gap-3 cursor-pointer select-none shrink-0 lg:hidden" onClick={() => navigate('/')}>
             <div className="bg-white p-1 sm:p-1.5 rounded-xl shadow-sm flex items-center justify-center shrink-0 border border-white/20 transition-all hover:scale-105 duration-300">
-              <Logo className="w-6 h-6 sm:w-7.5 sm:h-7.5" showText={false} />
+              <Logo className="w-6 h-6 sm:w-8 sm:h-8" showText={false} />
             </div>
             <div className="flex flex-col">
               <h2 className="text-[18px] sm:text-[23px] font-black tracking-tight leading-none flex items-center select-none uppercase">

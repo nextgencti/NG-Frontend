@@ -186,7 +186,7 @@ export default function Fees() {
         className="bg-white/70 backdrop-blur-2xl border border-white/60 rounded-[32px] shadow-[0_12px_36px_rgba(0,0,0,0.02)] overflow-hidden hover:shadow-[0_15px_40px_rgba(0,0,0,0.06)] hover:border-white transition-all duration-300"
       >
         <div className="px-6 py-5 border-b border-white/50 flex items-center bg-white/40 backdrop-blur-sm">
-          <div className="w-1.5 h-4.5 bg-slate-400 rounded-full mr-2"></div>
+          <div className="w-1.5 h-5 bg-slate-400 rounded-full mr-2"></div>
           <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Invoices History</h3>
         </div>
         

@@ -103,7 +103,7 @@ export default function WordCounter() {
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3 cursor-pointer select-none" onClick={() => navigate('/')}>
             <div className="bg-white p-1.5 rounded-xl border border-white/10 flex items-center justify-center shrink-0">
-              <Logo className="w-7.5 h-7.5" showText={false} />
+              <Logo className="w-8 h-8" showText={false} />
             </div>
             <div className="flex flex-col">
               <h2 className="text-[25px] sm:text-[30px] font-helvetica-light tracking-wide leading-none flex items-center">

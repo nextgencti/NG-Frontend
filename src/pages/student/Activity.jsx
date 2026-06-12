@@ -368,7 +368,7 @@ export default function Activity() {
                       <div key={i} className="p-5 flex items-center justify-between hover:bg-slate-50/50 transition-colors group cursor-pointer">
                         <div className="flex items-center gap-4 min-w-0">
                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border transition-all duration-300 ${color}`}>
-                            <Icon className="w-4.5 h-4.5" />
+                            <Icon className="w-5 h-5" />
                           </div>
                           <div className="min-w-0">
                             <p className="text-sm font-black text-slate-800 truncate uppercase tracking-wide leading-tight">{act.action}</p>

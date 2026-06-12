@@ -82,7 +82,7 @@ export default function AdminFinance() {
                 <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border border-slate-100 shadow-sm ${
                   txn.status === 'completed' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
                 } group-hover:scale-105 transition-transform duration-500`}>
-                  {txn.status === 'completed' ? <CheckCircle2 className="w-4.5 h-4.5" /> : <AlertCircle className="w-4.5 h-4.5" />}
+                  {txn.status === 'completed' ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
                 </div>
                 <div>
                   <p className="text-xs font-extrabold text-slate-900 group-hover:text-primary-600 transition-colors">{txn.student}</p>

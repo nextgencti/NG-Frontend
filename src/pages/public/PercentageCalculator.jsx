@@ -66,7 +66,7 @@ export default function PercentageCalculator() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0F0C20]/70 backdrop-blur-md border-b border-indigo-950/45">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3 cursor-pointer select-none" onClick={() => navigate('/')}>
-            <div className="bg-white p-1.5 rounded-xl shadow-sm border border-white/10 flex items-center justify-center shrink-0"><Logo className="w-7.5 h-7.5" showText={false} /></div>
+            <div className="bg-white p-1.5 rounded-xl shadow-sm border border-white/10 flex items-center justify-center shrink-0"><Logo className="w-8 h-8" showText={false} /></div>
             <h2 className="text-[25px] sm:text-[30px] font-helvetica-light tracking-wide leading-none flex items-center"><span className="text-white">Next</span><span className="text-indigo-400 ml-0.5">Gen</span></h2>
           </div>
           <button onClick={() => navigate('/tools')} className="px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-indigo-500/35 text-slate-200 hover:text-white rounded-full font-bold text-xs transition-all flex items-center gap-2 cursor-pointer">

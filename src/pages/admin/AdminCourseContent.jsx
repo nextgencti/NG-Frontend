@@ -288,7 +288,7 @@ export default function AdminCourseContent() {
       {/* Header */}
       <div className="flex items-center gap-4 mb-1">
         <button onClick={() => navigate('/admin/courses')} className="w-9 h-9 flex items-center justify-center rounded-full bg-white border border-[#E5E7EB] text-[#6B7280] hover:text-primary-600 transition-all shadow-sm">
-          <ArrowLeft className="w-4.5 h-4.5" />
+          <ArrowLeft className="w-5 h-5" />
         </button>
         <div>
           <h2 className="text-xl font-bold text-[#111827] tracking-tight">{course?.name}</h2>
