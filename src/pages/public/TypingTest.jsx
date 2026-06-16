@@ -20,34 +20,51 @@ import SkyStrikeGame from './typing-games/SkyStrikeGame';
 
 
 
-// Mechanical keyboard switch sounds synthesized using Web Audio API
-const playKeyClick = (key, isSoundEnabled) => {
-  if (!isSoundEnabled) return;
+import keySoundEffect from '../../assets/key_sound_effect.mp3';
+
+const keyAudio = new Audio(keySoundEffect);
+
+const playErrorSound = (volume) => {
   try {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const osc = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
     
-    let freq = key === ' ' ? 90 : 160;
-    let duration = key === ' ' ? 0.05 : 0.035;
+    // Create an error buzz
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.1);
     
-    // Slight randomized pitch for natural mechanical key feel
-    freq += (Math.random() - 0.5) * 15;
-
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + duration);
-    
-    gainNode.gain.setValueAtTime(0.06, audioCtx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    gainNode.gain.setValueAtTime(0.3 * volume, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
     
     osc.connect(gainNode);
     gainNode.connect(audioCtx.destination);
     
     osc.start();
-    osc.stop(audioCtx.currentTime + duration);
+    osc.stop(audioCtx.currentTime + 0.1);
   } catch (e) {
-    // Fail silently if audio context is blocked
+    // ignore
+  }
+};
+
+// Play custom mp3 sound on keypress or error sound on mistake
+const playKeyClick = (key, isSoundEnabled, volume = 0.5, isWrong = false) => {
+  if (!isSoundEnabled) return;
+  
+  if (isWrong) {
+    playErrorSound(volume);
+    return;
+  }
+  
+  try {
+    const sound = keyAudio.cloneNode();
+    sound.volume = volume;
+    sound.play().catch(e => {
+      // Ignore if browser blocks auto-play
+    });
+  } catch (e) {
+    // Fail silently
   }
 };
 
@@ -62,9 +79,16 @@ const MemoizedWord = React.memo(({
   isEyeActive,
   showLiveWPM,
   liveWpmVal,
-  isStarted
+  isStarted,
+  isPastWord
 }) => {
   const chars = word.split('');
+
+  // Calculate if the word is entirely wrong
+  const cleanTypedSegment = typedWordSegment.replace(/ $/,''); // remove trailing space
+  const isWordWrong = isPastWord 
+    ? (cleanTypedSegment !== word) 
+    : (cleanTypedSegment !== word.substring(0, cleanTypedSegment.length));
 
   return (
     <div className="inline-block mr-0.5 mb-1.5 relative select-none">
@@ -75,9 +99,14 @@ const MemoizedWord = React.memo(({
         const isCharCorrect = isCharTyped && typedWordSegment[relativeCharIdx] === char;
         const isCursorHere = isCursorInWord && (relativeCharIdx === typedWordSegment.length);
 
-        let charColorClass = 'text-slate-500/60';
-        if (isCharTyped) {
-          charColorClass = isCharCorrect ? 'text-slate-200' : 'text-rose-500 underline decoration-rose-500/65 decoration-2';
+        let charColorClass = 'text-white';
+        if (isWordWrong) {
+          charColorClass = 'text-rose-500 underline decoration-rose-500/65 decoration-2';
+          if (isCharTyped && !isCharCorrect) {
+             charColorClass += ' bg-rose-500/20';
+          }
+        } else if (isCharTyped) {
+          charColorClass = isCharCorrect ? 'text-emerald-400' : 'text-rose-500 bg-rose-500/20 underline decoration-rose-500/65 decoration-2';
         }
 
         return (
@@ -85,11 +114,11 @@ const MemoizedWord = React.memo(({
             {isCursorHere && isFocused && (
               <>
                 {/* Blinking Cursor caret */}
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-[1.2em] bg-indigo-400 caret-blink rounded-sm" />
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-[1.2em] bg-indigo-400 caret-blink rounded-sm z-40" />
                 
                 {/* Floating live WPM badge above cursor */}
                 {showLiveWPM && isStarted && (
-                  <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-transparent text-indigo-400 text-xs font-bold px-0.5 py-0 pointer-events-none whitespace-nowrap animate-in fade-in zoom-in-75 duration-200">
+                  <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#151230] border border-indigo-500/30 text-indigo-400 text-xs font-black px-2 py-0.5 rounded shadow-xl pointer-events-none whitespace-nowrap animate-in fade-in zoom-in-75 duration-200 z-50">
                     {liveWpmVal} wpm
                   </span>
                 )}
@@ -121,9 +150,9 @@ const MemoizedWord = React.memo(({
           <span key="space" className={`font-mono relative ${spaceColorClass}`}>
             {isCursorAtSpace && isFocused && (
               <>
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-[1.2em] bg-indigo-400 caret-blink rounded-sm" />
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-[1.2em] bg-indigo-400 caret-blink rounded-sm z-40" />
                 {showLiveWPM && isStarted && (
-                  <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-transparent text-indigo-400 text-xs font-bold px-0.5 py-0 pointer-events-none whitespace-nowrap animate-in fade-in zoom-in-75 duration-200">
+                  <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#151230] border border-indigo-500/30 text-indigo-400 text-xs font-black px-2 py-0.5 rounded shadow-xl pointer-events-none whitespace-nowrap animate-in fade-in zoom-in-75 duration-200 z-50">
                     {liveWpmVal} wpm
                   </span>
                 )}
@@ -208,6 +237,11 @@ export default function TypingTest() {
   const [activeGame, setActiveGame] = useState(null);
   const [gameStats, setGameStats] = useState({ recent: [], bests: {} });
 
+  // Scroll to top when a game is selected or closed
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [activeGame, activeLobbyMode]);
+
   useEffect(() => {
     if (isAuthenticated) {
       const fetchGameStats = async () => {
@@ -233,6 +267,7 @@ export default function TypingTest() {
   const [duration, setDuration] = useState(60); // 15 | 30 | 60 | 120 seconds
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSoundEnabled, setIsSoundEnabled] = useState(true);
+  const [volume, setVolume] = useState(0.8);
   const [smileyType, setSmileyType] = useState('happy'); // happy | wink | neutral
   const [fontSize, setFontSize] = useState('md'); // xs | sm | md | lg | xl
   const [rowLimit, setRowLimit] = useState(3); // lines limit / text length multiplier
@@ -410,6 +445,14 @@ export default function TypingTest() {
     const val = e.target.value;
     if (isFinished) return;
 
+    // Prevent backspacing previous words (don't allow deleting spaces)
+    if (val.length < typedText.length) {
+      const deletedChars = typedText.substring(val.length);
+      if (deletedChars.includes(' ')) {
+        return;
+      }
+    }
+
     if (!isStarted && val.length > 0) {
       setIsStarted(true);
       setStartTime(Date.now());
@@ -446,7 +489,15 @@ export default function TypingTest() {
     
     if (isFinished) return;
 
-    playKeyClick(e.key, isSoundEnabled);
+    // Check if the pressed key is a mistake
+    let isWrong = false;
+    if (e.key.length === 1 && typedText.length < textToType.length) {
+      if (e.key !== textToType[typedText.length]) {
+        isWrong = true;
+      }
+    }
+
+    playKeyClick(e.key, isSoundEnabled, volume, isWrong);
 
     if (e.key === 'Backspace') {
       setBackspaces(prev => prev + 1);
@@ -523,21 +574,36 @@ export default function TypingTest() {
     }
   };
 
-  // Word-by-word visual rendering with cursor tracking
-  const renderTextScroller = () => {
+  // Pre-calculate words data to prevent splitting and re-calculating on every keystroke
+  const wordsData = React.useMemo(() => {
     const words = textToType.split(' ');
     let absoluteCharCounter = 0;
-
     return words.map((word, wordIdx) => {
       const wordStartIndex = absoluteCharCounter;
       const wordLenWithSpace = word.length + 1;
       absoluteCharCounter += wordLenWithSpace;
-      
       const isLastWord = wordIdx === words.length - 1;
       const wordEndIndex = wordStartIndex + (isLastWord ? word.length : wordLenWithSpace);
+      return { word, wordIdx, isLastWord, wordStartIndex, wordEndIndex };
+    });
+  }, [textToType]);
 
-      const typedWordSegment = typedText.substring(wordStartIndex, wordEndIndex);
+  // Word-by-word visual rendering with cursor tracking
+  const renderTextScroller = () => {
+    return wordsData.map((data) => {
+      const { word, wordIdx, isLastWord, wordStartIndex, wordEndIndex } = data;
+
+      let typedWordSegment = '';
+      if (typedText.length > wordStartIndex) {
+        if (typedText.length >= wordEndIndex) {
+          typedWordSegment = typedText.substring(wordStartIndex, wordEndIndex);
+        } else {
+          typedWordSegment = typedText.substring(wordStartIndex, typedText.length);
+        }
+      }
+
       const isCursorInWord = typedText.length >= wordStartIndex && typedText.length < wordEndIndex + (isLastWord ? 1 : 0);
+      const isPastWord = typedText.length >= wordEndIndex + (isLastWord ? 1 : 0);
 
       return (
         <MemoizedWord 
@@ -553,6 +619,7 @@ export default function TypingTest() {
           showLiveWPM={showLiveWPM}
           liveWpmVal={isCursorInWord ? liveWpmVal : 0}
           isStarted={isCursorInWord ? isStarted : false}
+          isPastWord={isPastWord}
         />
       );
     });
@@ -746,24 +813,26 @@ export default function TypingTest() {
 
       <main className="w-[95%] max-w-[1600px] mx-auto px-4 sm:px-6 pt-28 pb-16 relative z-10">
         {/* Header */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/35 text-indigo-300 text-[10px] font-bold uppercase tracking-wider mb-2.5">
-            <Keyboard className="w-3.5 h-3.5" />
-            <span>{activeLobbyMode ? 'Typing Speed Tester' : 'Practice Modes'}</span>
+        {!activeGame && (
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/35 text-indigo-300 text-[10px] font-bold uppercase tracking-wider mb-2.5">
+              <Keyboard className="w-3.5 h-3.5" />
+              <span>{activeLobbyMode ? 'Typing Speed Tester' : 'Practice Modes'}</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black text-white mb-1 tracking-tight">
+              {activeLobbyMode ? (
+                <>Typing Speed <span className="text-indigo-400">Tester</span></>
+              ) : (
+                <>Improve your Typing speed with our <span className="text-indigo-400">free Typing Games</span></>
+              )}
+            </h1>
+            <p className="text-slate-400 font-medium text-xs max-w-lg mx-auto leading-relaxed">
+              {activeLobbyMode 
+                ? "Test your keyboard typing speeds and WPM with advanced visual statistics and charts."
+                : "If you want to test your typing speed, try out our 1-minute free Typing test. You can quickly see how fast you can type."}
+            </p>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white mb-1 tracking-tight">
-            {activeLobbyMode ? (
-              <>Typing Speed <span className="text-indigo-400">Tester</span></>
-            ) : (
-              <>Improve your Typing speed with our <span className="text-indigo-400">free Typing Games</span></>
-            )}
-          </h1>
-          <p className="text-slate-400 font-medium text-xs max-w-lg mx-auto leading-relaxed">
-            {activeLobbyMode 
-              ? "Test your keyboard typing speeds and WPM with advanced visual statistics and charts."
-              : "If you want to test your typing speed, try out our 1-minute free Typing test. You can quickly see how fast you can type."}
-          </p>
-        </div>
+        )}
 
         {!activeLobbyMode ? (
           /* Lobby Layout */
@@ -1118,6 +1187,26 @@ export default function TypingTest() {
 
               {/* Mode Toggle & duration */}
               <div className="flex items-center gap-5">
+                <div className="flex items-center gap-2 bg-slate-950/40 rounded-xl p-1 border border-indigo-950 px-2">
+                  <button 
+                    onClick={() => setIsSoundEnabled(!isSoundEnabled)} 
+                    className={`p-1 rounded-lg transition-all cursor-pointer ${isSoundEnabled ? 'text-indigo-300 hover:text-indigo-200' : 'text-slate-500 hover:text-slate-400'}`}
+                    title={isSoundEnabled ? "Mute typing clicks" : "Unmute typing clicks"}
+                  >
+                    {isSoundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+                  </button>
+                  {isSoundEnabled && (
+                    <input 
+                      type="range" 
+                      min="0" max="1" step="0.05" 
+                      value={volume} 
+                      onChange={(e) => setVolume(parseFloat(e.target.value))}
+                      className="w-16 h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                      title="Adjust typing volume"
+                    />
+                  )}
+                </div>
+
                 <div className="flex items-center bg-slate-950/40 rounded-xl p-1 border border-indigo-950">
                   <button 
                     onClick={() => setMode('normal')}

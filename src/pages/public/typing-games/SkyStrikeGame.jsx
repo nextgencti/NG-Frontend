@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, RotateCcw, ArrowLeft, Heart, ShieldAlert, Award, Zap, Maximize, Minimize } from 'lucide-react';
+import { Play, RotateCcw, ArrowLeft, Heart, ShieldAlert, Award, Zap, Maximize, Minimize, Volume2, VolumeX } from 'lucide-react';
 import api from '../../../lib/axios';
 
 const WORDS_POOL = {
@@ -19,7 +19,10 @@ const ACHIEVEMENTS = [
 ];
 
 // Synth sounds using Web Audio API
+export let globalVolume = 3.0; // Higher default volume
+
 const playSound = (type) => {
+  if (globalVolume <= 0) return; // Muted
   try {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const dest = audioCtx.destination;
@@ -29,8 +32,8 @@ const playSound = (type) => {
       const gainNode = audioCtx.createGain();
       osc.type = oscType;
       osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-      gainNode.gain.setValueAtTime(gainStart, audioCtx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(gainEnd, audioCtx.currentTime + duration);
+      gainNode.gain.setValueAtTime(gainStart * globalVolume, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(gainEnd * globalVolume, audioCtx.currentTime + duration);
       osc.connect(gainNode);
       gainNode.connect(dest);
       osc.start();
@@ -56,8 +59,8 @@ const playSound = (type) => {
       filter.type = 'lowpass';
       filter.frequency.setValueAtTime(140, audioCtx.currentTime);
       
-      gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+      gainNode.gain.setValueAtTime(0.2 * globalVolume, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.001 * globalVolume, audioCtx.currentTime + 0.4);
       
       osc.connect(filter);
       filter.connect(gainNode);
@@ -116,6 +119,7 @@ export default function SkyStrikeGame({ onBack, isAuthenticated }) {
   // Game over analytics
   const [analytics, setAnalytics] = useState(null);
   const [, setSavingScore] = useState(false);
+  const [volume, setVolume] = useState(3.0);
 
   const canvasRef = useRef(null);
   const shipImageRef = useRef(null);
@@ -256,12 +260,12 @@ export default function SkyStrikeGame({ onBack, isAuthenticated }) {
     stateRef.current.bullets.push({
       x: px + Math.cos(angle + Math.PI/2) * 12,
       y: py + Math.sin(angle + Math.PI/2) * 12,
-      vx, vy, color: '#06B6D4'
+      vx, vy, color: '#06B6D4', targetY: target.y
     });
     stateRef.current.bullets.push({
       x: px + Math.cos(angle - Math.PI/2) * 12,
       y: py + Math.sin(angle - Math.PI/2) * 12,
-      vx, vy, color: '#06B6D4'
+      vx, vy, color: '#06B6D4', targetY: target.y
     });
   };
 
@@ -523,6 +527,21 @@ export default function SkyStrikeGame({ onBack, isAuthenticated }) {
       state.bullets = state.bullets.filter(b => {
         b.x += b.vx;
         b.y += b.vy;
+
+        // Stop bullet and spawn sparks if it reaches target word height
+        if (b.targetY !== undefined && b.y <= b.targetY + 20) {
+          for (let i = 0; i < 3; i++) {
+            state.particles.push({
+              x: b.x, y: b.y,
+              vx: (Math.random() - 0.5) * 4,
+              vy: (Math.random() - 0.5) * 4,
+              color: '#38BDF8', // Cyan spark
+              alpha: 1.0,
+              radius: 1 + Math.random() * 2
+            });
+          }
+          return false;
+        }
 
         ctx.save();
         ctx.strokeStyle = b.color;
@@ -827,18 +846,7 @@ export default function SkyStrikeGame({ onBack, isAuthenticated }) {
         });
       }
 
-      // Shield Aura Ring
-      if (state.shields > 0) {
-        ctx.save();
-        ctx.strokeStyle = state.shields === 3 ? 'rgba(34, 211, 238, 0.25)' : state.shields === 2 ? 'rgba(245, 158, 11, 0.22)' : 'rgba(239, 68, 68, 0.25)';
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = ctx.strokeStyle;
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.arc(px, py, 32, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.restore();
-      }
+      // Shield Aura Ring removed per user request
 
       // Spaceship Body
       ctx.save();
@@ -898,7 +906,7 @@ export default function SkyStrikeGame({ onBack, isAuthenticated }) {
   const levelProgress = (xp / (level * 60)) * 100;
 
   return (
-    <div ref={gameContainerRef} className={`w-full text-center max-w-4xl mx-auto select-none font-sans ${isFullscreen ? 'bg-[#0B091B] min-h-screen p-8 overflow-y-auto flex flex-col justify-center' : ''}`}>
+    <div ref={gameContainerRef} className={`w-full text-center max-w-4xl mx-auto select-none font-sans ${isFullscreen ? 'bg-[#0B091B] h-screen p-6 md:p-10 overflow-y-auto' : ''}`}>
       {/* Dynamic Badge Unlock Banner */}
       {newBadgeAlert && (
         <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-[#1D173D]/95 border border-amber-500 rounded-2xl px-6 py-3 shadow-2xl flex items-center gap-3 animate-bounce">
@@ -922,7 +930,27 @@ export default function SkyStrikeGame({ onBack, isAuthenticated }) {
           <Zap className="w-4 h-4 text-cyan-400 animate-pulse" />
           <h2 className="text-sm font-black text-white uppercase tracking-wider">Sky Strike</h2>
         </div>
-        <div className="flex justify-end gap-4">
+        <div className="flex items-center justify-end gap-4">
+          <div className="flex items-center gap-2 bg-slate-900/50 px-2 py-1.5 rounded-lg border border-indigo-500/20">
+            <button onClick={() => {
+              const newVol = volume > 0 ? 0 : 3.0;
+              setVolume(newVol);
+              globalVolume = newVol;
+            }} className="text-slate-400 hover:text-white cursor-pointer transition-colors">
+              {volume > 0 ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+            </button>
+            <input 
+              type="range" 
+              min="0" max="5" step="0.5" 
+              value={volume} 
+              onChange={(e) => {
+                const val = parseFloat(e.target.value);
+                setVolume(val);
+                globalVolume = val;
+              }}
+              className="w-16 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+            />
+          </div>
           <button
             onClick={toggleFullscreen}
             className="flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
@@ -1025,13 +1053,12 @@ export default function SkyStrikeGame({ onBack, isAuthenticated }) {
             </div>
           )}
 
-          {/* Canvas Wrapper */}
           <div className="w-full bg-[#0B091B] border border-indigo-500/20 rounded-3xl p-1 shadow-2xl relative">
             <canvas 
               ref={canvasRef} 
               width={800} 
               height={460} 
-              className="w-full h-auto block rounded-2xl max-w-full"
+              className={`w-full block rounded-2xl mx-auto object-contain ${isFullscreen ? 'max-h-[55vh] sm:max-h-[65vh]' : 'h-auto max-w-full'}`}
             />
           </div>
         </div>

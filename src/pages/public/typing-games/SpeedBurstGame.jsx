@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, RotateCcw, ArrowLeft, Hourglass, Award, Zap } from 'lucide-react';
+import { Play, RotateCcw, ArrowLeft, Hourglass, Award, Zap, Maximize, Minimize } from 'lucide-react';
 import api from '../../../lib/axios';
 
 const WORD_DIFFICULTIES = {
@@ -64,7 +64,9 @@ export default function SpeedBurstGame({ onBack, isAuthenticated }) {
   const [inputValue, setInputValue] = useState('');
   const [stats, setStats] = useState({ correct: 0, total: 0, totalChars: 0, wpm: 0, errors: 0 });
   const [, setSavingScore] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
+  const containerRef = useRef(null);
   const inputRef = useRef(null);
 
   const generateWords = (diff) => {
@@ -183,10 +185,28 @@ export default function SpeedBurstGame({ onBack, isAuthenticated }) {
     saveScore();
   }, [gameState, isAuthenticated, stats, difficulty]);
 
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen?.().catch(err => {
+        console.error("Error attempting to enable fullscreen:", err);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  };
+
   const accuracy = stats.totalChars > 0 ? Math.max(0, Math.round(((stats.totalChars - stats.errors) / stats.totalChars) * 100)) : 100;
 
   return (
-    <div className="w-full text-center max-w-4xl mx-auto">
+    <div ref={containerRef} className={`w-full text-center max-w-4xl mx-auto ${isFullscreen ? 'bg-[#0B091B] h-screen p-6 md:p-10 overflow-y-auto' : ''}`}>
       {/* Header */}
       <div className="flex items-center justify-between border-b border-indigo-950/60 pb-4 mb-6">
         <button 
@@ -196,33 +216,44 @@ export default function SpeedBurstGame({ onBack, isAuthenticated }) {
           <ArrowLeft className="w-4 h-4" /> Back to Games
         </button>
         <div className="flex items-center gap-2">
-          <Zap className="w-4 h-4 text-indigo-400" />
+          <Zap className="w-4 h-4 text-amber-400" />
           <h2 className="text-sm font-black text-white uppercase tracking-wider">Speed Burst</h2>
         </div>
-        <div className="w-24"></div>
+        <div className="flex items-center gap-2 bg-slate-950/30 border border-indigo-950 px-3 py-1.5 rounded-xl">
+          <button 
+            onClick={toggleFullscreen}
+            className={`p-1 rounded transition-colors cursor-pointer text-slate-500 hover:text-slate-200`}
+          >
+            {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+          </button>
+        </div>
       </div>
 
       {gameState === 'lobby' && (
-        <div className="bg-[#151230]/75 border border-indigo-500/20 rounded-3xl p-8 text-center max-w-md mx-auto shadow-2xl animate-in zoom-in-95">
-          <div className="w-16 h-16 bg-indigo-500/10 border border-indigo-500/30 rounded-2xl flex items-center justify-center mx-auto mb-5 text-indigo-400">
-            <Hourglass className="w-8 h-8" />
+        <div className="bg-white border-4 border-sky-400 rounded-[2rem] p-8 text-center max-w-md mx-auto shadow-[0_12px_0_0_rgba(56,189,248,1)] animate-in zoom-in-95 mt-4">
+          <div className="w-20 h-20 bg-amber-400 border-4 border-amber-500 rounded-full flex items-center justify-center mx-auto mb-5 text-white shadow-inner">
+            <span className="text-4xl">🚀</span>
           </div>
-          <h3 className="text-xl font-black text-white mb-2">Speed Burst</h3>
-          <p className="text-xs text-slate-400 font-medium leading-relaxed mb-6">
-            A fast-paced 30-second sprint test. Type as many single words as you can. How high can your WPM burst?
+          <h3 className="text-3xl font-black text-slate-800 mb-2">Speed Burst</h3>
+          <p className="text-sm text-slate-600 font-bold leading-relaxed mb-6">
+            A fast-paced 30-second sprint test! Type as fast as you can. Are you ready?
           </p>
 
           {/* Difficulty Selector */}
           <div className="mb-6">
-            <span className="text-[10px] text-slate-500 font-black uppercase tracking-wider block mb-2">Difficulty Mode</span>
-            <div className="flex justify-center bg-slate-950/40 rounded-xl p-1 border border-indigo-950">
-              {['easy', 'medium', 'hard'].map((level) => (
+            <span className="text-xs text-sky-500 font-black uppercase tracking-wider block mb-3">Choose Level</span>
+            <div className="flex justify-center gap-3">
+              {[
+                { level: 'easy', color: 'emerald', bg: 'bg-emerald-500', border: 'border-emerald-600', hoverBg: 'hover:bg-emerald-50', hoverBorder: 'hover:border-emerald-400', text: 'text-emerald-700', label: '🟢 Easy' },
+                { level: 'medium', color: 'amber', bg: 'bg-amber-400', border: 'border-amber-500', hoverBg: 'hover:bg-amber-50', hoverBorder: 'hover:border-amber-400', text: 'text-amber-700', label: '🟡 Med' },
+                { level: 'hard', color: 'rose', bg: 'bg-rose-500', border: 'border-rose-600', hoverBg: 'hover:bg-rose-50', hoverBorder: 'hover:border-rose-400', text: 'text-rose-700', label: '🔴 Hard' }
+              ].map((s) => (
                 <button
-                  key={level}
-                  onClick={() => setDifficulty(level)}
-                  className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all duration-200 cursor-pointer flex-1 ${difficulty === level ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                  key={s.level}
+                  onClick={() => setDifficulty(s.level)}
+                  className={`px-3 py-2 rounded-2xl font-black tracking-wider transition-all duration-200 cursor-pointer flex-1 border-2 border-b-4 ${difficulty === s.level ? `${s.bg} ${s.border} text-white translate-y-[2px] border-b-2` : `bg-white border-${s.color}-200 ${s.text} ${s.hoverBorder} ${s.hoverBg}`}`}
                 >
-                  {level}
+                  {s.label}
                 </button>
               ))}
             </div>
@@ -230,45 +261,48 @@ export default function SpeedBurstGame({ onBack, isAuthenticated }) {
 
           <button
             onClick={startGame}
-            className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 cursor-pointer"
+            className="w-full py-4 bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-400 hover:to-purple-400 text-white rounded-2xl font-black text-lg uppercase tracking-widest transition-all flex items-center justify-center gap-3 shadow-[0_8px_0_0_rgba(168,85,247,1)] hover:shadow-[0_4px_0_0_rgba(168,85,247,1)] hover:translate-y-1 active:shadow-none active:translate-y-2 cursor-pointer"
           >
-            <Play className="w-4 h-4 fill-current" /> Start Sprint
+            Play Now! 🎯
           </button>
         </div>
       )}
 
       {gameState === 'playing' && (
-        <div className="w-full flex flex-col gap-5 max-w-lg mx-auto">
+        <div className="w-full flex flex-col gap-6 max-w-2xl mx-auto mt-4">
           {/* Stats Header */}
-          <div className="grid grid-cols-3 gap-3 bg-slate-950/40 border border-indigo-950 rounded-2xl p-4 text-center">
-            <div>
-              <p className="text-xl font-black text-indigo-400 font-mono">{timeLeft}s</p>
-              <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wider">Time Left</span>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-white border-4 border-sky-400 rounded-3xl p-4 text-center shadow-[0_6px_0_0_rgba(56,189,248,1)]">
+              <div className="text-3xl mb-1">🕒</div>
+              <p className="text-3xl font-black text-sky-500">{timeLeft}s</p>
+              <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Time Left</span>
             </div>
-            <div>
-              <p className="text-xl font-black text-indigo-400 font-mono">{stats.wpm}</p>
-              <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wider">Burst WPM</span>
+            <div className="bg-white border-4 border-pink-400 rounded-3xl p-4 text-center shadow-[0_6px_0_0_rgba(244,114,182,1)] transform scale-110 z-10">
+              <div className="text-4xl mb-1 animate-pulse">🚀</div>
+              <p className="text-4xl font-black text-pink-500">{stats.wpm}</p>
+              <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Speed (WPM)</span>
             </div>
-            <div>
-              <p className="text-xl font-black text-indigo-400 font-mono">{stats.correct}</p>
-              <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wider">Words Typed</span>
+            <div className="bg-white border-4 border-amber-400 rounded-3xl p-4 text-center shadow-[0_6px_0_0_rgba(251,191,36,1)]">
+              <div className="text-3xl mb-1">⭐</div>
+              <p className="text-3xl font-black text-amber-500">{stats.correct}</p>
+              <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Words Typed</span>
             </div>
           </div>
 
           {/* Word Display Board */}
-          <div className="bg-[#151230]/70 border border-indigo-500/20 rounded-3xl p-10 flex flex-col items-center justify-center relative min-h-[160px]">
-            {/* Glowing borders */}
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-20" />
+          <div className="bg-white border-4 border-violet-400 rounded-[3rem] p-10 flex flex-col items-center justify-center relative min-h-[200px] shadow-[0_12px_0_0_rgba(167,139,250,1)] mt-4 overflow-hidden">
+            <div className="absolute -top-10 -right-10 text-6xl opacity-20 rotate-12">☁️</div>
+            <div className="absolute -bottom-10 -left-10 text-6xl opacity-20 -rotate-12">🌈</div>
             
-            <p className="text-[10px] text-slate-500 font-black uppercase tracking-wider mb-2">Type This Word</p>
-            <h1 className="text-3xl sm:text-4xl font-mono font-black text-white tracking-wide">
+            <p className="text-sm text-violet-400 font-black uppercase tracking-wider mb-2">Type This Word</p>
+            <h1 className="text-5xl sm:text-7xl font-black text-slate-800 tracking-wide animate-bounce mt-2 mb-4">
               {wordList[currentWordIndex]}
             </h1>
             
             {/* Next word preview */}
-            <p className="text-xs text-slate-500 font-mono mt-3 opacity-60">
-              next: {wordList[currentWordIndex + 1]}
-            </p>
+            <div className="bg-violet-100 text-violet-500 font-bold px-4 py-1.5 rounded-full text-sm">
+              Next: {wordList[currentWordIndex + 1]}
+            </div>
           </div>
 
           {/* Input Panel */}
@@ -277,56 +311,54 @@ export default function SpeedBurstGame({ onBack, isAuthenticated }) {
             type="text"
             value={inputValue}
             onChange={handleInputChange}
-            placeholder="Type word..."
-            className="w-full bg-[#151230]/70 border border-indigo-500/30 focus:border-indigo-500/80 text-white rounded-xl py-3 px-4 text-sm font-semibold outline-none text-center font-mono shadow-2xl transition-all"
+            placeholder="Type here! 🎯"
+            className="w-full bg-white border-4 border-emerald-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-200 text-slate-800 rounded-full py-5 px-8 text-2xl font-black outline-none text-center shadow-[0_8px_0_0_rgba(52,211,153,1)] transition-all placeholder:text-emerald-200 mt-2"
             autoFocus
           />
         </div>
       )}
 
       {gameState === 'gameover' && (
-        <div className="bg-[#151230]/75 border border-indigo-500/20 rounded-3xl p-8 text-center max-w-md mx-auto shadow-2xl animate-in zoom-in-95">
-          <div className="w-16 h-16 bg-indigo-500/10 border border-indigo-500/30 rounded-2xl flex items-center justify-center mx-auto mb-5 text-indigo-400">
-            <Award className="w-8 h-8" />
-          </div>
-          <h3 className="text-xl font-black text-white mb-2">Sprint Completed</h3>
-          <p className="text-xs text-slate-400 font-medium leading-relaxed mb-6">
-            Congratulations! You completed the sprint with:
+        <div className="bg-white border-4 border-emerald-400 rounded-[2rem] p-8 text-center max-w-md mx-auto shadow-[0_12px_0_0_rgba(52,211,153,1)] animate-in zoom-in-95 mt-4">
+          <div className="text-6xl mb-4 animate-bounce">🏆</div>
+          <h3 className="text-3xl font-black text-slate-800 mb-2">Awesome Job!</h3>
+          <p className="text-sm text-slate-600 font-bold leading-relaxed mb-6">
+            You typed super fast! Here are your amazing stats:
           </p>
 
-          <div className="grid grid-cols-3 gap-3 bg-slate-950/40 border border-indigo-950 rounded-2xl p-4 mb-6">
+          <div className="grid grid-cols-3 gap-3 bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 mb-6">
             <div>
-              <p className="text-lg font-black text-indigo-400 font-mono">{stats.wpm}</p>
-              <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wider block">WPM</span>
+              <p className="text-2xl font-black text-pink-500">{stats.wpm}</p>
+              <span className="text-[10px] text-slate-500 font-black uppercase tracking-wider block mt-1">Speed</span>
             </div>
             <div>
-              <p className="text-lg font-black text-indigo-400 font-mono">{accuracy}%</p>
-              <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wider block">Accuracy</span>
+              <p className="text-2xl font-black text-sky-500">{accuracy}%</p>
+              <span className="text-[10px] text-slate-500 font-black uppercase tracking-wider block mt-1">Accuracy</span>
             </div>
             <div>
-              <p className="text-lg font-black text-indigo-400 font-mono">{stats.correct}</p>
-              <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wider block">Words</span>
+              <p className="text-2xl font-black text-amber-500">{stats.correct}</p>
+              <span className="text-[10px] text-slate-500 font-black uppercase tracking-wider block mt-1">Words</span>
             </div>
           </div>
 
           {!isAuthenticated && (
-            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mb-6 text-[10px] text-amber-300 font-semibold leading-relaxed">
-              🔑 Log in or create an account to save your typing stats and compete on the leaderboards!
+            <div className="bg-amber-100 border border-amber-200 rounded-xl p-3 mb-6 text-xs text-amber-700 font-bold">
+              🔑 Log in to save your awesome scores!
             </div>
           )}
 
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-3">
             <button
               onClick={startGame}
-              className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-white rounded-2xl font-black text-lg uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-[0_6px_0_0_rgba(5,150,105,1)] hover:translate-y-1 hover:shadow-[0_3px_0_0_rgba(5,150,105,1)] cursor-pointer"
             >
-              <RotateCcw className="w-4 h-4" /> Reset Sprint
+              🔄 Play Again!
             </button>
             <button
               onClick={onBack}
-              className="flex-1 py-3 bg-white/5 hover:bg-white/10 text-indigo-300 border border-indigo-500/20 rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer"
+              className="w-full py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl font-black text-sm uppercase tracking-widest transition-all cursor-pointer border-2 border-slate-200"
             >
-              All Games
+              Back to Games
             </button>
           </div>
         </div>

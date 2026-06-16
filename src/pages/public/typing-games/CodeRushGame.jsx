@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, RotateCcw, ArrowLeft, Keyboard, Award, Zap } from 'lucide-react';
+import { Play, RotateCcw, ArrowLeft, Keyboard, Award, Zap, Maximize, Minimize } from 'lucide-react';
 import api from '../../../lib/axios';
 
 const CODE_DATABASE = {
@@ -65,7 +65,9 @@ export default function CodeRushGame({ onBack, isAuthenticated }) {
   const [wpm, setWpm] = useState(0);
   const [accuracy, setAccuracy] = useState(100);
   const [savingScore, setSavingScore] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
+  const containerRef = useRef(null);
   const inputRef = useRef(null);
 
   const startGame = () => {
@@ -147,6 +149,24 @@ export default function CodeRushGame({ onBack, isAuthenticated }) {
     saveScore();
   }, [gameState]);
 
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen?.().catch(err => {
+        console.error("Error attempting to enable fullscreen:", err);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  };
+
   const renderSnippet = () => {
     return snippet.split('').map((char, index) => {
       const isTyped = index < typedText.length;
@@ -170,7 +190,7 @@ export default function CodeRushGame({ onBack, isAuthenticated }) {
   };
 
   return (
-    <div className="w-full text-center max-w-4xl mx-auto">
+    <div ref={containerRef} className={`w-full text-center max-w-4xl mx-auto ${isFullscreen ? 'bg-[#0B091B] h-screen p-6 md:p-10 overflow-y-auto' : ''}`}>
       {/* Header */}
       <div className="flex items-center justify-between border-b border-indigo-950/60 pb-4 mb-6">
         <button 
@@ -183,7 +203,14 @@ export default function CodeRushGame({ onBack, isAuthenticated }) {
           <Keyboard className="w-4 h-4 text-emerald-400" />
           <h2 className="text-sm font-black text-white uppercase tracking-wider">Code Rush</h2>
         </div>
-        <div className="w-24"></div>
+        <div className="flex items-center gap-2 bg-slate-950/30 border border-indigo-950 px-3 py-1.5 rounded-xl">
+          <button 
+            onClick={toggleFullscreen}
+            className={`p-1 rounded transition-colors cursor-pointer text-slate-500 hover:text-slate-200`}
+          >
+            {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+          </button>
+        </div>
       </div>
 
       {gameState === 'lobby' && (

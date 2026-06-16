@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, RotateCcw, ArrowLeft, Heart, Award, Sparkles } from 'lucide-react';
+import { Play, RotateCcw, ArrowLeft, Heart, Award, Sparkles, Maximize, Minimize } from 'lucide-react';
 import api from '../../../lib/axios';
 
 const LETTER_POOLS = {
@@ -53,7 +53,9 @@ export default function LetterHuntGame({ onBack, isAuthenticated }) {
   const [maxTime, setMaxTime] = useState(1.5);
   const [hitTimes, setHitTimes] = useState([]); // track reaction times for analytics
   const [savingScore, setSavingScore] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
+  const containerRef = useRef(null);
   const timerRef = useRef(null);
   const hitTimeRef = useRef(null);
 
@@ -192,11 +194,29 @@ export default function LetterHuntGame({ onBack, isAuthenticated }) {
     saveScore();
   }, [gameState]);
 
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen?.().catch(err => {
+        console.error("Error attempting to enable fullscreen:", err);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  };
+
   const avgReaction = hitTimes.length > 0 ? Math.round(hitTimes.reduce((a, b) => a + b, 0) / hitTimes.length) : 0;
   const progressPercentage = (timeLeft / maxTime) * 100;
 
   return (
-    <div className="w-full text-center max-w-4xl mx-auto">
+    <div ref={containerRef} className={`w-full text-center max-w-4xl mx-auto ${isFullscreen ? 'bg-[#0B091B] h-screen p-6 md:p-10 overflow-y-auto' : ''}`}>
       {/* Header */}
       <div className="flex items-center justify-between border-b border-indigo-950/60 pb-4 mb-6">
         <button 
@@ -209,7 +229,14 @@ export default function LetterHuntGame({ onBack, isAuthenticated }) {
           <Sparkles className="w-4 h-4 text-amber-400" />
           <h2 className="text-sm font-black text-white uppercase tracking-wider">Letter Hunt</h2>
         </div>
-        <div className="w-24"></div>
+        <div className="flex items-center gap-2 bg-slate-950/30 border border-indigo-950 px-3 py-1.5 rounded-xl">
+          <button 
+            onClick={toggleFullscreen}
+            className={`p-1 rounded transition-colors cursor-pointer text-slate-500 hover:text-slate-200`}
+          >
+            {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+          </button>
+        </div>
       </div>
 
       {gameState === 'lobby' && (

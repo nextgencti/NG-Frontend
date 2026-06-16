@@ -5,6 +5,7 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import PageSkeleton from './components/shared/PageSkeleton';
 import HomeSkeleton from './components/shared/HomeSkeleton';
+import ScrollToTop from './components/ScrollToTop';
 
 const RouteSuspense = ({ children }) => {
   const location = useLocation();
@@ -101,6 +102,7 @@ function App() {
   return (
     <AuthProvider>
       <Router>
+        <ScrollToTop />
         <Toaster position="top-right" toastOptions={{ duration: 4000, style: { background: '#334155', color: '#fff' } }} />
         <RouteSuspense>
           <Routes>
