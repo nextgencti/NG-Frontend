@@ -3,11 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Keyboard, RefreshCw, Zap, ArrowRight, Settings, 
   Volume2, VolumeX, Smile, Eye, EyeOff, Edit3, BarChart2, Clock, 
-  RotateCcw, History, Sparkles, BookOpen, SmilePlus
+  RotateCcw, History, Sparkles, BookOpen, SmilePlus, Users, Gamepad2,
+  Bomb, Heart, ShieldAlert, Hourglass, Play, Award
 } from 'lucide-react';
 import Footer from '../../components/Footer';
 import Logo from '../../components/Logo';
 import api from '../../lib/axios';
+import { useAuth } from '../../context/AuthContext';
+import WordRainGame from './typing-games/WordRainGame';
+import SpeedBurstGame from './typing-games/SpeedBurstGame';
+import WordBombGame from './typing-games/WordBombGame';
+import QuoteTypingGame from './typing-games/QuoteTypingGame';
+import CodeRushGame from './typing-games/CodeRushGame';
+import LetterHuntGame from './typing-games/LetterHuntGame';
+import SkyStrikeGame from './typing-games/SkyStrikeGame';
+
+
 
 // Mechanical keyboard switch sounds synthesized using Web Audio API
 const playKeyClick = (key, isSoundEnabled) => {
@@ -190,6 +201,31 @@ const WORD_DATABASES = {
 
 export default function TypingTest() {
   const navigate = useNavigate();
+
+  const [activeLobbyMode, setActiveLobbyMode] = useState(null);
+  
+  const { currentUser, isAuthenticated } = useAuth();
+  const [activeGame, setActiveGame] = useState(null);
+  const [gameStats, setGameStats] = useState({ recent: [], bests: {} });
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      const fetchGameStats = async () => {
+        try {
+          const res = await api.get('/student/typing-scores/stats');
+          if (res.data.success) {
+            setGameStats({
+              recent: res.data.recent || [],
+              bests: res.data.bests || {}
+            });
+          }
+        } catch (err) {
+          console.error("Failed to fetch game stats:", err);
+        }
+      };
+      fetchGameStats();
+    }
+  }, [isAuthenticated, activeGame]);
 
   // Settings State
   const [language, setLanguage] = useState('english'); // english | javascript | numbers
@@ -713,17 +749,357 @@ export default function TypingTest() {
         <div className="text-center mb-6">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/35 text-indigo-300 text-[10px] font-bold uppercase tracking-wider mb-2.5">
             <Keyboard className="w-3.5 h-3.5" />
-            <span>Typing Speed Tester</span>
+            <span>{activeLobbyMode ? 'Typing Speed Tester' : 'Practice Modes'}</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-white mb-1 tracking-tight">
-            Typing Speed <span className="text-indigo-400">Tester</span>
+            {activeLobbyMode ? (
+              <>Typing Speed <span className="text-indigo-400">Tester</span></>
+            ) : (
+              <>Improve your Typing speed with our <span className="text-indigo-400">free Typing Games</span></>
+            )}
           </h1>
           <p className="text-slate-400 font-medium text-xs max-w-lg mx-auto leading-relaxed">
-            Test your keyboard typing speeds and WPM with advanced visual statistics and charts.
+            {activeLobbyMode 
+              ? "Test your keyboard typing speeds and WPM with advanced visual statistics and charts."
+              : "If you want to test your typing speed, try out our 1-minute free Typing test. You can quickly see how fast you can type."}
           </p>
         </div>
 
-        {!isFinished ? (
+        {!activeLobbyMode ? (
+          /* Lobby Layout */
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto mt-10">
+            {/* Card 1: Typing Test */}
+            <div 
+              onClick={() => setActiveLobbyMode('typing-test')}
+              className="bg-[#151230]/80 border border-indigo-500/20 hover:border-indigo-400/50 rounded-2xl p-6 cursor-pointer transition-all hover:-translate-y-1 shadow-lg hover:shadow-indigo-500/20 group"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
+                  <Keyboard className="w-5 h-5" />
+                </div>
+                <h3 className="text-lg font-black text-white">Typing Test</h3>
+              </div>
+              <p className="text-xs text-slate-400 font-medium leading-relaxed">
+                60 second typing game with the top 200 words of each language.
+              </p>
+            </div>
+
+            {/* Card 2: Competition */}
+            <div 
+              onClick={() => setActiveLobbyMode('competition')}
+              className="bg-[#151230]/80 border border-indigo-500/20 hover:border-indigo-400/50 rounded-2xl p-6 cursor-pointer transition-all hover:-translate-y-1 shadow-lg hover:shadow-indigo-500/20 group"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform">
+                  <Zap className="w-5 h-5" />
+                </div>
+                <h3 className="text-lg font-black text-white">Competition</h3>
+              </div>
+              <p className="text-xs text-slate-400 font-medium leading-relaxed">
+                Battle it out against other typists in 24h typing matches.
+              </p>
+            </div>
+
+            {/* Card 3: Multiplayer */}
+            <div 
+              onClick={() => setActiveLobbyMode('multiplayer')}
+              className="bg-[#151230]/80 border border-indigo-500/20 hover:border-indigo-400/50 rounded-2xl p-6 cursor-pointer transition-all hover:-translate-y-1 shadow-lg hover:shadow-indigo-500/20 group"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-400 group-hover:scale-110 transition-transform">
+                  <Users className="w-5 h-5" />
+                </div>
+                <h3 className="text-lg font-black text-white">Multiplayer</h3>
+              </div>
+              <p className="text-xs text-slate-400 font-medium leading-relaxed">
+                Type against other players in realtime multiplayer matches.
+              </p>
+            </div>
+
+            {/* Card 4: Custom Mode */}
+            <div 
+              onClick={() => {
+                setActiveLobbyMode('custom');
+                setIsEditMode(true);
+                setIsSettingsOpen(true);
+              }}
+              className="bg-[#151230]/80 border border-indigo-500/20 hover:border-indigo-400/50 rounded-2xl p-6 cursor-pointer transition-all hover:-translate-y-1 shadow-lg hover:shadow-indigo-500/20 group"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
+                  <Edit3 className="w-5 h-5" />
+                </div>
+                <h3 className="text-lg font-black text-white">Custom Mode</h3>
+              </div>
+              <p className="text-xs text-slate-400 font-medium leading-relaxed">
+                Paste your own text and practice typing with custom paragraphs.
+              </p>
+            </div>
+
+            {/* Card 5: Text Practice */}
+            <div 
+              onClick={() => setActiveLobbyMode('text-practice')}
+              className="bg-[#151230]/80 border border-indigo-500/20 hover:border-indigo-400/50 rounded-2xl p-6 cursor-pointer transition-all hover:-translate-y-1 shadow-lg hover:shadow-indigo-500/20 group"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
+                  <BookOpen className="w-5 h-5" />
+                </div>
+                <h3 className="text-lg font-black text-white">Text Practice</h3>
+              </div>
+              <p className="text-xs text-slate-400 font-medium leading-relaxed">
+                Practice typing with various curated texts and code snippets.
+              </p>
+            </div>
+
+            {/* Card 6: Typing Games */}
+            <div 
+              onClick={() => setActiveLobbyMode('typing-games')}
+              className="bg-[#151230]/80 border border-indigo-500/20 hover:border-indigo-400/50 rounded-2xl p-6 cursor-pointer transition-all hover:-translate-y-1 shadow-lg hover:shadow-indigo-500/20 group"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-violet-500/20 flex items-center justify-center text-violet-400 group-hover:scale-110 transition-transform">
+                  <Gamepad2 className="w-5 h-5" />
+                </div>
+                <h3 className="text-lg font-black text-white">Typing Games</h3>
+              </div>
+              <p className="text-xs text-slate-400 font-medium leading-relaxed">
+                Play fun minigames that help improve your typing speed and muscle memory.
+              </p>
+            </div>
+          </div>
+        ) : activeLobbyMode === 'typing-games' ? (
+          <div className="w-full">
+            {activeGame ? (
+              <div className="w-full animate-in fade-in duration-300">
+                {activeGame === 'word-rain' && (
+                  <WordRainGame onBack={() => setActiveGame(null)} isAuthenticated={isAuthenticated} />
+                )}
+                {activeGame === 'speed-burst' && (
+                  <SpeedBurstGame onBack={() => setActiveGame(null)} isAuthenticated={isAuthenticated} />
+                )}
+                {activeGame === 'word-bomb' && (
+                  <WordBombGame onBack={() => setActiveGame(null)} isAuthenticated={isAuthenticated} />
+                )}
+                {activeGame === 'quote-typing' && (
+                  <QuoteTypingGame onBack={() => setActiveGame(null)} isAuthenticated={isAuthenticated} />
+                )}
+                {activeGame === 'code-rush' && (
+                  <CodeRushGame onBack={() => setActiveGame(null)} isAuthenticated={isAuthenticated} />
+                )}
+                {activeGame === 'letter-hunt' && (
+                  <LetterHuntGame onBack={() => setActiveGame(null)} isAuthenticated={isAuthenticated} />
+                )}
+                {activeGame === 'sky-strike' && (
+                  <SkyStrikeGame onBack={() => setActiveGame(null)} isAuthenticated={isAuthenticated} />
+                )}
+              </div>
+            ) : (
+              <div className="w-full text-center animate-in fade-in duration-300">
+                <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+                  <button 
+                    onClick={() => setActiveLobbyMode(null)} 
+                    className="flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
+                  >
+                    <ArrowLeft className="w-4 h-4" /> Back to Modes
+                  </button>
+                  {!isAuthenticated && (
+                    <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-1.5 text-[10px] text-amber-300 font-bold tracking-wide">
+                      🔑 Note: Log in/Sign up to save your best game scores!
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto mt-6">
+                  {/* Game 1: Word Rain */}
+                  <div 
+                    onClick={() => setActiveGame('word-rain')}
+                    className="bg-[#151230]/80 border border-indigo-500/20 hover:border-indigo-400/50 rounded-2xl p-6 cursor-pointer transition-all hover:-translate-y-1 shadow-lg hover:shadow-indigo-500/20 group text-left"
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
+                          <ShieldAlert className="w-5 h-5" />
+                        </div>
+                        <h3 className="text-lg font-black text-white">Word Rain</h3>
+                      </div>
+                      <span className="text-[9px] text-indigo-400 font-black uppercase tracking-wider bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">Arcade</span>
+                    </div>
+                    <p className="text-xs text-slate-400 font-medium leading-relaxed mb-4">
+                      Words are falling from the sky! Type them before they hit the ground. You have 3 lives!
+                    </p>
+                    <div className="border-t border-indigo-950/60 pt-3 flex justify-between items-center text-[10px] font-bold text-slate-500">
+                      <span>Best Score:</span>
+                      <span className="text-indigo-300 font-mono">
+                        {gameStats.bests['Word Rain'] ? `${gameStats.bests['Word Rain'].score} pts (${gameStats.bests['Word Rain'].wpm} WPM)` : 'No score yet'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Game 2: Speed Burst */}
+                  <div 
+                    onClick={() => setActiveGame('speed-burst')}
+                    className="bg-[#151230]/80 border border-indigo-500/20 hover:border-indigo-400/50 rounded-2xl p-6 cursor-pointer transition-all hover:-translate-y-1 shadow-lg hover:shadow-indigo-500/20 group text-left"
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform">
+                          <Hourglass className="w-5 h-5" />
+                        </div>
+                        <h3 className="text-lg font-black text-white">Speed Burst</h3>
+                      </div>
+                      <span className="text-[9px] text-amber-400 font-black uppercase tracking-wider bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">Sprint</span>
+                    </div>
+                    <p className="text-xs text-slate-400 font-medium leading-relaxed mb-4">
+                      A fast-paced 30-second single word sprint. Type as many words as you can!
+                    </p>
+                    <div className="border-t border-indigo-950/60 pt-3 flex justify-between items-center text-[10px] font-bold text-slate-500">
+                      <span>Best Speed:</span>
+                      <span className="text-indigo-300 font-mono">
+                        {gameStats.bests['Speed Burst'] ? `${gameStats.bests['Speed Burst'].wpm} WPM` : 'No score yet'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Game 3: Word Bomb */}
+                  <div 
+                    onClick={() => setActiveGame('word-bomb')}
+                    className="bg-[#151230]/80 border border-indigo-500/20 hover:border-indigo-400/50 rounded-2xl p-6 cursor-pointer transition-all hover:-translate-y-1 shadow-lg hover:shadow-indigo-500/20 group text-left"
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-rose-500/20 flex items-center justify-center text-rose-400 group-hover:scale-110 transition-transform">
+                          <Bomb className="w-5 h-5" />
+                        </div>
+                        <h3 className="text-lg font-black text-white">Word Bomb</h3>
+                      </div>
+                      <span className="text-[9px] text-rose-400 font-black uppercase tracking-wider bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">Survival</span>
+                    </div>
+                    <p className="text-xs text-slate-400 font-medium leading-relaxed mb-4">
+                      Type the word before the ticking bomb explodes! Countdowns get faster on hot streaks.
+                    </p>
+                    <div className="border-t border-indigo-950/60 pt-3 flex justify-between items-center text-[10px] font-bold text-slate-500">
+                      <span>Best Score:</span>
+                      <span className="text-indigo-300 font-mono">
+                        {gameStats.bests['Word Bomb'] ? `${gameStats.bests['Word Bomb'].score} pts` : 'No score yet'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Game 4: Quote Typing */}
+                  <div 
+                    onClick={() => setActiveGame('quote-typing')}
+                    className="bg-[#151230]/80 border border-indigo-500/20 hover:border-indigo-400/50 rounded-2xl p-6 cursor-pointer transition-all hover:-translate-y-1 shadow-lg hover:shadow-indigo-500/20 group text-left"
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
+                          <BookOpen className="w-5 h-5" />
+                        </div>
+                        <h3 className="text-lg font-black text-white">Quote Typing</h3>
+                      </div>
+                      <span className="text-[9px] text-cyan-400 font-black uppercase tracking-wider bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">Flow</span>
+                    </div>
+                    <p className="text-xs text-slate-400 font-medium leading-relaxed mb-4">
+                      Type beautiful quotes and sayings to improve your speed, rhythm, and punctuation.
+                    </p>
+                    <div className="border-t border-indigo-950/60 pt-3 flex justify-between items-center text-[10px] font-bold text-slate-500">
+                      <span>Best Speed:</span>
+                      <span className="text-indigo-300 font-mono">
+                        {gameStats.bests['Quote Typing'] ? `${gameStats.bests['Quote Typing'].wpm} WPM` : 'No score yet'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Game 5: Code Rush */}
+                  <div 
+                    onClick={() => setActiveGame('code-rush')}
+                    className="bg-[#151230]/80 border border-indigo-500/20 hover:border-indigo-400/50 rounded-2xl p-6 cursor-pointer transition-all hover:-translate-y-1 shadow-lg hover:shadow-indigo-500/20 group text-left"
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
+                          <Keyboard className="w-5 h-5" />
+                        </div>
+                        <h3 className="text-lg font-black text-white">Code Rush</h3>
+                      </div>
+                      <span className="text-[9px] text-emerald-400 font-black uppercase tracking-wider bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Coding</span>
+                    </div>
+                    <p className="text-xs text-slate-400 font-medium leading-relaxed mb-4">
+                      Type JavaScript, HTML, and CSS structures. Practice brackets, braces, and operators!
+                    </p>
+                    <div className="border-t border-indigo-950/60 pt-3 flex justify-between items-center text-[10px] font-bold text-slate-500">
+                      <span>Best Speed:</span>
+                      <span className="text-indigo-300 font-mono">
+                        {gameStats.bests['Code Rush'] ? `${gameStats.bests['Code Rush'].wpm} WPM` : 'No score yet'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Game 6: Letter Hunt */}
+                  <div 
+                    onClick={() => setActiveGame('letter-hunt')}
+                    className="bg-[#151230]/80 border border-indigo-500/20 hover:border-indigo-400/50 rounded-2xl p-6 cursor-pointer transition-all hover:-translate-y-1 shadow-lg hover:shadow-indigo-500/20 group text-left"
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-400 group-hover:scale-110 transition-transform">
+                          <Sparkles className="w-5 h-5" />
+                        </div>
+                        <h3 className="text-lg font-black text-white">Letter Hunt</h3>
+                      </div>
+                      <span className="text-[9px] text-pink-400 font-black uppercase tracking-wider bg-pink-500/10 px-2 py-0.5 rounded border border-pink-500/20">Reaction</span>
+                    </div>
+                    <p className="text-xs text-slate-400 font-medium leading-relaxed mb-4">
+                      Reaction-time character hunter. Click the keys on screen before the deadline!
+                    </p>
+                    <div className="border-t border-indigo-950/60 pt-3 flex justify-between items-center text-[10px] font-bold text-slate-500">
+                      <span>Best Score:</span>
+                      <span className="text-indigo-300 font-mono">
+                        {gameStats.bests['Letter Hunt'] ? `${gameStats.bests['Letter Hunt'].score} pts (${gameStats.bests['Letter Hunt'].wpm} WPM)` : 'No score yet'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Game 7: Sky Strike */}
+                  <div 
+                    onClick={() => setActiveGame('sky-strike')}
+                    className="bg-[#151230]/80 border border-indigo-500/20 hover:border-indigo-400/50 rounded-2xl p-6 cursor-pointer transition-all hover:-translate-y-1 shadow-lg hover:shadow-indigo-500/20 group text-left"
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
+                          <Zap className="w-5 h-5 fill-current" />
+                        </div>
+                        <h3 className="text-lg font-black text-white">Sky Strike</h3>
+                      </div>
+                      <span className="text-[9px] text-cyan-400 font-black uppercase tracking-wider bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">Shooter</span>
+                    </div>
+                    <p className="text-xs text-slate-400 font-medium leading-relaxed mb-4">
+                      Type words to lock onto alien spaceships and fire lasers to blast them out of the sky!
+                    </p>
+                    <div className="border-t border-indigo-950/60 pt-3 flex justify-between items-center text-[10px] font-bold text-slate-500">
+                      <span>Best Score:</span>
+                      <span className="text-indigo-300 font-mono">
+                        {gameStats.bests['Sky Strike'] ? `${gameStats.bests['Sky Strike'].score} pts (${gameStats.bests['Sky Strike'].wpm} WPM)` : 'No score yet'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="w-full">
+            <div className="mb-4">
+               <button 
+                 onClick={() => setActiveLobbyMode(null)} 
+                 className="flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
+               >
+                 <ArrowLeft className="w-4 h-4" /> Back to Modes
+               </button>
+            </div>
+            {!isFinished ? (
           <>
             {/* Top Bar controls */}
             <div className="bg-[#151230]/65 border border-indigo-500/15 rounded-2xl px-5 py-3.5 mb-3 flex flex-wrap gap-4 items-center justify-between text-xs font-semibold text-slate-400 relative">
@@ -1131,6 +1507,8 @@ export default function TypingTest() {
             ))}
           </div>
         </div>
+        </div>
+        )}
       </main>
 
       <Footer />
