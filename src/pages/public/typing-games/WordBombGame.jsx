@@ -92,6 +92,7 @@ export default function WordBombGame({ onBack, isAuthenticated }) {
     }
   };
 
+  const containerRef = useRef(null);
   const inputRef = useRef(null);
   const timerRef = useRef(null);
 

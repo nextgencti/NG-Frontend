@@ -100,13 +100,17 @@ export default function VerifyOTP() {
        toast.success(isSignup ? 'Email verified! Let\'s complete your profile.' : 'Successfully logged in!');
 
       
-      if (!user.profileComplete) {
-         navigate('/complete-profile');
-      } else if (user.role === 'student' && user.status === 'pending') {
-         navigate('/pending-approval');
-      } else {
-         navigate(user.role === 'admin' ? '/admin' : '/dashboard');
-      }
+       if (!user.profileComplete) {
+          navigate('/complete-profile');
+       } else if (user.role === 'student' && user.status === 'pending') {
+          navigate('/pending-approval');
+       } else if (user.role === 'superadmin') {
+          navigate('/sa-pin');
+       } else if (user.role === 'admin') {
+          navigate('/admin-pin');
+       } else {
+          navigate('/dashboard');
+       }
     } catch (error) {
       setIsLoading(false);
       console.error(error);

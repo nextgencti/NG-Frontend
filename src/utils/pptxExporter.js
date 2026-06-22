@@ -166,7 +166,10 @@ export const exportTestToPPTX = async (test, questions, options = {}) => {
       // True/False format: Render as 1x2 large horizontal cards
       optKeys.forEach((key, optIdx) => {
         const optionText = q.options[key];
-        const isCorrect = q.correctAnswer === key;
+        const isCorrect = q.correctAnswer === key || 
+                          (q.correctAnswer && 
+                           (q.correctAnswer.toString().toUpperCase() === key || 
+                            q.correctAnswer.toString().toUpperCase() === optionText.toString().toUpperCase()));
         const highlight = isTeachingMode && isCorrect;
 
         const cardBg = highlight ? '064E3B' : '25225E'; // Emerald green vs Elevated Indigo
@@ -227,7 +230,10 @@ export const exportTestToPPTX = async (test, questions, options = {}) => {
       // Standard MCQ 4 Options: Render as 2x2 grid cards
       optKeys.forEach((key, optIdx) => {
         const optionText = q.options[key];
-        const isCorrect = q.correctAnswer === key;
+        const isCorrect = q.correctAnswer === key || 
+                          (q.correctAnswer && 
+                           (q.correctAnswer.toString().toUpperCase() === key || 
+                            q.correctAnswer.toString().toUpperCase() === optionText.toString().toUpperCase()));
         const highlight = isTeachingMode && isCorrect;
 
         const cardBg = highlight ? '064E3B' : '25225E'; // Emerald green vs Elevated Indigo

@@ -27,7 +27,26 @@ export const AuthProvider = ({ children }) => {
       const adminVerified = localStorage.getItem('admin_verified');
 
       if (storedUser && token) {
-        setCurrentUser(JSON.parse(storedUser));
+        const userObj = JSON.parse(storedUser);
+        setCurrentUser(userObj);
+
+        // Background profile sync to fetch latest approval status / rollNumber
+        const profileUrl = userObj.role === 'admin' || userObj.role === 'superadmin' 
+          ? '/admin/profile' 
+          : '/student/profile';
+          
+        api.get(profileUrl)
+          .then(res => {
+            if (res.data.success && res.data.user) {
+              const freshUser = res.data.user;
+              localStorage.setItem('user', JSON.stringify(freshUser));
+              setCurrentUser(freshUser);
+              console.log('[AUTH] Profile synced successfully');
+            }
+          })
+          .catch(err => {
+            console.warn('[AUTH] Profile background sync failed:', err.message);
+          });
       }
       if (saVerified === 'true') {
         setIsSuperAdminVerified(true);

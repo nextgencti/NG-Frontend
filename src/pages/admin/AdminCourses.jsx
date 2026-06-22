@@ -261,7 +261,13 @@ export default function AdminCourses() {
                           }`}>
                             {course.status}
                           </div>
-                          <div className="text-sm font-black text-slate-900 tracking-tight">₹{course.fees}</div>
+                          <div className="text-sm font-black text-slate-900 tracking-tight">
+                            {course.courseFeeType === 'monthly' 
+                              ? `₹${course.monthlyFee || course.fees}/mo` 
+                              : course.courseFeeType === 'both' 
+                                ? `₹${course.fees || course.fixedFee} / ₹${course.monthlyFee}/mo` 
+                                : `₹${course.fees}`}
+                          </div>
                         </div>
 
                         {isSuperAdmin && course.instituteName && (

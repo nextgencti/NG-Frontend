@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, ClipboardList, Clock, CheckCircle2, Trash2, Edit2, BookOpen, BarChart2, Loader2, Trophy, Globe, Presentation } from 'lucide-react';
+import { Plus, Search, ClipboardList, Clock, CheckCircle2, Trash2, Edit2, BookOpen, BarChart2, Loader2, Trophy, Globe, Presentation, X, Play, Download, Sparkles } from 'lucide-react';
 import AddTestModal from '../../components/admin/AddTestModal';
 import api from '../../lib/axios';
 import toast from 'react-hot-toast';
@@ -24,6 +24,13 @@ export default function AdminTests() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+
+  // Presentation & PPT Modal State
+  const [selectedTestForPPT, setSelectedTestForPPT] = useState(null);
+  const [isPPTModalOpen, setIsPPTModalOpen] = useState(false);
+  const [isPPTExporting, setIsPPTExporting] = useState(false);
+  const [isLoadingPPTData, setIsLoadingPPTData] = useState(false);
+  const [pptQuestions, setPptQuestions] = useState([]);
 
   useEffect(() => {
     fetchTests();
@@ -89,30 +96,48 @@ export default function AdminTests() {
     }
   };
 
-  const handleQuickExportPPT = async (testItem) => {
-    const toastId = toast.loading(`Preparing PowerPoint slides for "${testItem.title}"... 🎥`);
+  const handleOpenPPTModal = async (testItem) => {
+    setSelectedTestForPPT(testItem);
+    setIsPPTModalOpen(true);
+    setIsLoadingPPTData(true);
+    setPptQuestions([]);
     try {
       const response = await api.get(`/admin/tests/${testItem.id}/full`);
       if (response.data.success) {
-        const fullTest = response.data.test;
-        const questions = response.data.questions || [];
-        
-        if (questions.length === 0) {
-          toast.error('This test has no questions to export!', { id: toastId });
-          return;
-        }
-
-        const { exportTestToPPTX } = await import('../../utils/pptxExporter');
-        await exportTestToPPTX(fullTest, questions, { isTeachingMode: false });
-        
-        toast.success('PowerPoint slideshow downloaded successfully!', { id: toastId });
+        setPptQuestions(response.data.questions || []);
       } else {
-        toast.error('Failed to retrieve test questions.', { id: toastId });
+        toast.error('Failed to retrieve test questions.');
+        setIsPPTModalOpen(false);
       }
     } catch (error) {
-      console.error('Error in quick PPT export:', error);
-      toast.error('Failed to export PowerPoint slideshow.', { id: toastId });
+      console.error('Error fetching questions for PPT:', error);
+      toast.error('Failed to fetch test details.');
+      setIsPPTModalOpen(false);
+    } finally {
+      setIsLoadingPPTData(false);
     }
+  };
+
+  const handleDownloadPPT = async (isTeachingMode) => {
+    if (!selectedTestForPPT || pptQuestions.length === 0) return;
+    setIsPPTExporting(true);
+    const toastId = toast.loading(`Preparing PowerPoint slides... 🎥`);
+    try {
+      const { exportTestToPPTX } = await import('../../utils/pptxExporter');
+      await exportTestToPPTX(selectedTestForPPT, pptQuestions, { isTeachingMode });
+      toast.success('PowerPoint slideshow downloaded successfully!', { id: toastId });
+    } catch (error) {
+      console.error('Error in PPT export:', error);
+      toast.error('Failed to export PowerPoint slideshow.', { id: toastId });
+    } finally {
+      setIsPPTExporting(false);
+    }
+  };
+
+  const handleLaunchWebPresentation = () => {
+    if (!selectedTestForPPT) return;
+    window.open(`/admin/tests/${selectedTestForPPT.id}/present`, '_blank');
+    setIsPPTModalOpen(false);
   };
 
   const upcomingCount = tests.filter(t => t.status === 'upcoming').length;
@@ -305,9 +330,9 @@ export default function AdminTests() {
                         </button>
                         {test.questions > 0 && (
                           <button
-                            onClick={() => handleQuickExportPPT(test)}
+                            onClick={() => handleOpenPPTModal(test)}
                             className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all cursor-pointer"
-                            title="Quick Export PPT"
+                            title="Presentation & Export Hub"
                           >
                             <Presentation className="w-4 h-4" />
                           </button>
@@ -354,6 +379,108 @@ export default function AdminTests() {
           Analysis: {filtered.length} of {tests.length} Operational Units
         </div>
       </div>
+
+      {/* Presentation & PPT Modal */}
+      {isPPTModalOpen && selectedTestForPPT && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white border border-slate-150 rounded-3xl w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-300 overflow-hidden">
+            
+            {/* Header */}
+            <div className="px-8 pt-8 pb-6 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center border border-indigo-100 shadow-sm text-indigo-600">
+                  <Presentation className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Presentation Hub</h3>
+                  <p className="text-[9.5px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Choose export format or presentation mode</p>
+                </div>
+              </div>
+              <button onClick={() => setIsPPTModalOpen(false)} className="text-slate-400 hover:text-slate-700 cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {isLoadingPPTData ? (
+              <div className="flex flex-col items-center justify-center py-20 gap-3">
+                <Loader2 className="w-6 h-6 text-primary-500 animate-spin" />
+                <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 animate-pulse">Retrieving test database...</p>
+              </div>
+            ) : (
+              <div className="p-8 space-y-4">
+                {/* Option 1: Exam PPT */}
+                <button
+                  type="button"
+                  disabled={isPPTExporting}
+                  onClick={() => handleDownloadPPT(false)}
+                  className="w-full p-4 rounded-2xl border border-slate-100 bg-slate-50/30 hover:bg-slate-50 hover:border-slate-200 text-left flex items-start gap-4 transition-all group active:scale-[0.98] disabled:opacity-50 font-bold"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-300">
+                    <Download className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <div className="flex items-center justify-between">
+                      <span className="block text-[11px] font-black text-slate-800 uppercase tracking-wide">Download Exam PPT</span>
+                      <span className="text-[8px] font-bold text-blue-600 bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded uppercase tracking-wider">Default</span>
+                    </div>
+                    <span className="block text-[10px] text-slate-400 font-medium mt-1 normal-case leading-relaxed">Generates standard slides. Answers are grouped into a compact answer key slide at the end.</span>
+                  </div>
+                </button>
+
+                {/* Option 2: Solution PPT */}
+                <button
+                  type="button"
+                  disabled={isPPTExporting}
+                  onClick={() => handleDownloadPPT(true)}
+                  className="w-full p-4 rounded-2xl border border-slate-100 bg-slate-50/30 hover:bg-slate-50 hover:border-slate-200 text-left flex items-start gap-4 transition-all group active:scale-[0.98] disabled:opacity-50 font-bold"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-300">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <div className="flex items-center justify-between">
+                      <span className="block text-[11px] font-black text-slate-800 uppercase tracking-wide">Download Solution PPT</span>
+                      <span className="text-[8px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded uppercase tracking-wider">Answers Highlighted</span>
+                    </div>
+                    <span className="block text-[10px] text-slate-400 font-medium mt-1 normal-case leading-relaxed">Highlights the correct answer on every question slide in emerald green. Ideal for study sheets or screen shares.</span>
+                  </div>
+                </button>
+
+                {/* Option 3: Launch Web PPT */}
+                <button
+                  type="button"
+                  disabled={isPPTExporting}
+                  onClick={handleLaunchWebPresentation}
+                  className="w-full p-4 rounded-2xl border border-indigo-100 bg-indigo-50/20 hover:bg-indigo-50 hover:border-indigo-200 text-left flex items-start gap-4 transition-all group active:scale-[0.98] font-bold"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-indigo-500 text-white border border-indigo-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-300 shadow-sm shadow-indigo-500/20">
+                    <Play className="w-5 h-5 fill-white ml-0.5" />
+                  </div>
+                  <div className="flex-1 text-left font-bold">
+                    <div className="flex items-center justify-between">
+                      <span className="block text-[11px] font-black text-slate-800 uppercase tracking-wide">Launch Web Presentation</span>
+                      <span className="text-[8px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded uppercase tracking-wider font-extrabold animate-pulse">Web PPT</span>
+                    </div>
+                    <span className="block text-[10px] text-slate-400 font-medium mt-1 normal-case leading-relaxed">Open interactive browser slide presenter with dynamic answer reveal shortcuts and custom poll timers.</span>
+                  </div>
+                </button>
+              </div>
+            )}
+
+            {/* Footer */}
+            <div className="px-8 py-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setIsPPTModalOpen(false)}
+                className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-slate-700 bg-white border border-slate-200 rounded-xl transition-all active:scale-95 shadow-sm cursor-pointer"
+              >
+                Close Hub
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }

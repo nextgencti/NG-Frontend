@@ -157,6 +157,17 @@ export default function UpdateProfileModal({ isOpen, onClose }) {
 
             {/* Inputs */}
             <div className="space-y-5">
+              {currentUser?.role === 'student' && currentUser?.rollNumber && (
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">
+                    Student Roll Number (ID)
+                  </label>
+                  <div className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono font-black text-slate-500 select-all tracking-wider">
+                    {currentUser.rollNumber}
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-2">
                   Full Name

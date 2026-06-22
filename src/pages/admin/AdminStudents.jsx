@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Plus, MoreHorizontal, UserCheck, UserX, CheckCircle2, Clock, Trash, AlertTriangle, X, CreditCard, Users, ShieldAlert } from 'lucide-react';
+import { Search, Filter, Plus, MoreHorizontal, UserCheck, UserX, CheckCircle2, Clock, Trash, AlertTriangle, X, CreditCard, Users, ShieldAlert, Award } from 'lucide-react';
 import api from '../../lib/axios';
 import toast from 'react-hot-toast';
 import AddStudentModal from '../../components/admin/AddStudentModal';
 import IDCard from '../../components/shared/IDCard';
+import ManageCertificatesModal from '../../components/admin/ManageCertificatesModal';
+import { useAuth } from '../../context/AuthContext';
 
 export default function AdminStudents() {
+  const { currentUser } = useAuth();
+  const isSuperAdmin = currentUser?.role === 'superadmin';
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all'); // 'all' or 'pending'
   const [selectedCourse, setSelectedCourse] = useState('All');
@@ -14,6 +19,7 @@ export default function AdminStudents() {
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedStudentForID, setSelectedStudentForID] = useState(null);
+  const [selectedStudentForCert, setSelectedStudentForCert] = useState(null);
   const [studentToDelete, setStudentToDelete] = useState(null);
   const [deletePin, setDeletePin] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
@@ -346,6 +352,15 @@ export default function AdminStudents() {
                             <UserCheck className="w-4 h-4" />
                           </button>
                         )}
+                        {isSuperAdmin && (
+                          <button 
+                            onClick={() => setSelectedStudentForCert(student)}
+                            className="p-1.5 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-all cursor-pointer"
+                            title="Award Certificate"
+                          >
+                            <Award className="w-4 h-4" />
+                          </button>
+                        )}
                         <button 
                           onClick={() => setSelectedStudentForID(student)}
                           className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all cursor-pointer"
@@ -391,6 +406,13 @@ export default function AdminStudents() {
           onClose={() => setSelectedStudentForID(null)} 
         />
       )}
+
+      <ManageCertificatesModal
+        isOpen={!!selectedStudentForCert}
+        onClose={() => setSelectedStudentForCert(null)}
+        student={selectedStudentForCert}
+        courses={courses}
+      />
 
       {/* Delete Confirmation Modal */}
       {studentToDelete && (

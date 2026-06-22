@@ -8,7 +8,16 @@ export default function AddCourseModal({ isOpen, onClose, onCourseAdded, institu
   const { currentUser } = useAuth();
   const isSuperAdmin = currentUser?.role === 'superadmin';
 
-  const [formData, setFormData] = useState({ name: '', duration: '', fees: '', status: 'active', instituteId: '' });
+  const [formData, setFormData] = useState({ 
+    name: '', 
+    duration: '', 
+    fees: '', 
+    status: 'active', 
+    instituteId: '',
+    courseFeeType: 'fixed',
+    monthlyFee: '',
+    fixedFee: ''
+  });
   const [thumbnail, setThumbnail] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -33,10 +42,15 @@ export default function AddCourseModal({ isOpen, onClose, onCourseAdded, institu
     }
     setLoading(true);
 
+    const finalFees = formData.courseFeeType === 'monthly' ? formData.monthlyFee : (formData.fixedFee || formData.fees);
+
     const submitData = new FormData();
     submitData.append('name', formData.name);
     submitData.append('duration', formData.duration);
-    submitData.append('fees', formData.fees);
+    submitData.append('fees', finalFees);
+    submitData.append('courseFeeType', formData.courseFeeType);
+    submitData.append('monthlyFee', formData.courseFeeType === 'fixed' ? '0' : formData.monthlyFee);
+    submitData.append('fixedFee', formData.courseFeeType === 'monthly' ? '0' : (formData.fixedFee || finalFees));
     submitData.append('status', formData.status);
     if (isSuperAdmin) {
       submitData.append('instituteId', formData.instituteId);
@@ -122,14 +136,56 @@ export default function AddCourseModal({ isOpen, onClose, onCourseAdded, institu
               <input type="text" name="name" required placeholder="Course Name (e.g., Web Development)" value={formData.name} onChange={handleChange} className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all placeholder:text-slate-400 placeholder:uppercase placeholder:font-bold" />
             </div>
             
-            <div className="flex gap-6">
-              <div className="relative flex-1 group">
-                <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-primary-600 transition-colors" />
-                <input type="text" name="duration" required placeholder="Duration (e.g., 3 Months)" value={formData.duration} onChange={handleChange} className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all placeholder:text-slate-400 placeholder:uppercase placeholder:font-bold" />
-              </div>
-              <div className="relative flex-1 group">
+            <div className="relative group">
+              <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-primary-600 transition-colors" />
+              <input type="text" name="duration" required placeholder="Duration (e.g., 3 Months)" value={formData.duration} onChange={handleChange} className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all placeholder:text-slate-400 placeholder:uppercase placeholder:font-bold" />
+            </div>
+
+            <div className="space-y-4 pt-1">
+              <label className="text-[10px] font-bold text-slate-400 block uppercase tracking-widest ml-0.5">Fee Structure Model</label>
+              <div className="relative group">
                 <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-primary-600 transition-colors" />
-                <input type="number" name="fees" required placeholder="Course Fees" value={formData.fees} onChange={handleChange} className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all placeholder:text-slate-400 placeholder:uppercase placeholder:font-bold" />
+                <select
+                  name="courseFeeType"
+                  value={formData.courseFeeType}
+                  onChange={handleChange}
+                  className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all appearance-none cursor-pointer uppercase font-bold"
+                >
+                  <option value="fixed">Fixed Course Fee Only</option>
+                  <option value="monthly">Monthly Installments Only</option>
+                  <option value="both">Both Options (Monthly / Fixed)</option>
+                </select>
+              </div>
+
+              <div className="flex gap-4">
+                {(formData.courseFeeType === 'fixed' || formData.courseFeeType === 'both') && (
+                  <div className="relative flex-1 group">
+                    <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-primary-600 transition-colors" />
+                    <input 
+                      type="number" 
+                      name="fixedFee" 
+                      required 
+                      placeholder="Total Fixed Fee" 
+                      value={formData.fixedFee} 
+                      onChange={handleChange} 
+                      className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all placeholder:text-slate-400 placeholder:uppercase placeholder:font-bold" 
+                    />
+                  </div>
+                )}
+                {(formData.courseFeeType === 'monthly' || formData.courseFeeType === 'both') && (
+                  <div className="relative flex-1 group">
+                    <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-primary-600 transition-colors" />
+                    <input 
+                      type="number" 
+                      name="monthlyFee" 
+                      required 
+                      placeholder="Monthly Installment Fee" 
+                      value={formData.monthlyFee} 
+                      onChange={handleChange} 
+                      className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all placeholder:text-slate-400 placeholder:uppercase placeholder:font-bold" 
+                    />
+                  </div>
+                )}
               </div>
             </div>
 

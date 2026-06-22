@@ -1,11 +1,16 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation, useParams } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import PageSkeleton from './components/shared/PageSkeleton';
 import HomeSkeleton from './components/shared/HomeSkeleton';
 import ScrollToTop from './components/ScrollToTop';
+
+const NavigateToClassroom = () => {
+  const { courseId } = useParams();
+  return <Navigate to={`/dashboard/courses/${courseId}/classroom`} replace />;
+};
 
 const RouteSuspense = ({ children }) => {
   const location = useLocation();
@@ -65,6 +70,7 @@ const AdminTestResults = lazy(() => import('./pages/admin/AdminTestResults'));
 const AdminEditTest = lazy(() => import('./pages/admin/AdminEditTest'));
 const AdminPin = lazy(() => import('./pages/admin/AdminPin'));
 const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'));
+const AdminTestPresenter = lazy(() => import('./pages/admin/AdminTestPresenter'));
 
 // Super Admin Pages (Lazy)
 const SuperAdminOverview = lazy(() => import('./pages/superadmin/SuperAdminOverview'));
@@ -73,6 +79,8 @@ const SuperAdminAdmins = lazy(() => import('./pages/superadmin/SuperAdminAdmins'
 const PublicLeads = lazy(() => import('./pages/superadmin/PublicLeads'));
 const SuperAdminPin = lazy(() => import('./pages/superadmin/SuperAdminPin'));
 const SuperAdminControls = lazy(() => import('./pages/superadmin/SuperAdminControls'));
+const StudentsActivity = lazy(() => import('./pages/superadmin/StudentsActivity'));
+
 
 import { useAuth } from './context/AuthContext';
 
@@ -131,6 +139,8 @@ function App() {
                 <Route index element={<StudentOverview />} />
                 <Route path="courses" element={<MyCourses />} />
                 <Route path="courses/:courseId/classroom" element={<StudentClassroom />} />
+                <Route path="my-courses" element={<Navigate to="/dashboard/courses" replace />} />
+                <Route path="my-courses/:courseId" element={<NavigateToClassroom />} />
                 <Route path="tests" element={<Tests />} />
                 <Route path="tests/:testId/take" element={<TakeTest />} />
                 <Route path="activity" element={<Activity />} />
@@ -147,6 +157,7 @@ function App() {
                   <AdminVerifiedRoute />
                 </ProtectedRoute>
               }>
+                <Route path="tests/:testId/present" element={<AdminTestPresenter />} />
                 <Route element={<DashboardLayout />}>
                   <Route index element={<AdminOverview />} />
                   <Route path="students" element={<AdminStudents />} />
@@ -174,6 +185,7 @@ function App() {
                   <Route path="admins" element={<SuperAdminAdmins />} />
                   <Route path="leads" element={<PublicLeads />} />
                   <Route path="controls" element={<SuperAdminControls />} />
+                  <Route path="activity" element={<StudentsActivity />} />
                 </Route>
               </Route>
             </Route>
