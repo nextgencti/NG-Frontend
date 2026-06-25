@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useBlocker } from 'react-router-dom';
 import JoditEditor from 'jodit-react';
 import { 
   Plus, 
@@ -34,7 +34,32 @@ export default function AdminCourseContent() {
   const editor = useRef(null);
   const [course, setCourse] = useState(null);
   const [modules, setModules] = useState([]);
+  const [savedCurriculumJson, setSavedCurriculumJson] = useState('[]');
   const [loading, setLoading] = useState(true);
+
+  const isDirty = JSON.stringify(modules) !== savedCurriculumJson;
+
+  // React Router blocker for internal client-side routes navigation
+  useBlocker(
+    ({ currentLocation, nextLocation }) => {
+      if (isDirty && currentLocation.pathname !== nextLocation.pathname) {
+        return !window.confirm("You have unpublished changes. Are you sure you want to leave without publishing?");
+      }
+      return false;
+    }
+  );
+
+  // Browser-level event blocker for reloads, tab closure, and external link clicks
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = ''; // Required standard for modern browser compatibility
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty]);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [expandedModules, setExpandedModules] = useState({});
@@ -135,7 +160,9 @@ export default function AdminCourseContent() {
       const response = await api.get('/admin/courses');
       const foundCourse = response.data.courses.find(c => c.id === courseId);
       setCourse(foundCourse);
-      setModules(foundCourse?.curriculum || []);
+      const curriculum = foundCourse?.curriculum || [];
+      setModules(curriculum);
+      setSavedCurriculumJson(JSON.stringify(curriculum));
     } catch (error) {
       toast.error('Failed to load course content.');
     } finally {
@@ -180,6 +207,7 @@ export default function AdminCourseContent() {
       await api.put(`/admin/courses/${courseId}/curriculum`, {
         curriculum: modules
       });
+      setSavedCurriculumJson(JSON.stringify(modules));
       toast.success('Course updated successfully!', { id: toastId });
     } catch (error) {
       toast.error('Failed to publish changes.', { id: toastId });
