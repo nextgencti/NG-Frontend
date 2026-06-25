@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useParams, useNavigate, useBlocker } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import JoditEditor from 'jodit-react';
 import { 
   Plus, 
@@ -39,15 +39,15 @@ export default function AdminCourseContent() {
 
   const isDirty = JSON.stringify(modules) !== savedCurriculumJson;
 
-  // React Router blocker for internal client-side routes navigation
-  useBlocker(
-    ({ currentLocation, nextLocation }) => {
-      if (isDirty && currentLocation.pathname !== nextLocation.pathname) {
-        return !window.confirm("You have unpublished changes. Are you sure you want to leave without publishing?");
+  const handleBack = () => {
+    if (isDirty) {
+      if (window.confirm("You have unpublished changes. Are you sure you want to leave without publishing?")) {
+        navigate('/admin/courses');
       }
-      return false;
+    } else {
+      navigate('/admin/courses');
     }
-  );
+  };
 
   // Browser-level event blocker for reloads, tab closure, and external link clicks
   useEffect(() => {
@@ -316,7 +316,7 @@ export default function AdminCourseContent() {
 
       {/* Header */}
       <div className="flex items-center gap-4 mb-1">
-        <button onClick={() => navigate('/admin/courses')} className="w-9 h-9 flex items-center justify-center rounded-full bg-white border border-[#E5E7EB] text-[#6B7280] hover:text-primary-600 transition-all shadow-sm">
+        <button onClick={handleBack} className="w-9 h-9 flex items-center justify-center rounded-full bg-white border border-[#E5E7EB] text-[#6B7280] hover:text-primary-600 transition-all shadow-sm">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div>
