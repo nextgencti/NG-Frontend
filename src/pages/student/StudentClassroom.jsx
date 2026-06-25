@@ -318,7 +318,7 @@ export default function StudentClassroom() {
                                 {mIdx + 1}.{lIdx + 1} {lesson.title}
                               </p>
                               <p className="text-[7.5px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
-                                {lesson.type === 'video' ? 'Video Class' : lesson.type === 'pdf' ? 'Syllabus PDF' : lesson.type === 'test' ? 'Assessment' : 'Class Note'}
+                                {lesson.type === 'video' ? 'Video Class' : lesson.type === 'pdf' ? 'Syllabus PDF' : lesson.type === 'image' ? 'Image Graphic' : lesson.type === 'test' ? 'Assessment' : 'Class Note'}
                               </p>
                             </div>
                           </button>
@@ -457,10 +457,11 @@ export default function StudentClassroom() {
                       <span className={`px-2.5 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest shrink-0 border ${
                         activeLesson.type === 'pdf' ? 'bg-blue-50 text-blue-700 border-blue-100/50'
                           : activeLesson.type === 'video' ? 'bg-purple-50 text-purple-700 border-purple-100/50 animate-pulse'
-                            : activeLesson.type === 'test' ? 'bg-rose-50 text-rose-700 border-rose-100/50'
-                            : 'bg-amber-50 text-amber-700 border-amber-100/50'
+                            : activeLesson.type === 'image' ? 'bg-emerald-50 text-emerald-700 border-emerald-100/50'
+                              : activeLesson.type === 'test' ? 'bg-rose-50 text-rose-700 border-rose-100/50'
+                                : 'bg-amber-50 text-amber-700 border-amber-100/50'
                       }`}>
-                        {activeLesson.type === 'pdf' ? '📄 Syllabus PDF' : activeLesson.type === 'video' ? '🎥 Lecture Video' : activeLesson.type === 'test' ? '📝 Test Exam' : '📝 Notes Sheet'}
+                        {activeLesson.type === 'pdf' ? '📄 Syllabus PDF' : activeLesson.type === 'video' ? '🎥 Lecture Video' : activeLesson.type === 'image' ? '🖼️ Image Graphic' : activeLesson.type === 'test' ? '📝 Test Exam' : '📝 Notes Sheet'}
                       </span>
                       <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Lesson {currentModuleIndex + 1}.{currentLessonIndex + 1}</p>
                     </div>
@@ -511,6 +512,21 @@ export default function StudentClassroom() {
                         style={{ height: 'calc(100vh - 280px)', minHeight: '450px' }}
                         title="PDF Viewer"
                       />
+                    </div>
+                  )}
+
+                  {activeLesson.type === 'image' && activeLesson.url && (
+                    <div className="flex flex-col">
+                      <div className="flex items-center px-6 py-3.5 bg-slate-50/50 border-b border-slate-100">
+                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest truncate">{activeLesson.title}</span>
+                      </div>
+                      <div className="p-6 bg-slate-50 flex items-center justify-center min-h-[450px]">
+                        <img 
+                          src={activeLesson.url} 
+                          alt={activeLesson.title} 
+                          className="max-h-[calc(100vh-280px)] object-contain rounded-xl shadow-lg border border-slate-200" 
+                        />
+                      </div>
                     </div>
                   )}
 

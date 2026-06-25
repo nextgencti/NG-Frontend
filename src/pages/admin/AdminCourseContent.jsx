@@ -22,7 +22,8 @@ import {
   Upload, 
   Video,
   ClipboardList,
-  CloudUpload
+  CloudUpload,
+  Image
 } from 'lucide-react';
 import api from '../../lib/axios';
 import toast from 'react-hot-toast';
@@ -394,6 +395,7 @@ export default function AdminCourseContent() {
                   <select value={newLesson.type} onChange={(e) => setNewLesson({...newLesson, type: e.target.value})} className="w-full px-3 py-3 bg-[#F8FAFC] border border-[#E5E7EB] rounded-[12px] text-[14px] outline-none cursor-pointer">
                     <option value="video">🎥 Video</option>
                     <option value="pdf">📄 PDF Doc</option>
+                    <option value="image">🖼️ Image (PNG, JPG)</option>
                     <option value="note">📝 Text Note</option>
                     <option value="test">📝 Test / Exam</option>
                   </select>
@@ -432,12 +434,12 @@ export default function AdminCourseContent() {
                 <div className="space-y-4 bg-[#F8FAFC] p-5 rounded-[16px] border border-[#E5E7EB]">
                   <div className="flex items-center justify-between">
                     <label className="text-[10px] font-bold text-[#94A3B8] uppercase ml-1 tracking-wider">Resource Link / File</label>
-                    {newLesson.type === 'pdf' && (
+                    {(newLesson.type === 'pdf' || newLesson.type === 'image') && (
                       <div className="relative">
-                        <input type="file" accept=".pdf" onChange={handleFileUpload} className="absolute inset-0 opacity-0 cursor-pointer" disabled={isUploading} />
+                        <input type="file" accept={newLesson.type === 'pdf' ? '.pdf' : 'image/*'} onChange={handleFileUpload} className="absolute inset-0 opacity-0 cursor-pointer" disabled={isUploading} />
                         <button type="button" className={`flex items-center gap-2 px-3 py-1.5 bg-white border border-[#E5E7EB] rounded-[8px] text-[11px] font-bold text-primary-600 hover:bg-primary-50 transition-all shadow-sm ${isUploading ? 'opacity-50' : ''}`}>
                           {isUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-                          {isUploading ? 'Uploading...' : 'Upload PDF'}
+                          {isUploading ? 'Uploading...' : `Upload ${newLesson.type === 'pdf' ? 'PDF' : 'Image'}`}
                         </button>
                       </div>
                     )}
@@ -496,7 +498,7 @@ export default function AdminCourseContent() {
           <div className="p-4 border-b border-[#F1F5F9] flex justify-between items-center bg-[#F8FAFC]">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-white shadow-sm border border-[#E5E7EB] flex items-center justify-center text-[#4F46E5]">
-                {previewLesson.type === 'video' ? <PlayCircle className="w-6 h-6" /> : <FileText className="w-6 h-6" />}
+                {previewLesson.type === 'video' ? <PlayCircle className="w-6 h-6" /> : previewLesson.type === 'image' ? <Image className="w-6 h-6" /> : <FileText className="w-6 h-6" />}
               </div>
               <div>
                 <h3 className="text-base font-bold text-[#111827] leading-tight">{previewLesson.title}</h3>
@@ -515,6 +517,14 @@ export default function AdminCourseContent() {
                 <Video className="w-16 h-16 opacity-20" />
                 <p className="text-[12px] font-bold opacity-60 uppercase tracking-widest">Video Stream Integration</p>
                 <a href={previewLesson.url} target="_blank" rel="noreferrer" className="px-6 py-2.5 bg-[#4F46E5] rounded-full text-[13px] font-bold hover:bg-[#4338CA] transition-all shadow-lg shadow-[#4F46E5]/30">Open Stream</a>
+              </div>
+            ) : previewLesson.type === 'image' ? (
+              <div className="flex flex-col items-center justify-center bg-[#F8FAFC] p-6 rounded-[16px] border border-[#E5E7EB] min-h-[300px]">
+                <img 
+                  src={previewLesson.url} 
+                  alt={previewLesson.title} 
+                  className="max-h-[50vh] object-contain rounded-lg shadow-md border border-slate-200"
+                />
               </div>
             ) : (
               <div className="flex flex-col h-[65vh]">
