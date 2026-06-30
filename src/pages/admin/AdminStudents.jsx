@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Plus, MoreHorizontal, UserCheck, UserX, CheckCircle2, Clock, Trash, AlertTriangle, X, CreditCard, Users, ShieldAlert, Award } from 'lucide-react';
+import { Search, Filter, Plus, MoreHorizontal, UserCheck, UserX, CheckCircle2, Clock, Trash, AlertTriangle, X, CreditCard, Users, ShieldAlert, Award, Printer, Edit, Sparkles } from 'lucide-react';
 import api from '../../lib/axios';
 import toast from 'react-hot-toast';
 import AddStudentModal from '../../components/admin/AddStudentModal';
 import IDCard from '../../components/shared/IDCard';
 import ManageCertificatesModal from '../../components/admin/ManageCertificatesModal';
 import { useAuth } from '../../context/AuthContext';
+import { printAdmissionForm } from '../../utils/printHelper';
 
 export default function AdminStudents() {
   const { currentUser } = useAuth();
@@ -23,6 +24,16 @@ export default function AdminStudents() {
   const [studentToDelete, setStudentToDelete] = useState(null);
   const [deletePin, setDeletePin] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [editingStudent, setEditingStudent] = useState(null);
+  const [activeDropdownId, setActiveDropdownId] = useState(null);
+
+  const handleStudentSaved = (savedStudent, isEdit) => {
+    if (isEdit) {
+      setStudents(prev => prev.map(s => s.id === savedStudent.id ? savedStudent : s));
+    } else {
+      setStudents(prev => [savedStudent, ...prev]);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -106,6 +117,9 @@ export default function AdminStudents() {
 
   return (
     <div className="space-y-6">
+      {activeDropdownId && (
+        <div className="fixed inset-0 z-30 cursor-default" onClick={() => setActiveDropdownId(null)} />
+      )}
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -213,8 +227,12 @@ export default function AdminStudents() {
 
       <AddStudentModal 
         isOpen={isAddModalOpen} 
-        onClose={() => setIsAddModalOpen(false)} 
-        onStudentAdded={(newStudent) => setStudents([newStudent, ...students])} 
+        onClose={() => {
+          setIsAddModalOpen(false);
+          setEditingStudent(null);
+        }} 
+        student={editingStudent}
+        onStudentAdded={handleStudentSaved} 
       />
 
       {/* Table Container */}
@@ -251,7 +269,7 @@ export default function AdminStudents() {
         </div>
 
         {/* Compact Data Table */}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto min-h-[280px]">
           <table className="w-full text-left border-collapse min-w-[900px]">
             <thead>
               <tr className="bg-slate-50/80 text-slate-400 text-[9px] font-bold uppercase tracking-widest border-b border-slate-100">
@@ -264,7 +282,7 @@ export default function AdminStudents() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredStudents.length > 0 ? filteredStudents.map((student) => (
+              {filteredStudents.length > 0 ? filteredStudents.map((student, index) => (
                 <tr key={student.id} className="hover:bg-slate-50/50 transition-colors group">
                   <td className="py-3 px-4.5">
                     <div className="flex items-center gap-2.5">
@@ -307,6 +325,10 @@ export default function AdminStudents() {
                       <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-widest bg-emerald-50 text-emerald-600 border border-emerald-100" title="Active">
                         <UserCheck className="w-3 h-3" /> Active
                       </span>
+                    ) : student.status === 'trial' ? (
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-widest bg-indigo-50 text-primary-650 border border-indigo-100/80" title="Trial Access">
+                        <Sparkles className="w-3 h-3 text-primary-500 animate-pulse" /> Trial Access
+                      </span>
                     ) : student.status === 'pending' ? (
                       <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-widest bg-amber-50 text-amber-600 border border-amber-100 animate-pulse" title="Pending">
                         <Clock className="w-3 h-3" /> Pending
@@ -317,66 +339,135 @@ export default function AdminStudents() {
                       </span>
                     )}
                   </td>
-                  <td className="py-3 px-4.5 text-right">
-                    {activeTab === 'pending' ? (
-                      <div className="flex items-center justify-end gap-1.5">
-                        <button 
-                          onClick={() => handleStatusUpdate(student.id, 'active')}
-                          className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-[9px] font-bold uppercase tracking-widest transition-all shadow-sm active:scale-95 cursor-pointer"
-                        >
-                          Approve
-                        </button>
-                        <button 
-                          onClick={() => handleStatusUpdate(student.id, 'rejected')}
-                          className="px-2.5 py-1 bg-white hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-md text-[9px] font-bold uppercase tracking-widest transition-all border border-slate-200 active:scale-95 shadow-sm cursor-pointer"
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-end gap-1">
-                        {student.status === 'active' ? (
-                          <button 
-                            onClick={() => handleStatusUpdate(student.id, 'inactive')}
-                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all cursor-pointer"
-                            title="Deactivate"
-                          >
-                            <UserX className="w-4 h-4" />
-                          </button>
-                        ) : (
-                          <button 
-                            onClick={() => handleStatusUpdate(student.id, 'active')}
-                            className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all cursor-pointer"
-                            title="Activate"
-                          >
-                            <UserCheck className="w-4 h-4" />
-                          </button>
-                        )}
-                        {isSuperAdmin && (
-                          <button 
-                            onClick={() => setSelectedStudentForCert(student)}
-                            className="p-1.5 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-all cursor-pointer"
-                            title="Award Certificate"
-                          >
-                            <Award className="w-4 h-4" />
-                          </button>
-                        )}
-                        <button 
-                          onClick={() => setSelectedStudentForID(student)}
-                          className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all cursor-pointer"
-                          title="Generate ID Card"
-                        >
-                          <CreditCard className="w-4 h-4" />
-                        </button>
-                        <button 
-                          onClick={() => setStudentToDelete(student)}
-                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all cursor-pointer"
-                          title="Delete Student"
-                        >
-                          <Trash className="w-4 h-4" />
-                        </button>
-                      </div>
-                    )}
+                  <td className="py-3 px-4.5 text-right relative">
+                    <div className="relative flex justify-end">
+                      <button
+                        onClick={() => setActiveDropdownId(activeDropdownId === student.id ? null : student.id)}
+                        className="p-1.5 hover:bg-slate-100 rounded-lg transition-all cursor-pointer text-slate-500 hover:text-slate-800"
+                        title="Actions"
+                      >
+                        <MoreHorizontal className="w-4 h-4" />
+                      </button>
+                      
+                      {activeDropdownId === student.id && (() => {
+                        const openUpward = index > 0 && index >= filteredStudents.length - 2;
+                        return (
+                          <div className={`absolute right-0 ${openUpward ? 'bottom-8 origin-bottom animate-in fade-in slide-in-from-bottom-1' : 'top-8 origin-top animate-in fade-in slide-in-from-top-1'} w-48 bg-white border border-slate-200 rounded-xl shadow-xl py-1.5 z-40 text-left duration-150`}>
+                            {activeTab === 'pending' ? (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    handleStatusUpdate(student.id, 'active');
+                                    setActiveDropdownId(null);
+                                  }}
+                                  className="w-full px-4 py-2 hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-xs font-semibold transition-colors flex items-center gap-2 cursor-pointer"
+                                >
+                                  <UserCheck className="w-3.5 h-3.5 text-emerald-500" />
+                                  Approve Student
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    handleStatusUpdate(student.id, 'rejected');
+                                    setActiveDropdownId(null);
+                                  }}
+                                  className="w-full px-4 py-2 hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-xs font-semibold transition-colors flex items-center gap-2 cursor-pointer"
+                                >
+                                  <UserX className="w-3.5 h-3.5 text-rose-500" />
+                                  Reject Student
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    setEditingStudent(student);
+                                    setIsAddModalOpen(true);
+                                    setActiveDropdownId(null);
+                                  }}
+                                  className="w-full px-4 py-2 hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-xs font-semibold transition-colors flex items-center gap-2 cursor-pointer"
+                                >
+                                  <Edit className="w-3.5 h-3.5 text-slate-400" />
+                                  Edit Profile
+                                </button>
+
+                                <button
+                                  onClick={() => {
+                                    handleStatusUpdate(student.id, student.status === 'active' ? 'inactive' : 'active');
+                                    setActiveDropdownId(null);
+                                  }}
+                                  className="w-full px-4 py-2 hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-xs font-semibold transition-colors flex items-center gap-2 cursor-pointer"
+                                >
+                                  {student.status === 'active' ? (
+                                    <>
+                                      <UserX className="w-3.5 h-3.5 text-slate-400" />
+                                      Deactivate
+                                    </>
+                                  ) : student.status === 'trial' ? (
+                                    <>
+                                      <UserCheck className="w-3.5 h-3.5 text-emerald-550 animate-pulse" />
+                                      <span className="text-emerald-600 font-extrabold">Activate Full Access</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <UserCheck className="w-3.5 h-3.5 text-slate-400" />
+                                      Activate
+                                    </>
+                                  )}
+                                </button>
+
+                                {isSuperAdmin && (
+                                  <button
+                                    onClick={() => {
+                                      setSelectedStudentForCert(student);
+                                      setActiveDropdownId(null);
+                                    }}
+                                    className="w-full px-4 py-2 hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-xs font-semibold transition-colors flex items-center gap-2 cursor-pointer"
+                                  >
+                                    <Award className="w-3.5 h-3.5 text-slate-400" />
+                                    Award Certificate
+                                  </button>
+                                )}
+
+                                <button
+                                  onClick={() => {
+                                    setSelectedStudentForID(student);
+                                    setActiveDropdownId(null);
+                                  }}
+                                  className="w-full px-4 py-2 hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-xs font-semibold transition-colors flex items-center gap-2 cursor-pointer"
+                                >
+                                  <CreditCard className="w-3.5 h-3.5 text-slate-400" />
+                                  Generate ID Card
+                                </button>
+
+                                <button
+                                  onClick={() => {
+                                    printAdmissionForm(student, getCourseName(student.course));
+                                    setActiveDropdownId(null);
+                                  }}
+                                  className="w-full px-4 py-2 hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-xs font-semibold transition-colors flex items-center gap-2 cursor-pointer"
+                                >
+                                  <Printer className="w-3.5 h-3.5 text-slate-400" />
+                                  Print Admission Form
+                                </button>
+
+                                <div className="border-t border-slate-100 my-1"></div>
+
+                                <button
+                                  onClick={() => {
+                                    setStudentToDelete(student);
+                                    setActiveDropdownId(null);
+                                  }}
+                                  className="w-full px-4 py-2 hover:bg-rose-50 text-rose-600 text-xs font-bold transition-colors flex items-center gap-2 cursor-pointer"
+                                >
+                                  <Trash className="w-3.5 h-3.5 text-rose-500" />
+                                  Delete Student
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </div>
                   </td>
                 </tr>
               )) : (

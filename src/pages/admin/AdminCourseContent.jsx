@@ -23,7 +23,8 @@ import {
   Video,
   ClipboardList,
   CloudUpload,
-  Image
+  Image,
+  GripVertical
 } from 'lucide-react';
 import api from '../../lib/axios';
 import toast from 'react-hot-toast';
@@ -33,6 +34,26 @@ export default function AdminCourseContent() {
   const navigate = useNavigate();
   const editor = useRef(null);
   const [course, setCourse] = useState(null);
+
+  const getYouTubeEmbedUrl = (url) => {
+    if (!url) return '';
+    let videoId = '';
+    
+    // Check if it's a short share link (youtu.be)
+    if (url.includes('youtu.be/')) {
+      videoId = url.split('youtu.be/')[1]?.split('?')[0];
+    } 
+    // Check if it's a standard watch link (youtube.com/watch?v=)
+    else if (url.includes('v=')) {
+      videoId = url.split('v=')[1]?.split('&')[0];
+    }
+    // Check if it's an embed link already
+    else if (url.includes('embed/')) {
+      videoId = url.split('embed/')[1]?.split('?')[0];
+    }
+    
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+  };
   const [modules, setModules] = useState([]);
   const [savedCurriculumJson, setSavedCurriculumJson] = useState('[]');
   const [loading, setLoading] = useState(true);
@@ -81,6 +102,10 @@ export default function AdminCourseContent() {
     content: '',
     testId: ''
   });
+  const [lessonPosition, setLessonPosition] = useState(1);
+  const [currentLessonsCount, setCurrentLessonsCount] = useState(0);
+  const [draggedItem, setDraggedItem] = useState(null); // { mIndex, lIndex }
+  const [dragOverItem, setDragOverItem] = useState(null); // { mIndex, lIndex }
 
   // Preview Modal States
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
@@ -232,12 +257,19 @@ export default function AdminCourseContent() {
 
   const handleOpenLessonModal = (moduleId, lesson = null) => {
     setActiveModuleId(moduleId);
+    const activeMod = modules.find(m => m.id === moduleId);
+    const lessonsList = activeMod?.lessons || [];
+    setCurrentLessonsCount(lessonsList.length);
+
     if (lesson) {
       setEditingLessonId(lesson.id);
       setNewLesson({ ...lesson });
+      const currentIdx = lessonsList.findIndex(l => l.id === lesson.id);
+      setLessonPosition(currentIdx + 1);
     } else {
       setEditingLessonId(null);
       setNewLesson({ title: '', type: 'video', url: '', duration: '', content: '', testId: '' });
+      setLessonPosition(lessonsList.length + 1);
     }
     setIsLessonModalOpen(true);
   };
@@ -248,11 +280,19 @@ export default function AdminCourseContent() {
 
     const updatedModules = modules.map(m => {
       if (m.id === activeModuleId) {
+        let lessons = [...m.lessons];
         if (editingLessonId) {
-          return { ...m, lessons: m.lessons.map(l => l.id === editingLessonId ? { ...newLesson } : l) };
+          // Remove the lesson from its current position
+          const currentIdx = lessons.findIndex(l => l.id === editingLessonId);
+          lessons = lessons.filter(l => l.id !== editingLessonId);
+          // Insert it at the new selected position (lessonPosition - 1)
+          const insertIdx = Math.max(0, Math.min(lessons.length, lessonPosition - 1));
+          lessons.splice(insertIdx, 0, { ...newLesson });
         } else {
-          return { ...m, lessons: [...m.lessons, { ...newLesson, id: Date.now().toString() }] };
+          // Add a new lesson at the end
+          lessons.push({ ...newLesson, id: Date.now().toString() });
         }
+        return { ...m, lessons };
       }
       return m;
     });
@@ -260,7 +300,73 @@ export default function AdminCourseContent() {
     setModules(updatedModules);
     setIsLessonModalOpen(false);
     setEditingLessonId(null);
-    toast.success(editingLessonId ? 'Lesson updated' : 'Lesson added');
+    toast.success(editingLessonId ? 'Lesson updated & reordered' : 'Lesson added');
+  };
+
+  const handleMoveLesson = (moduleId, lIndex, direction) => {
+    const targetIndex = direction === 'up' ? lIndex - 1 : lIndex + 1;
+    if (targetIndex < 0) return;
+    
+    const updatedModules = modules.map(m => {
+      if (m.id === moduleId) {
+        const lessons = [...m.lessons];
+        if (targetIndex >= lessons.length) return m;
+        // Swap the elements
+        const temp = lessons[lIndex];
+        lessons[lIndex] = lessons[targetIndex];
+        lessons[targetIndex] = temp;
+        return { ...m, lessons };
+      }
+      return m;
+    });
+    setModules(updatedModules);
+    toast.success('Lesson order updated');
+  };
+
+  // Drag and Drop Event Handlers
+  const handleDragStart = (e, mIndex, lIndex) => {
+    setDraggedItem({ mIndex, lIndex });
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragEnd = () => {
+    setDraggedItem(null);
+    setDragOverItem(null);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const handleDragEnter = (e, mIndex, lIndex) => {
+    if (draggedItem && draggedItem.mIndex === mIndex) {
+      setDragOverItem({ mIndex, lIndex });
+    }
+  };
+
+  const handleDrop = (e, mIndex, lIndex) => {
+    e.preventDefault();
+    if (!draggedItem) return;
+
+    if (draggedItem.mIndex !== mIndex) {
+      toast.error('Lessons can only be reordered within the same Topic');
+      return;
+    }
+
+    const fromIdx = draggedItem.lIndex;
+    const toIdx = lIndex;
+    if (fromIdx === toIdx) return;
+
+    const updatedModules = [...modules];
+    const moduleItem = updatedModules[mIndex];
+    const lessons = [...moduleItem.lessons];
+
+    const [movedLesson] = lessons.splice(fromIdx, 1);
+    lessons.splice(toIdx, 0, movedLesson);
+
+    updatedModules[mIndex] = { ...moduleItem, lessons };
+    setModules(updatedModules);
+    toast.success('Lesson reordered successfully');
   };
 
   const handleDeleteLesson = (moduleId, lessonId) => {
@@ -372,8 +478,26 @@ export default function AdminCourseContent() {
             {expandedModules[module.id] && (
               <div className="border-t border-[#F1F5F9] bg-[#FFFFFF] divide-y divide-[#F1F5F9]">
                 {module.lessons.map((lesson, lIndex) => (
-                  <div key={lesson.id} className="p-3.5 pl-14 flex items-center justify-between hover:bg-[#F8FAFC] transition-colors group/lesson">
+                  <div 
+                    key={lesson.id} 
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, mIndex, lIndex)}
+                    onDragOver={handleDragOver}
+                    onDragEnter={(e) => handleDragEnter(e, mIndex, lIndex)}
+                    onDragEnd={handleDragEnd}
+                    onDrop={(e) => handleDrop(e, mIndex, lIndex)}
+                    className={`p-3.5 pl-14 flex items-center justify-between hover:bg-[#F8FAFC] transition-all group/lesson cursor-move relative ${
+                      dragOverItem && dragOverItem.mIndex === mIndex && dragOverItem.lIndex === lIndex 
+                        ? 'border-t-2 border-t-primary-500 bg-primary-50/10' 
+                        : ''
+                    } ${
+                      draggedItem && draggedItem.mIndex === mIndex && draggedItem.lIndex === lIndex 
+                        ? 'opacity-30 bg-slate-50' 
+                        : ''
+                    }`}
+                  >
                     <div className="flex items-center gap-3">
+                      <GripVertical className="w-4 h-4 text-slate-350 cursor-grab active:cursor-grabbing hover:text-slate-600 shrink-0 -ml-5 mr-1" />
                       <div className="w-7 h-7 rounded-full bg-[#F1F5F9] flex items-center justify-center text-[10px] font-bold text-[#6B7280] group-hover/lesson:bg-primary-50 group-hover/lesson:text-primary-600 transition-colors">{lIndex + 1}</div>
                       {lesson.type === 'video' ? <PlayCircle className="w-4 h-4 text-primary-500" /> : 
                        lesson.type === 'test' ? <ClipboardList className="w-4 h-4 text-rose-500" /> :
@@ -387,9 +511,31 @@ export default function AdminCourseContent() {
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5 opacity-0 group-hover/lesson:opacity-100 transition-opacity">
-                      <button onClick={() => handlePreviewLesson(lesson)} className="p-1.5 text-[#6B7280] hover:text-primary-600 hover:bg-white rounded-lg transition-all border border-transparent hover:border-[#E5E7EB]"><Eye className="w-3.5 h-3.5" /></button>
-                      <button onClick={() => handleOpenLessonModal(module.id, lesson)} className="p-1.5 text-[#6B7280] hover:text-primary-600 hover:bg-white rounded-lg transition-all border border-transparent hover:border-[#E5E7EB]"><Pencil className="w-3.5 h-3.5" /></button>
-                      <button onClick={() => handleDeleteLesson(module.id, lesson.id)} className="p-1.5 text-[#6B7280] hover:text-rose-600 hover:bg-white rounded-lg transition-all border border-transparent hover:border-[#E5E7EB]"><Trash2 className="w-3.5 h-3.5" /></button>
+                      {/* Move Up */}
+                      {lIndex > 0 && (
+                        <button 
+                          type="button"
+                          onClick={() => handleMoveLesson(module.id, lIndex, 'up')}
+                          className="p-1.5 text-[#6B7280] hover:text-[#4F46E5] hover:bg-[#EEF2FF] rounded-lg transition-all border border-transparent hover:border-[#E5E7EB]"
+                          title="Move Up"
+                        >
+                          <ChevronUp className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      {/* Move Down */}
+                      {lIndex < module.lessons.length - 1 && (
+                        <button 
+                          type="button"
+                          onClick={() => handleMoveLesson(module.id, lIndex, 'down')}
+                          className="p-1.5 text-[#6B7280] hover:text-[#4F46E5] hover:bg-[#EEF2FF] rounded-lg transition-all border border-transparent hover:border-[#E5E7EB]"
+                          title="Move Down"
+                        >
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      <button type="button" onClick={() => handlePreviewLesson(lesson)} className="p-1.5 text-[#6B7280] hover:text-primary-600 hover:bg-white rounded-lg transition-all border border-transparent hover:border-[#E5E7EB]"><Eye className="w-3.5 h-3.5" /></button>
+                      <button type="button" onClick={() => handleOpenLessonModal(module.id, lesson)} className="p-1.5 text-[#6B7280] hover:text-primary-600 hover:bg-white rounded-lg transition-all border border-transparent hover:border-[#E5E7EB]"><Pencil className="w-3.5 h-3.5" /></button>
+                      <button type="button" onClick={() => handleDeleteLesson(module.id, lesson.id)} className="p-1.5 text-[#6B7280] hover:text-rose-600 hover:bg-white rounded-lg transition-all border border-transparent hover:border-[#E5E7EB]"><Trash2 className="w-3.5 h-3.5" /></button>
                     </div>
                   </div>
                 ))}
@@ -405,7 +551,7 @@ export default function AdminCourseContent() {
       {/* Lesson Modal */}
       {isLessonModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#111827]/40 backdrop-blur-sm">
-          <div className="bg-white rounded-[20px] w-full max-w-4xl shadow-2xl border border-[#E5E7EB] animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[94vh]">
+          <div className="bg-white rounded-[20px] w-full max-w-4xl shadow-2xl border border-[#E5E7EB] animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[94vh] lg:ml-32">
             <div className="p-5 border-b border-[#F1F5F9] flex justify-between items-center shrink-0 bg-[#F8FAFC]">
               <h3 className="text-[17px] font-bold text-[#111827]">{editingLessonId ? 'Modify Lesson' : 'New Lesson'}</h3>
               <button onClick={() => setIsLessonModalOpen(false)} className="text-[#94A3B8] hover:text-[#111827]"><X className="w-5 h-5" /></button>
@@ -433,6 +579,23 @@ export default function AdminCourseContent() {
                   <input type="text" value={newLesson.duration} onChange={(e) => setNewLesson({...newLesson, duration: e.target.value})} placeholder="e.g. 15 mins" className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#E5E7EB] rounded-[12px] text-[14px] outline-none focus:ring-4 focus:ring-primary-600/5 transition-all" />
                 </div>
               </div>
+
+              {editingLessonId && (
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-[#94A3B8] uppercase ml-1 tracking-wider">Position (Serial Number)</label>
+                  <select 
+                    value={lessonPosition} 
+                    onChange={(e) => setLessonPosition(Number(e.target.value))} 
+                    className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#E5E7EB] rounded-[12px] text-[14px] outline-none cursor-pointer focus:ring-4 focus:ring-primary-600/5 transition-all bg-select-arrow"
+                  >
+                    {Array.from({ length: currentLessonsCount }, (_, idx) => (
+                      <option key={idx + 1} value={idx + 1}>
+                        {idx + 1}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {newLesson.type === 'test' ? (
                 <div className="space-y-1.5">
@@ -500,7 +663,7 @@ export default function AdminCourseContent() {
       {/* Add Topic Modal */}
       {isTopicModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#111827]/40 backdrop-blur-sm">
-          <div className="bg-white rounded-[20px] w-full max-w-md shadow-2xl border border-[#E5E7EB] animate-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-[20px] w-full max-w-md shadow-2xl border border-[#E5E7EB] animate-in zoom-in-95 duration-200 lg:ml-32">
             <div className="p-5 border-b border-[#F1F5F9] flex justify-between items-center">
               <h3 className="text-[17px] font-bold text-[#111827]">Add New Topic</h3>
               <button onClick={() => setIsTopicModalOpen(false)} className="text-[#94A3B8] hover:text-[#111827]"><X className="w-5 h-5" /></button>
@@ -522,7 +685,7 @@ export default function AdminCourseContent() {
     {/* Preview Modal */}
     {isPreviewModalOpen && previewLesson && (
       <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-[#111827]/60 backdrop-blur-md">
-        <div className="bg-white rounded-[24px] w-full max-w-3xl shadow-2xl border border-[#E5E7EB] animate-in slide-in-from-bottom-6 duration-400 overflow-hidden flex flex-col max-h-[85vh]">
+        <div className="bg-white rounded-[24px] w-full max-w-3xl shadow-2xl border border-[#E5E7EB] animate-in slide-in-from-bottom-6 duration-400 overflow-hidden flex flex-col max-h-[85vh] lg:ml-32">
           <div className="p-4 border-b border-[#F1F5F9] flex justify-between items-center bg-[#F8FAFC]">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-white shadow-sm border border-[#E5E7EB] flex items-center justify-center text-[#4F46E5]">
@@ -541,10 +704,29 @@ export default function AdminCourseContent() {
                 <div className="rich-content" dangerouslySetInnerHTML={{ __html: previewLesson.content }} />
               </div>
             ) : previewLesson.type === 'video' ? (
-              <div className="aspect-video bg-[#111827] rounded-[16px] flex items-center justify-center text-white flex-col gap-4 border border-[#1E293B] shadow-2xl">
-                <Video className="w-16 h-16 opacity-20" />
-                <p className="text-[12px] font-bold opacity-60 uppercase tracking-widest">Video Stream Integration</p>
-                <a href={previewLesson.url} target="_blank" rel="noreferrer" className="px-6 py-2.5 bg-[#4F46E5] rounded-full text-[13px] font-bold hover:bg-[#4338CA] transition-all shadow-lg shadow-[#4F46E5]/30">Open Stream</a>
+              <div className="aspect-video bg-[#111827] rounded-[16px] overflow-hidden border border-[#1E293B] shadow-2xl relative">
+                {previewLesson.url ? (
+                  previewLesson.url.match(/\.(mp4|webm|ogg|mov)(\?|$)/i) ? (
+                    <video 
+                      src={previewLesson.url} 
+                      controls 
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <iframe
+                      src={getYouTubeEmbedUrl(previewLesson.url)}
+                      className="w-full h-full border-none relative z-10"
+                      title="Video Player Preview"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  )
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-white/50">
+                    <Video className="w-16 h-16 opacity-25 mb-2 animate-pulse" />
+                    <p className="text-[11px] font-black uppercase tracking-wider">No video URL provided</p>
+                  </div>
+                )}
               </div>
             ) : previewLesson.type === 'image' ? (
               <div className="flex flex-col items-center justify-center bg-[#F8FAFC] p-6 rounded-[16px] border border-[#E5E7EB] min-h-[300px]">

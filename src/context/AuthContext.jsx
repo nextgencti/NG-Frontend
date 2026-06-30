@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { initFirebase, signInWithPopup, signOut } from '../lib/firebase';
+import { initFirebase, signInWithPopup, signOut, signInWithEmailAndPassword, sendPasswordResetEmail } from '../lib/firebase';
 import toast from 'react-hot-toast';
 import api from '../lib/axios';
 
@@ -115,6 +115,67 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Login with Email and Password
+  const loginWithEmailAndPassword = async (email, password) => {
+    try {
+      // If Firebase isn't ready yet, wait for it now
+      if (!authInstance) {
+        console.log('[AUTH] Waiting for Firebase to initialize...');
+        try {
+          const { auth } = await initFirebase();
+          setAuthInstance(auth);
+        } catch (fbError) {
+          console.error('[AUTH] Firebase init failed during login:', fbError);
+          toast.error('Connection issue. Please try again.');
+          throw fbError;
+        }
+      }
+
+      const result = await signInWithEmailAndPassword(authInstance, email, password);
+      const idToken = await result.user.getIdToken();
+      
+      const response = await api.post('/auth/firebase-login', { idToken });
+      const { user, token, isNewUser } = response.data;
+
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      
+      // Reset verifications on fresh login
+      localStorage.removeItem('sa_verified');
+      setIsSuperAdminVerified(false);
+      localStorage.removeItem('admin_verified');
+      setIsAdminVerified(false);
+      
+      setCurrentUser(user);
+      
+      return { user, isNew: isNewUser || !user.profileComplete };
+    } catch (error) {
+      console.error("Email/Password login error:", error);
+      throw error;
+    }
+  };
+
+  // Send Password Reset Email
+  const sendPasswordReset = async (email) => {
+    try {
+      if (!authInstance) {
+        console.log('[AUTH] Waiting for Firebase to initialize...');
+        try {
+          const { auth } = await initFirebase();
+          setAuthInstance(auth);
+        } catch (fbError) {
+          console.error('[AUTH] Firebase init failed during login:', fbError);
+          toast.error('Connection issue. Please try again.');
+          throw fbError;
+        }
+      }
+      await sendPasswordResetEmail(authInstance, email);
+    } catch (error) {
+      console.error("Password reset error:", error);
+      throw error;
+    }
+  };
+
   const verifySuperAdminPin = async (pin) => {
     try {
       const response = await api.post('/superadmin/verify-pin', { pin });
@@ -169,6 +230,8 @@ export const AuthProvider = ({ children }) => {
     currentUser,
     setCurrentUser,
     loginWithGoogle,
+    loginWithEmailAndPassword,
+    sendPasswordReset,
     logout,
     loading,
     isAuthenticated: !!currentUser,

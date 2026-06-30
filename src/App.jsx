@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation, useParams } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
@@ -6,6 +6,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import PageSkeleton from './components/shared/PageSkeleton';
 import HomeSkeleton from './components/shared/HomeSkeleton';
 import ScrollToTop from './components/ScrollToTop';
+import OfflineScreen from './components/shared/OfflineScreen';
 
 const NavigateToClassroom = () => {
   const { courseId } = useParams();
@@ -40,6 +41,7 @@ const InstituteSignup = lazy(() => import('./pages/public/InstituteSignup'));
 const PublicTestRunner = lazy(() => import('./pages/public/PublicTestRunner'));
 const About = lazy(() => import('./pages/public/About'));
 const Services = lazy(() => import('./pages/public/Services'));
+const ServiceDetails = lazy(() => import('./pages/public/ServiceDetails'));
 const Tools = lazy(() => import('./pages/public/Tools'));
 const TypingTest = lazy(() => import('./pages/public/TypingTest'));
 const AgeCalculator = lazy(() => import('./pages/public/AgeCalculator'));
@@ -58,6 +60,8 @@ const Activity = lazy(() => import('./pages/student/Activity'));
 const Fees = lazy(() => import('./pages/student/Fees'));
 const Certificates = lazy(() => import('./pages/student/Certificates'));
 const StudentClassroom = lazy(() => import('./pages/student/StudentClassroom'));
+const MyProfile = lazy(() => import('./pages/student/MyProfile'));
+const AiTutor = lazy(() => import('./pages/student/AiTutor'));
 
 // Admin Pages (Lazy)
 const AdminOverview = lazy(() => import('./pages/admin/AdminOverview'));
@@ -107,6 +111,30 @@ const AdminVerifiedRoute = () => {
 };
 
 function App() {
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  if (isOffline) {
+    return (
+      <AuthProvider>
+        <OfflineScreen onRetry={() => setIsOffline(false)} />
+        <Toaster position="top-right" toastOptions={{ duration: 4000, style: { background: '#334155', color: '#fff' } }} />
+      </AuthProvider>
+    );
+  }
+
   return (
     <AuthProvider>
       <Router>
@@ -123,6 +151,7 @@ function App() {
             <Route path="/verify-otp" element={<VerifyOTP />} />
             <Route path="/tests/public/:testId" element={<PublicTestRunner />} />
             <Route path="/services" element={<Services />} />
+            <Route path="/services/:id" element={<ServiceDetails />} />
             <Route path="/tools" element={<Tools />} />
             <Route path="/tools/typing-test" element={<TypingTest />} />
             <Route path="/tools/age-calculator" element={<AgeCalculator />} />
@@ -135,9 +164,15 @@ function App() {
               <Route path="/pending-approval" element={<PendingApproval />} />
               
               {/* Student Dashboard Routes */}
-              <Route path="/dashboard" element={<DashboardLayout />}>
+              <Route path="/dashboard" element={
+                <ProtectedRoute requiredRole="student">
+                  <DashboardLayout />
+                </ProtectedRoute>
+              }>
                 <Route index element={<StudentOverview />} />
+                <Route path="profile" element={<MyProfile />} />
                 <Route path="courses" element={<MyCourses />} />
+                <Route path="ai-tutor" element={<AiTutor />} />
                 <Route path="courses/:courseId/classroom" element={<StudentClassroom />} />
                 <Route path="my-courses" element={<Navigate to="/dashboard/courses" replace />} />
                 <Route path="my-courses/:courseId" element={<NavigateToClassroom />} />
@@ -148,6 +183,16 @@ function App() {
                 <Route path="fees" element={<Fees />} />
                 <Route path="certificates" element={<Certificates />} />
               </Route>
+
+              {/* Student Dashboard Presentation Route */}
+              <Route 
+                path="/student/tests/:testId/present" 
+                element={
+                  <ProtectedRoute requiredRole="student">
+                    <AdminTestPresenter />
+                  </ProtectedRoute>
+                } 
+              />
 
               {/* Admin Dashboard Routes */}
               <Route path="/admin-pin" element={<AdminPin />} />

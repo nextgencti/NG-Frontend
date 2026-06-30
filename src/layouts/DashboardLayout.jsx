@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
 import dashboardBg from '../assets/dashboard_bg.png';
 import { 
   LayoutDashboard, 
@@ -19,13 +19,17 @@ import {
   Shield,
   Building2,
   Users,
-  Menu
+  Menu,
+  Sparkles
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useRef, useEffect } from 'react';
 import UpdateProfileModal from '../components/student/UpdateProfileModal';
+import FloatingAiTutor from '../components/student/FloatingAiTutor';
 import Logo from '../components/Logo';
 import NotificationBell from '../components/NotificationBell';
+import TrialBanner from '../components/shared/TrialBanner';
+import ProfileIncompleteBanner from '../components/shared/ProfileIncompleteBanner';
 
 export default function DashboardLayout() {
   const { currentUser, logout } = useAuth();
@@ -52,7 +56,9 @@ export default function DashboardLayout() {
 
   const studentLinks = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+    { name: 'My Profile', path: '/dashboard/profile', icon: User },
     { name: 'My Courses', path: '/dashboard/courses', icon: BookOpen },
+    { name: 'AI Tutor (Sanju)', path: '/dashboard/ai-tutor', icon: Sparkles },
     { name: 'Tests', path: '/dashboard/tests', icon: ClipboardList },
     { name: 'Activity', path: '/dashboard/activity', icon: Activity },
     { name: 'Fees', path: '/dashboard/fees', icon: CreditCard },
@@ -84,6 +90,21 @@ export default function DashboardLayout() {
 
   const sidebarLinks = isSuperAdmin ? superAdminLinks : (isAdmin ? adminLinks : studentLinks);
 
+  const isClassroom = location.pathname.includes('/classroom');
+  const showTrial = currentUser?.status === 'trial' && !isClassroom;
+  const showProfileAlert = currentUser?.role === 'student' && (
+    !currentUser?.fatherName || 
+    !currentUser?.motherName || 
+    !currentUser?.dob || 
+    !currentUser?.gender || 
+    !currentUser?.aadhaar
+  ) && location.pathname !== '/dashboard/profile' && !isClassroom;
+
+  const activeBannersCount = (showTrial ? 1 : 0) + (showProfileAlert ? 1 : 0);
+  const containerClass = activeBannersCount > 1 
+    ? "max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-3"
+    : "max-w-7xl mx-auto grid grid-cols-1 gap-3";
+
   const handleLogout = async () => {
     await logout();
     navigate('/');
@@ -106,6 +127,7 @@ export default function DashboardLayout() {
   const getPageTitle = () => {
     const path = location.pathname;
     if (path === '/dashboard') return 'Dashboard';
+    if (path === '/dashboard/profile') return 'My Profile';
     if (path === '/dashboard/courses') return 'My Courses';
     if (path === '/dashboard/tests') return 'Assessments';
     if (path === '/dashboard/activity') return 'Activity Board';
@@ -157,12 +179,12 @@ export default function DashboardLayout() {
         } lg:flex`}
       >
         <div className={`h-20 flex items-center ${isCollapsed ? 'lg:justify-center' : 'justify-between'} justify-between px-6 border-b border-[#F1F5F9] transition-all relative group`}>
-          <div className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
             <Logo 
               className={isCollapsed ? "w-8 h-8" : "w-8 h-8"} 
               showText={!isCollapsed} 
             />
-          </div>
+          </Link>
           
           {/* Desktop Collapse Toggle */}
           <button 
@@ -362,6 +384,16 @@ export default function DashboardLayout() {
           </div>
         </header>
 
+        {/* Sticky Alert Banners Bar - Stuck to the bottom of the header */}
+        {(showTrial || showProfileAlert) && (
+          <div className="bg-slate-50/95 border-b border-slate-200/60 px-4 sm:px-8 py-1.5 shrink-0 z-20 shadow-sm shadow-slate-100/50 animate-in slide-in-from-top-2 duration-300">
+            <div className={containerClass}>
+              {showTrial && <TrialBanner />}
+              {showProfileAlert && <ProfileIncompleteBanner />}
+            </div>
+          </div>
+        )}
+
         <UpdateProfileModal 
           isOpen={isProfileModalOpen} 
           onClose={() => setIsProfileModalOpen(false)} 
@@ -374,8 +406,8 @@ export default function DashboardLayout() {
           </div>
         </div>
 
-        {/* Mobile Bottom Navigation Bar (Premium Expanding Floating Dock) */}
-        <div className="fixed bottom-5 left-4 right-4 h-16 bg-white/90 backdrop-blur-md border border-slate-200/80 lg:hidden flex items-center justify-between px-4 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.04)] rounded-[24px] print:hidden">
+        {/* Mobile Bottom Navigation Bar (Ultra-Premium Sticky Dock) */}
+        <div className="fixed bottom-0 left-0 right-0 h-16 bg-white/95 backdrop-blur-md border-t border-slate-200/60 lg:hidden flex items-center justify-around px-2 z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] print:hidden">
           {sidebarLinks.length <= 5 ? (
             sidebarLinks.map((link) => {
               const Icon = link.icon;
@@ -384,22 +416,18 @@ export default function DashboardLayout() {
                   key={link.name}
                   to={link.path}
                   end={link.path === '/dashboard' || link.path === '/admin' || link.path === '/superadmin'}
-                  className={({ isActive }) =>
-                    `flex items-center justify-center rounded-xl transition-all duration-300 active:scale-95 ${
-                      isActive 
-                        ? 'bg-gradient-to-r from-[#EEF2FF]/95 to-[#F5F7FF]/95 text-[#4F46E5] px-4 py-2 border border-[#C7D2FE]/30 shadow-sm' 
-                        : 'text-slate-400 hover:text-slate-800 p-2.5'
-                    }`
-                  }
+                  className="flex-1 py-1 flex flex-col items-center justify-center transition-all duration-300 active:scale-95 cursor-pointer"
                 >
                   {({ isActive }) => (
-                    <div className="flex items-center gap-1.5">
-                      <Icon className={`w-5 h-5 transition-transform ${isActive ? 'scale-105' : 'scale-100'}`} />
-                      {isActive && (
-                        <span className="text-[10px] font-black tracking-wider uppercase animate-in slide-in-from-left-2 duration-300">
-                          {getShortName(link.name)}
-                        </span>
-                      )}
+                    <div className="flex flex-col items-center gap-0.5">
+                      <Icon className={`w-5 h-5 transition-all duration-300 ${isActive ? 'text-[#4F46E5] scale-110 drop-shadow-[0_2px_8px_rgba(79,70,229,0.15)]' : 'text-slate-400'}`} />
+                      <span className={`text-[8px] font-black tracking-widest uppercase transition-all duration-300 ${
+                        isActive 
+                          ? 'text-[#4F46E5] font-extrabold' 
+                          : 'text-slate-400/90 font-bold'
+                      }`}>
+                        {getShortName(link.name)}
+                      </span>
                     </div>
                   )}
                 </NavLink>
@@ -414,22 +442,18 @@ export default function DashboardLayout() {
                     key={link.name}
                     to={link.path}
                     end={link.path === '/dashboard' || link.path === '/admin' || link.path === '/superadmin'}
-                    className={({ isActive }) =>
-                      `flex items-center justify-center rounded-xl transition-all duration-300 active:scale-95 ${
-                        isActive 
-                          ? 'bg-gradient-to-r from-[#EEF2FF]/95 to-[#F5F7FF]/95 text-[#4F46E5] px-4 py-2 border border-[#C7D2FE]/30 shadow-sm' 
-                          : 'text-slate-400 hover:text-slate-800 p-2.5'
-                      }`
-                    }
+                    className="flex-1 py-1 flex flex-col items-center justify-center transition-all duration-300 active:scale-95 cursor-pointer"
                   >
                     {({ isActive }) => (
-                      <div className="flex items-center gap-1.5">
-                        <Icon className={`w-5 h-5 transition-transform ${isActive ? 'scale-105' : 'scale-100'}`} />
-                        {isActive && (
-                          <span className="text-[10px] font-black tracking-wider uppercase animate-in slide-in-from-left-2 duration-300">
-                            {getShortName(link.name)}
-                          </span>
-                        )}
+                      <div className="flex flex-col items-center gap-0.5">
+                        <Icon className={`w-5 h-5 transition-all duration-300 ${isActive ? 'text-[#4F46E5] scale-110 drop-shadow-[0_2px_8px_rgba(79,70,229,0.15)]' : 'text-slate-400'}`} />
+                        <span className={`text-[8px] font-black tracking-widest uppercase transition-all duration-300 ${
+                          isActive 
+                            ? 'text-[#4F46E5] font-extrabold' 
+                            : 'text-slate-400/90 font-bold'
+                        }`}>
+                          {getShortName(link.name)}
+                        </span>
                       </div>
                     )}
                   </NavLink>
@@ -438,16 +462,17 @@ export default function DashboardLayout() {
               {/* More / Menu Drawer Toggle */}
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="flex items-center justify-center rounded-xl p-2.5 text-slate-400 hover:text-slate-800 active:scale-95 transition-all duration-300 cursor-pointer"
+                className="flex-1 py-1 flex flex-col items-center justify-center active:scale-95 transition-all duration-300 cursor-pointer"
               >
-                <div className="flex items-center gap-1.5 flex-col xs:flex-row">
+                <div className="flex flex-col items-center gap-0.5">
                   <Menu className="w-5 h-5 text-slate-400" />
-                  <span className="text-[10px] font-black text-slate-400 tracking-wider uppercase">More</span>
+                  <span className="text-[8px] font-black text-slate-400/90 tracking-widest uppercase">More</span>
                 </div>
               </button>
             </>
           )}
         </div>
+        {currentUser?.role === 'student' && location.pathname !== '/dashboard/ai-tutor' && <FloatingAiTutor />}
       </main>
     </div>
   );

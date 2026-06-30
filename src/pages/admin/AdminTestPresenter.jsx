@@ -1,13 +1,55 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Play, Pause, X, Maximize, Minimize, Timer, Sparkles, CheckCircle2, Volume2, VolumeX, BarChart3, HelpCircle, RefreshCw, ClipboardList, BookOpen, Clock, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Play, Pause, X, Maximize, Minimize, Timer, Sparkles, CheckCircle2, Volume2, VolumeX, BarChart3, HelpCircle, RefreshCw, ClipboardList, BookOpen, Clock, ChevronRight, Loader2 } from 'lucide-react';
 import api from '../../lib/axios';
 import toast from 'react-hot-toast';
 import logoImg from '../../assets/logo.png';
+import sanjuAvatar from '../../assets/AI_Tutor_sunju.png';
+import { useAuth } from '../../context/AuthContext';
+
+const renderExplanation = (text) => {
+  if (!text) return null;
+  
+  const lines = text.split('\n');
+  return lines.map((line, lineIdx) => {
+    const regex = /(\*\*.*?\*\*|\*.*?\*)/g;
+    const splitParts = line.split(regex);
+    
+    const parsedLine = splitParts.map((part, partIdx) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return (
+          <strong key={partIdx} className="font-extrabold text-white">
+            {part.slice(2, -2)}
+          </strong>
+        );
+      }
+      if (part.startsWith('*') && part.endsWith('*')) {
+        return (
+          <em key={partIdx} className="italic text-indigo-300">
+            {part.slice(1, -1)}
+          </em>
+        );
+      }
+      return <span key={partIdx}>{part}</span>;
+    });
+
+    return (
+      <p 
+        key={lineIdx} 
+        className="min-h-[1.5rem] text-slate-200 font-medium text-[13px] tracking-wide"
+        style={{ lineHeight: '2.0', wordSpacing: '0.15em' }}
+      >
+        {parsedLine}
+      </p>
+    );
+  });
+};
 
 export default function AdminTestPresenter() {
   const { testId } = useParams();
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
+  const isStudent = currentUser?.role === 'student';
 
   const [test, setTest] = useState(null);
   const [questions, setQuestions] = useState([]);
@@ -20,6 +62,8 @@ export default function AdminTestPresenter() {
 
   // Presenter Feature States
   const [showAnswer, setShowAnswer] = useState(false);
+  const [explanation, setExplanation] = useState('');
+  const [isExplaining, setIsExplaining] = useState(false);
   
   // Poll States
   const [isPollOpen, setIsPollOpen] = useState(false);
@@ -41,6 +85,7 @@ export default function AdminTestPresenter() {
 
   const timerIntervalRef = useRef(null);
   const presenterContainerRef = useRef(null);
+  const currentQuestion = currentSlide > 0 && currentSlide <= questions.length ? questions[currentSlide - 1] : null;
 
   // Synthesize tick sound using Web Audio API
   const playTick = useCallback(() => {
@@ -108,19 +153,19 @@ export default function AdminTestPresenter() {
           setTest(response.data.test);
           setQuestions(response.data.questions || []);
         } else {
-          toast.error('Failed to retrieve test details.');
-          navigate('/admin/tests');
+          toast.error(response.data.message || 'Failed to retrieve test details.');
+          navigate(isStudent ? '/dashboard/tests' : '/admin/tests');
         }
       } catch (error) {
         console.error('Error fetching test for presenter:', error);
-        toast.error('Failed to load presentation slides.');
-        navigate('/admin/tests');
+        toast.error(error.response?.data?.message || 'Failed to load presentation slides.');
+        navigate(isStudent ? '/dashboard/tests' : '/admin/tests');
       } finally {
         setIsLoading(false);
       }
     };
     fetchPresenterData();
-  }, [testId, navigate]);
+  }, [testId, navigate, isStudent]);
 
   // Handle Poll Simulation Result Generation
   const generateSimulatedResults = useCallback((q) => {
@@ -286,8 +331,8 @@ export default function AdminTestPresenter() {
           break;
         case 'p':
         case 'P':
-          // Toggle poll on question slides
-          if (currentSlide > 0 && currentSlide <= questions.length) {
+          // Toggle poll on question slides (only for admin)
+          if (!isStudent && currentSlide > 0 && currentSlide <= questions.length) {
             setIsPollOpen(prev => !prev);
           }
           break;
@@ -300,7 +345,7 @@ export default function AdminTestPresenter() {
           if (document.fullscreenElement) {
             document.exitFullscreen().catch(() => {});
           } else {
-            navigate('/admin/tests');
+            navigate(isStudent ? '/dashboard/tests' : '/admin/tests');
           }
           break;
         default:
@@ -310,7 +355,7 @@ export default function AdminTestPresenter() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentSlide, questions.length, navigate]);
+  }, [currentSlide, questions.length, navigate, isStudent]);
 
   // Track Fullscreen Change Events
   useEffect(() => {
@@ -375,6 +420,35 @@ export default function AdminTestPresenter() {
     }
   };
 
+  const fetchExplanation = useCallback(async (q) => {
+    if (!q) return;
+    setIsExplaining(true);
+    setExplanation('');
+    try {
+      const response = await api.post('/admin/explain-question', {
+        question: q.question,
+        options: q.options,
+        correctAnswer: q.correctAnswer
+      });
+      if (response.data.success) {
+        setExplanation(response.data.explanation);
+      } else {
+        setExplanation('स्पष्टीकरण लोड करने में असमर्थ।');
+      }
+    } catch (error) {
+      console.error(error);
+      setExplanation('स्पष्टीकरण लोड करने में त्रुटि।');
+    } finally {
+      setIsExplaining(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (showAnswer && currentQuestion) {
+      fetchExplanation(currentQuestion);
+    }
+  }, [showAnswer, currentSlide, currentQuestion, fetchExplanation]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#090816] flex flex-col items-center justify-center gap-4 text-white">
@@ -386,7 +460,7 @@ export default function AdminTestPresenter() {
 
   if (!test) return null;
 
-  const currentQuestion = currentSlide > 0 && currentSlide <= questions.length ? questions[currentSlide - 1] : null;
+
 
   return (
     <div 
@@ -394,10 +468,10 @@ export default function AdminTestPresenter() {
       className="min-h-screen w-full bg-gradient-to-br from-[#090816] via-[#12102E] to-[#090816] text-white flex flex-col justify-between relative overflow-hidden font-sans select-none"
     >
       {/* ─── TOP BAR HUD ─── */}
-      <div className="px-8 py-5 border-b border-indigo-950/40 bg-[#0c0a1f]/75 backdrop-blur-md flex items-center justify-between z-20">
+      <div className="px-8 py-3.5 border-b border-indigo-950/40 bg-[#0c0a1f]/75 backdrop-blur-md flex items-center justify-between z-20">
         <div className="flex items-center gap-4">
           <button
-            onClick={() => navigate('/admin/tests')}
+            onClick={() => navigate(isStudent ? '/dashboard/tests' : '/admin/tests')}
             className="p-2 rounded-xl bg-indigo-950/50 hover:bg-indigo-900/60 border border-indigo-900/30 text-indigo-300 hover:text-white transition-all cursor-pointer"
             title="Exit Presentation"
           >
@@ -444,33 +518,33 @@ export default function AdminTestPresenter() {
       </div>
 
       {/* ─── MAIN SLIDE DISPLAY AREA ─── */}
-      <div className="flex-1 flex items-center justify-center p-8 relative">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 relative">
         
         {/* ─── COVER SLIDE (Index 0) ─── */}
         {currentSlide === 0 && (
-          <div className="w-full max-w-4xl text-center space-y-8 animate-in fade-in zoom-in-95 duration-500">
+          <div className="w-full max-w-4xl text-center space-y-5 animate-in fade-in zoom-in-95 duration-500">
             {/* Logo Badge Container */}
-            <div className="inline-flex p-4 rounded-3xl bg-white border border-indigo-100 shadow-xl shadow-indigo-950/40 scale-105 mb-2 hover:rotate-6 transition-transform">
-              <img src={logoImg} alt="Brand Logo" className="w-16 h-16 object-contain" />
+            <div className="inline-flex p-3 rounded-2xl bg-white border border-indigo-100 shadow-xl shadow-indigo-950/40 mb-1 hover:rotate-6 transition-transform">
+              <img src={logoImg} alt="Brand Logo" className="w-12 h-12 object-contain" />
             </div>
             
-            <div className="space-y-4">
-              <span className="px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-xs font-black text-indigo-400 uppercase tracking-widest animate-pulse">
+            <div className="space-y-2">
+              <span className="px-3.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-[10px] font-black text-indigo-400 uppercase tracking-widest animate-pulse">
                 Interactive Slideshow
               </span>
-              <h2 className="text-5xl md:text-6xl font-black tracking-tight leading-tight uppercase text-white max-w-3xl mx-auto drop-shadow-md">
+              <h2 className="text-3xl md:text-4xl font-black tracking-tight leading-tight uppercase text-white max-w-3xl mx-auto drop-shadow-md">
                 {test.title}
               </h2>
-              <p className="text-lg md:text-xl font-bold text-indigo-300 uppercase tracking-widest">
+              <p className="text-xs md:text-sm font-bold text-indigo-300 uppercase tracking-widest">
                 DEPARTMENT: {test.course}
               </p>
             </div>
 
             {/* Underline */}
-            <div className="w-32 h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent mx-auto rounded-full"></div>
+            <div className="w-24 h-0.5 bg-gradient-to-r from-transparent via-indigo-500 to-transparent mx-auto rounded-full"></div>
 
             {/* Grid Stats */}
-            <div className="grid grid-cols-3 gap-6 max-w-2xl mx-auto pt-6">
+            <div className="grid grid-cols-3 gap-4 max-w-xl mx-auto pt-4">
               {[
                 { label: 'Questions Count', value: `${questions.length} Qs`, icon: ClipboardList, color: 'text-indigo-400' },
                 { label: 'Total Weightage', value: `${test.totalMarks || 100}M`, icon: BookOpen, color: 'text-emerald-400' },
@@ -478,19 +552,19 @@ export default function AdminTestPresenter() {
               ].map(stat => {
                 const Icon = stat.icon;
                 return (
-                  <div key={stat.label} className="p-4 rounded-2xl bg-indigo-950/20 border border-indigo-900/30 backdrop-blur-sm flex flex-col items-center">
-                    <Icon className={`w-5 h-5 ${stat.color} mb-2`} />
-                    <span className="text-lg font-black text-white">{stat.value}</span>
-                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1 text-center">{stat.label}</span>
+                  <div key={stat.label} className="p-3 rounded-xl bg-indigo-950/20 border border-indigo-900/30 backdrop-blur-sm flex flex-col items-center">
+                    <Icon className={`w-4 h-4 ${stat.color} mb-1.5`} />
+                    <span className="text-sm font-black text-white">{stat.value}</span>
+                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 text-center">{stat.label}</span>
                   </div>
                 );
               })}
             </div>
 
-            <div className="pt-8">
+            <div className="pt-4">
               <button
                 onClick={() => setCurrentSlide(1)}
-                className="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-500/20 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 cursor-pointer inline-flex items-center gap-2"
+                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-500/20 text-white rounded-xl font-black text-[9px] uppercase tracking-widest transition-all active:scale-95 cursor-pointer inline-flex items-center gap-2"
               >
                 Start Presentation
                 <ChevronRight className="w-4 h-4" />
@@ -501,170 +575,205 @@ export default function AdminTestPresenter() {
 
         {/* ─── QUESTIONS SLIDES (Index 1 to N) ─── */}
         {currentQuestion && (
-          <div className="w-full max-w-5xl h-full flex flex-col justify-center animate-in fade-in slide-in-from-right-8 duration-300">
-            {/* Question Header Meta */}
-            <div className="flex justify-between items-center mb-4">
-              <div className="flex items-center gap-3">
-                <span className="text-xs font-black tracking-widest text-indigo-400 uppercase">
-                  QUESTION {currentSlide} OF {questions.length}
-                </span>
-              </div>
-              <span className="px-3 py-1 rounded bg-indigo-950/60 border border-indigo-900/40 text-[10px] font-black text-indigo-300 tracking-wider">
-                {currentQuestion.marks || 1} MARKS
-              </span>
-            </div>
-
-            {/* Centered Circular Autoplay Timer */}
-            {isAutoplayActive && (
-              <div className="flex flex-col items-center justify-center mb-8 animate-in zoom-in-95 duration-300">
-                <style>{`
-                  @keyframes timerPulse {
-                    0%, 100% {
-                      transform: scale(1);
-                      filter: drop-shadow(0 0 12px rgba(244, 63, 94, 0.4));
-                    }
-                    50% {
-                      transform: scale(1.06);
-                      filter: drop-shadow(0 0 24px rgba(244, 63, 94, 0.8));
-                    }
-                  }
-                  @keyframes timerPulseNormal {
-                    0%, 100% {
-                      transform: scale(1);
-                      filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.25));
-                    }
-                    50% {
-                      transform: scale(1.03);
-                      filter: drop-shadow(0 0 16px rgba(99, 102, 241, 0.5));
-                    }
-                  }
-                  @keyframes progressReveal {
-                    0%, 100% {
-                      transform: scale(1);
-                      filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.25));
-                    }
-                    50% {
-                      transform: scale(1.03);
-                      filter: drop-shadow(0 0 16px rgba(16, 185, 129, 0.5));
-                    }
-                  }
-                  .timer-pulse-critical {
-                    animation: timerPulse 0.5s infinite ease-in-out;
-                  }
-                  .timer-pulse-normal {
-                    animation: timerPulseNormal 2s infinite ease-in-out;
-                  }
-                  .timer-pulse-reveal {
-                    animation: progressReveal 1.5s infinite ease-in-out;
-                  }
-                `}</style>
-                <div className={`relative w-20 h-20 flex items-center justify-center ${
-                  autoplayPhase === 'question'
-                    ? (autoplayTimeLeft <= 3 ? 'timer-pulse-critical' : 'timer-pulse-normal')
-                    : 'timer-pulse-reveal'
-                }`}>
-                  {/* Backdrop glass circle */}
-                  <div className="absolute inset-1.5 rounded-full bg-indigo-950/45 border border-indigo-900/40 backdrop-blur-sm shadow-inner shadow-indigo-950/60"></div>
-                  
-                  <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 80 80">
-                    {/* Circle Track */}
-                    <circle 
-                      cx="40" 
-                      cy="40" 
-                      r="34" 
-                      stroke="#151336" 
-                      strokeWidth="4" 
-                      fill="transparent" 
-                    />
-                    {/* Dynamic Circle Progress Indicator */}
-                    <circle 
-                      cx="40" 
-                      cy="40" 
-                      r="34" 
-                      stroke={autoplayPhase === 'question' ? (autoplayTimeLeft <= 3 ? '#f43f5e' : '#6366f1') : '#10b981'} 
-                      strokeWidth="5" 
-                      fill="transparent"
-                      strokeDasharray={2 * Math.PI * 34}
-                      strokeDashoffset={2 * Math.PI * 34 * (1 - autoplayTimeLeft / (autoplayPhase === 'question' ? autoplayQuestionTime : autoplayRevealTime))}
-                      className="transition-all duration-1000 ease-linear"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  
-                  {/* Timer Text in Circle */}
-                  <div className="flex flex-col items-center justify-center z-10">
-                    <span className={`text-2xl font-black tracking-tight leading-none ${
-                      autoplayPhase === 'question' 
-                        ? (autoplayTimeLeft <= 3 ? 'text-rose-500 animate-pulse font-black' : 'text-white')
-                        : 'text-emerald-400 animate-pulse'
-                    }`}>
-                      {autoplayTimeLeft}
-                    </span>
-                    <span className="text-[6.5px] font-black uppercase tracking-widest text-slate-400 mt-0.5">secs</span>
-                  </div>
+          <div className="w-full max-w-7xl flex flex-col lg:flex-row gap-8 items-stretch justify-center animate-in fade-in slide-in-from-right-8 duration-300">
+            {/* Left Column: Question and Options */}
+            <div className="flex-1 flex flex-col justify-center py-2 min-w-0">
+              {/* Question Header Meta */}
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-black tracking-widest text-indigo-400 uppercase">
+                    QUESTION {currentSlide} OF {questions.length}
+                  </span>
                 </div>
-                
-                {/* Timer Subtext */}
-                <span className={`text-[9px] font-black uppercase tracking-widest mt-2.5 px-2.5 py-0.5 rounded-full border transition-all ${
-                  autoplayPhase === 'question' 
-                    ? 'text-indigo-300 bg-indigo-950/60 border-indigo-900/40'
-                    : 'text-emerald-400 bg-emerald-950/40 border-emerald-900/40 font-extrabold animate-pulse'
-                }`}>
-                  {autoplayPhase === 'question' ? '• Thinking Time' : '✓ Reveal Answer'}
+                <span className="px-3 py-1 rounded bg-indigo-950/60 border border-indigo-900/40 text-[10px] font-black text-indigo-300 tracking-wider">
+                  {currentQuestion.marks || 1} MARKS
                 </span>
               </div>
-            )}
 
-            {/* Question Statement */}
-            <div className="mb-8 min-h-[100px] flex items-center">
-              <h3 className="text-2xl md:text-3xl font-extrabold text-white leading-relaxed tracking-wide select-text">
-                {currentQuestion.question}
-              </h3>
+              {/* Centered Circular Autoplay Timer */}
+              {isAutoplayActive && (
+                <div className="flex flex-col items-center justify-center mb-8 animate-in zoom-in-95 duration-300">
+                  <style>{`
+                    @keyframes timerPulse {
+                      0%, 100% {
+                        transform: scale(1);
+                        filter: drop-shadow(0 0 12px rgba(244, 63, 94, 0.4));
+                      }
+                      50% {
+                        transform: scale(1.06);
+                        filter: drop-shadow(0 0 24px rgba(244, 63, 94, 0.8));
+                      }
+                    }
+                    @keyframes timerPulseNormal {
+                      0%, 100% {
+                        transform: scale(1);
+                        filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.25));
+                      }
+                      50% {
+                        transform: scale(1.03);
+                        filter: drop-shadow(0 0 16px rgba(99, 102, 241, 0.5));
+                      }
+                    }
+                    @keyframes progressReveal {
+                      0%, 100% {
+                        transform: scale(1);
+                        filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.25));
+                      }
+                      50% {
+                        transform: scale(1.03);
+                        filter: drop-shadow(0 0 16px rgba(16, 185, 129, 0.5));
+                      }
+                    }
+                    .timer-pulse-critical {
+                      animation: timerPulse 0.5s infinite ease-in-out;
+                    }
+                    .timer-pulse-normal {
+                      animation: timerPulseNormal 2s infinite ease-in-out;
+                    }
+                    .timer-pulse-reveal {
+                      animation: progressReveal 1.5s infinite ease-in-out;
+                    }
+                  `}</style>
+                  <div className={`relative w-20 h-20 flex items-center justify-center ${
+                    autoplayPhase === 'question'
+                      ? (autoplayTimeLeft <= 3 ? 'timer-pulse-critical' : 'timer-pulse-normal')
+                      : 'timer-pulse-reveal'
+                  }`}>
+                    {/* Backdrop glass circle */}
+                    <div className="absolute inset-1.5 rounded-full bg-indigo-950/45 border border-indigo-900/40 backdrop-blur-sm shadow-inner shadow-indigo-950/60"></div>
+                    
+                    <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 80 80">
+                      {/* Circle Track */}
+                      <circle 
+                        cx="40" 
+                        cy="40" 
+                        r="34" 
+                        stroke="#151336" 
+                        strokeWidth="4" 
+                        fill="transparent" 
+                      />
+                      {/* Dynamic Circle Progress Indicator */}
+                      <circle 
+                        cx="40" 
+                        cy="40" 
+                        r="34" 
+                        stroke={autoplayPhase === 'question' ? (autoplayTimeLeft <= 3 ? '#f43f5e' : '#6366f1') : '#10b981'} 
+                        strokeWidth="5" 
+                        fill="transparent"
+                        strokeDasharray={2 * Math.PI * 34}
+                        strokeDashoffset={2 * Math.PI * 34 * (1 - autoplayTimeLeft / (autoplayPhase === 'question' ? autoplayQuestionTime : autoplayRevealTime))}
+                        className="transition-all duration-1000 ease-linear"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    
+                    {/* Timer Text in Circle */}
+                    <div className="flex flex-col items-center justify-center z-10">
+                      <span className={`text-2xl font-black tracking-tight leading-none ${
+                        autoplayPhase === 'question' 
+                          ? (autoplayTimeLeft <= 3 ? 'text-rose-500 animate-pulse font-black' : 'text-white')
+                          : 'text-emerald-400 animate-pulse'
+                      }`}>
+                        {autoplayTimeLeft}
+                      </span>
+                      <span className="text-[6.5px] font-black uppercase tracking-widest text-slate-400 mt-0.5">secs</span>
+                    </div>
+                  </div>
+                  
+                  {/* Timer Subtext */}
+                  <span className={`text-[9px] font-black uppercase tracking-widest mt-2.5 px-2.5 py-0.5 rounded-full border transition-all ${
+                    autoplayPhase === 'question' 
+                      ? 'text-indigo-300 bg-indigo-950/60 border-indigo-900/40'
+                      : 'text-emerald-400 bg-emerald-950/40 border-emerald-900/40 font-extrabold animate-pulse'
+                  }`}>
+                    {autoplayPhase === 'question' ? '• Thinking Time' : '✓ Reveal Answer'}
+                  </span>
+                </div>
+              )}
+
+              {/* Question Statement */}
+              <div className="mb-4 min-h-[50px] flex items-center">
+                <h3 className="text-xl md:text-2xl font-extrabold text-white leading-relaxed tracking-wide select-text">
+                  {currentQuestion.question}
+                </h3>
+              </div>
+
+              {/* Options grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {['A', 'B', 'C', 'D'].filter(key => currentQuestion.options && currentQuestion.options[key]).map((key) => {
+                  const optText = currentQuestion.options[key];
+                  const isCorrect = currentQuestion.correctAnswer === key || 
+                                    (currentQuestion.correctAnswer && 
+                                     (currentQuestion.correctAnswer.toString().toUpperCase() === key || 
+                                      currentQuestion.correctAnswer.toString().toUpperCase() === optText.toString().toUpperCase()));
+                  const highlight = showAnswer && isCorrect;
+
+                  return (
+                    <div
+                      key={key}
+                      className={`p-5 rounded-2xl border transition-all duration-300 flex items-center gap-4 relative group ${
+                        highlight 
+                          ? 'bg-emerald-950/40 border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.25)] text-emerald-100'
+                          : showAnswer
+                            ? 'bg-indigo-950/10 border-indigo-950/50 text-slate-500 opacity-40'
+                            : 'bg-indigo-950/30 border-indigo-900/30 hover:border-indigo-700/50 hover:bg-indigo-950/50 text-slate-200'
+                      }`}
+                    >
+                      {/* Circle badge */}
+                      <div className={`w-8 h-8 rounded-full border flex items-center justify-center shrink-0 font-bold transition-all ${
+                        highlight 
+                          ? 'bg-emerald-600 border-emerald-500 text-white shadow-sm'
+                          : showAnswer
+                            ? 'bg-indigo-950/20 border-indigo-950/50 text-indigo-900'
+                            : 'bg-indigo-900/50 border-indigo-800 text-indigo-200 group-hover:bg-indigo-500 group-hover:text-white group-hover:border-indigo-400'
+                      }`}>
+                        {key}
+                      </div>
+
+                      <div className="flex-1 text-sm font-semibold select-text break-words pr-6">
+                        {optText}
+                      </div>
+
+                      {highlight && (
+                        <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 absolute right-5 top-1/2 -translate-y-1/2 animate-in zoom-in-75 duration-300" />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
-            {/* Options grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {['A', 'B', 'C', 'D'].filter(key => currentQuestion.options && currentQuestion.options[key]).map((key) => {
-                const optText = currentQuestion.options[key];
-                const isCorrect = currentQuestion.correctAnswer === key || 
-                                  (currentQuestion.correctAnswer && 
-                                   (currentQuestion.correctAnswer.toString().toUpperCase() === key || 
-                                    currentQuestion.correctAnswer.toString().toUpperCase() === optText.toString().toUpperCase()));
-                const highlight = showAnswer && isCorrect;
+            {/* Right Column: AI Explanation Panel */}
+            {showAnswer && (
+              <div className="w-full lg:w-96 shrink-0 bg-[#12102E]/60 backdrop-blur-md border border-indigo-500/25 rounded-3xl p-6 shadow-2xl flex flex-col justify-between animate-in slide-in-from-right-6 duration-500 text-left min-h-[350px]">
+                <div>
+                  <div className="flex items-center gap-2.5 mb-4 border-b border-indigo-950/60 pb-3">
+                    <img src={sanjuAvatar} alt="Sanju Avatar" className="w-6 h-6 object-contain rounded-full border border-indigo-500/35" />
+                    <span className="text-xs font-black text-indigo-200 uppercase tracking-widest">Sanju - AI Explanation</span>
+                  </div>
 
-                return (
-                  <div
-                    key={key}
-                    className={`p-5 rounded-2xl border transition-all duration-300 flex items-center gap-4 relative group ${
-                      highlight 
-                        ? 'bg-emerald-950/40 border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.25)] text-emerald-100'
-                        : showAnswer
-                          ? 'bg-indigo-950/10 border-indigo-950/50 text-slate-500 opacity-40'
-                          : 'bg-indigo-950/30 border-indigo-900/30 hover:border-indigo-700/50 hover:bg-indigo-950/50 text-slate-200'
-                    }`}
-                  >
-                    {/* Circle badge */}
-                    <div className={`w-8 h-8 rounded-full border flex items-center justify-center shrink-0 font-bold transition-all ${
-                      highlight 
-                        ? 'bg-emerald-600 border-emerald-500 text-white shadow-sm'
-                        : showAnswer
-                          ? 'bg-indigo-950/20 border-indigo-950/50 text-indigo-900'
-                          : 'bg-indigo-900/50 border-indigo-800 text-indigo-200 group-hover:bg-indigo-500 group-hover:text-white group-hover:border-indigo-400'
-                    }`}>
-                      {key}
-                    </div>
-
-                    <div className="flex-1 text-sm font-semibold select-text break-words pr-6">
-                      {optText}
-                    </div>
-
-                    {highlight && (
-                      <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 absolute right-5 top-1/2 -translate-y-1/2 animate-in zoom-in-75 duration-300" />
+                  <div className="text-slate-300 text-xs leading-relaxed space-y-3 select-text max-h-[320px] overflow-y-auto pr-1">
+                    {isExplaining ? (
+                      <div className="flex flex-col items-center justify-center py-16 gap-3 text-slate-400">
+                        <Loader2 className="w-6 h-6 text-indigo-500 animate-spin" />
+                        <span className="text-[10px] font-bold uppercase tracking-wider animate-pulse">Sanju is thinking...</span>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {renderExplanation(explanation) || (
+                          <p className="font-medium text-slate-300">कोई स्पष्टीकरण उपलब्ध नहीं है।</p>
+                        )}
+                      </div>
                     )}
                   </div>
-                );
-              })}
-            </div>
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-indigo-950/60 flex items-center justify-between text-[9px] font-bold text-slate-500 uppercase tracking-widest">
+                  <span>Powered by Gemini</span>
+                  <span>NextGen AI Tutor</span>
+                </div>
+              </div>
+            )}
 
             {/* ─── POLL OVERLAY COMPONENT ─── */}
             {isPollOpen && (
@@ -991,7 +1100,7 @@ export default function AdminTestPresenter() {
           {currentQuestion && (
             <>
               <span>[S] Show Answer</span>
-              <span>[P] Toggle Poll</span>
+              {!isStudent && <span>[P] Toggle Poll</span>}
             </>
           )}
           <span>[F] Fullscreen</span>
@@ -1026,19 +1135,21 @@ export default function AdminTestPresenter() {
                 {showAnswer ? 'Hide Answer' : 'Show Answer'}
               </button>
 
-              {/* Toggles classroom poll overlay */}
-              <button
-                onClick={() => setIsPollOpen(!isPollOpen)}
-                className={`px-5 py-3 rounded-2xl border text-[9.5px] font-black uppercase tracking-widest transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 ${
-                  isPollOpen 
-                    ? 'bg-indigo-600 border-indigo-500 text-white shadow-md' 
-                    : 'bg-indigo-950/60 border-indigo-900/40 text-indigo-300 hover:text-white hover:bg-indigo-900/60'
-                }`}
-                title="Launch timer poll on slide [P]"
-              >
-                <BarChart3 className="w-3.5 h-3.5" />
-                Poll Mode
-              </button>
+              {/* Toggles classroom poll overlay (hidden for students) */}
+              {!isStudent && (
+                <button
+                  onClick={() => setIsPollOpen(!isPollOpen)}
+                  className={`px-5 py-3 rounded-2xl border text-[9.5px] font-black uppercase tracking-widest transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 ${
+                    isPollOpen 
+                      ? 'bg-indigo-600 border-indigo-500 text-white shadow-md' 
+                      : 'bg-indigo-950/60 border-indigo-900/40 text-indigo-300 hover:text-white hover:bg-indigo-900/60'
+                  }`}
+                  title="Launch timer poll on slide [P]"
+                >
+                  <BarChart3 className="w-3.5 h-3.5" />
+                  Poll Mode
+                </button>
+              )}
 
               {/* Auto Play Configuration Toggle */}
               <button

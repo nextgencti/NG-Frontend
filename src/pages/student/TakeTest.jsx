@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Clock, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, Loader2, Sun, Moon, Maximize, Minimize, Download, Sparkles, Award } from 'lucide-react';
+import { Clock, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, Loader2, Sun, Moon, Maximize, Minimize, Download, Sparkles, Award, Presentation } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../lib/axios';
 import toast from 'react-hot-toast';
@@ -250,7 +250,7 @@ export default function TakeTest() {
         animate={{ opacity: 1 }}
         className={`min-h-screen transition-colors duration-500 flex flex-col items-center py-10 px-4 bg-dashboard-grid bg-repeat ${isDarkMode ? 'bg-slate-950' : 'bg-slate-50'}`}
       >
-        <div className={`${isDarkMode ? 'glass-dark bg-slate-900/70 backdrop-blur-2xl border-white/10 shadow-[0_24px_50px_rgba(0,0,0,0.2)]' : 'bg-white/70 backdrop-blur-2xl border-white/60 shadow-[0_24px_50px_rgba(0,0,0,0.03)]'} rounded-[36px] p-6 md:p-10 max-w-3xl w-full space-y-8 border relative`}>
+        <div className={`${isDarkMode ? 'glass-dark bg-slate-900/70 backdrop-blur-2xl border-white/10 shadow-[0_24px_50px_rgba(0,0,0,0.2)]' : 'bg-white/70 backdrop-blur-2xl border-white/60 shadow-[0_24px_50px_rgba(0,0,0,0.03)]'} rounded-[24px] p-6 md:p-8 max-w-2xl w-full space-y-6 border relative`}>
           
           <style dangerouslySetInnerHTML={{__html: `
             @media print {
@@ -290,48 +290,61 @@ export default function TakeTest() {
           `}} />
 
           {/* Action Header */}
-          <div className="flex justify-between items-center border-b border-slate-100 dark:border-white/5 pb-5 print:hidden">
+          <div className="flex justify-between items-center border-b border-slate-100 dark:border-white/5 pb-4 print:hidden">
             <button
               onClick={() => navigate('/dashboard/tests')}
-              className="flex items-center gap-1.5 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/15 text-slate-800 dark:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-slate-200 dark:border-white/5 active:scale-95 cursor-pointer shadow-sm"
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border active:scale-95 cursor-pointer shadow-sm ${
+                isDarkMode 
+                  ? 'bg-white/10 hover:bg-white/15 text-white border-white/5' 
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200 hover:text-slate-950'
+              }`}
             >
               <ChevronLeft className="w-4 h-4 text-slate-500" /> Back to List
             </button>
             
-            <button
-              onClick={() => window.print()}
-              className="flex items-center gap-2 px-5 py-2.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md transition-all active:scale-95 cursor-pointer border border-[#4F46E5] hover:border-[#4338CA]"
-            >
-              <Download className="w-4 h-4 text-white/90" /> Print Summary
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => navigate(`/student/tests/${testId}/present`)}
+                className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md transition-all active:scale-95 cursor-pointer border border-indigo-650"
+              >
+                <Presentation className="w-4 h-4 text-white" /> Practice Slideshow
+              </button>
+              
+              <button
+                onClick={() => window.print()}
+                className="flex items-center gap-2 px-5 py-2.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md transition-all active:scale-95 cursor-pointer border border-[#4F46E5] hover:border-[#4338CA]"
+              >
+                <Download className="w-4 h-4 text-white/90" /> Print Summary
+              </button>
+            </div>
           </div>
           
           {/* Header Summary */}
-          <div className="text-center space-y-5">
-            <div className={`w-20 h-20 ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'} rounded-full flex items-center justify-center mx-auto shadow-inner`}>
-              <CheckCircle2 className="w-10 h-10" />
+          <div className="text-center space-y-4">
+            <div className={`w-16 h-16 ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'} rounded-full flex items-center justify-center mx-auto shadow-inner`}>
+              <CheckCircle2 className="w-8 h-8" />
             </div>
             <div>
-              <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded bg-primary-50 dark:bg-white/5 border border-primary-100/30 dark:border-white/5 text-[9px] font-black text-primary-600 uppercase tracking-widest">
-                <Sparkles className="w-3 h-3 text-amber-500" /> {test?.course || 'Assessment'}
+              <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-primary-50 dark:bg-white/5 border border-primary-100/30 dark:border-white/5 text-[8.5px] font-black text-primary-600 uppercase tracking-widest">
+                <Sparkles className="w-2.5 h-2.5 text-amber-500" /> {test?.course || 'Assessment'}
               </div>
-              <h2 className={`text-2xl sm:text-3xl font-black ${isDarkMode ? 'text-white' : 'text-slate-900'} mt-2 uppercase tracking-tight`}>
+              <h2 className={`text-xl sm:text-2xl font-black ${isDarkMode ? 'text-white' : 'text-slate-900'} mt-1.5 uppercase tracking-tight`}>
                 {test?.title || 'Assessment Complete'}
               </h2>
-              <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'} mt-1 font-medium`}>Assessment scorecard has been generated successfully.</p>
+              <p className={`text-[11px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'} mt-0.5 font-medium`}>Assessment scorecard has been generated successfully.</p>
             </div>
             
-            <div className={`${isDarkMode ? 'bg-white/5 border-white/10 backdrop-blur-md' : 'bg-white/40 border-white/60 backdrop-blur-md shadow-sm'} rounded-3xl border p-6 space-y-4 max-w-md mx-auto`}>
-              <div className="grid grid-cols-2 gap-4">
-                <div className={`${isDarkMode ? 'bg-slate-800/50 backdrop-blur-md border border-white/10' : 'bg-white/60 backdrop-blur-md border border-white/80'} rounded-2xl p-4 text-center shadow-sm`}>
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 leading-none">Final Score</p>
-                  <p className={`text-2xl sm:text-3xl font-black ${isDarkMode ? 'text-white' : 'text-primary-600'}`}>
-                    {result.score ?? 0} <span className="text-xs sm:text-sm text-slate-400 font-medium">/ {result.totalMarks ?? 100}</span>
+            <div className={`${isDarkMode ? 'bg-white/5 border-white/10 backdrop-blur-md' : 'bg-white/40 border-white/60 backdrop-blur-md shadow-sm'} rounded-2xl border p-4 space-y-3 max-w-sm mx-auto`}>
+              <div className="grid grid-cols-2 gap-3">
+                <div className={`${isDarkMode ? 'bg-slate-800/50 backdrop-blur-md border border-white/10' : 'bg-white/60 backdrop-blur-md border border-white/80'} rounded-xl p-3 text-center shadow-sm`}>
+                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 leading-none">Final Score</p>
+                  <p className={`text-xl sm:text-2xl font-black ${isDarkMode ? 'text-white' : 'text-primary-600'}`}>
+                    {result.score ?? 0} <span className="text-[10px] sm:text-xs text-slate-400 font-medium">/ {result.totalMarks ?? 100}</span>
                   </p>
                 </div>
-                <div className={`${isDarkMode ? 'bg-slate-800/50 backdrop-blur-md border border-white/10' : 'bg-white/60 backdrop-blur-md border border-white/80'} rounded-2xl p-4 text-center shadow-sm`}>
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 leading-none">Passing Grade</p>
-                  <p className="text-2xl sm:text-3xl font-black text-emerald-500 leading-none">{result.grade || 'A'}</p>
+                <div className={`${isDarkMode ? 'bg-slate-800/50 backdrop-blur-md border border-white/10' : 'bg-white/60 backdrop-blur-md border border-white/80'} rounded-xl p-3 text-center shadow-sm`}>
+                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 leading-none">Passing Grade</p>
+                  <p className="text-xl sm:text-2xl font-black text-emerald-500 leading-none">{result.grade || 'A'}</p>
                 </div>
               </div>
               
@@ -357,14 +370,14 @@ export default function TakeTest() {
               {(result.detailedReport || []).map((item, index) => (
                 <div 
                   key={item.questionId || index} 
-                  className={`p-6 rounded-[28px] border-2 relative overflow-hidden print-card ${
+                  className={`p-4 sm:p-5 rounded-2xl border-2 relative overflow-hidden print-card ${
                     item.isCorrect 
                       ? (isDarkMode ? 'border-emerald-500/10 bg-emerald-500/5' : 'border-emerald-100 bg-emerald-50/20') 
                       : (isDarkMode ? 'border-rose-500/10 bg-rose-500/5' : 'border-rose-100 bg-rose-50/20')
                   }`}
                 >
-                  <div className="flex items-start gap-4 mb-5">
-                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 font-black text-xs ${
+                  <div className="flex items-start gap-3 mb-4">
+                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 font-black text-xs ${
                       item.isCorrect 
                         ? (isDarkMode ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-emerald-100 text-emerald-700 border border-emerald-250') 
                         : (isDarkMode ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-rose-100 text-rose-700 border border-rose-250')
@@ -372,7 +385,7 @@ export default function TakeTest() {
                       {index + 1}
                     </div>
                     <div className="flex-1">
-                      <h4 className={`text-base font-black leading-snug uppercase ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{item.question}</h4>
+                      <h4 className={`text-sm sm:text-base font-black leading-snug uppercase ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{item.question}</h4>
                       <div className="flex items-center gap-1.5 mt-1.5">
                         <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{item.marks} Points</span>
                         {item.isCorrect ? (
@@ -408,16 +421,16 @@ export default function TakeTest() {
                       }
 
                       return (
-                        <div key={opt} className={`flex items-center justify-between p-3 rounded-2xl border ${bgClass}`}>
-                          <div className="flex items-center gap-3">
-                            <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black ${
+                        <div key={opt} className={`flex items-center justify-between p-2.5 rounded-xl border ${bgClass}`}>
+                          <div className="flex items-center gap-2.5">
+                            <span className={`w-5.5 h-5.5 rounded-lg flex items-center justify-center text-[10px] font-black ${
                               isCorrectOption ? (isDarkMode ? 'bg-emerald-500/30 text-emerald-400' : 'bg-emerald-200 text-emerald-800') 
                                 : isSelected ? (isDarkMode ? 'bg-rose-500/30 text-rose-400' : 'bg-rose-200 text-rose-800') 
                                 : (isDarkMode ? 'bg-white/5 text-slate-500' : 'bg-slate-50 text-slate-450')
                             }`}>
                               {opt}
                             </span>
-                            <span className={`${textClass} text-xs font-semibold`}>{item.options[opt]}</span>
+                            <span className={`${textClass} text-[11.5px] font-semibold`}>{item.options[opt]}</span>
                           </div>
                           {badge}
                         </div>

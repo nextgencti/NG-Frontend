@@ -53,13 +53,19 @@ export default function PendingApproval() {
         </div>
         
         <div className="bg-white/5 border border-white/5 rounded-3xl p-6 text-left space-y-5">
-          <p className="text-slate-300 leading-relaxed text-xs sm:text-sm font-medium">
+          <p 
+            className="text-slate-300 leading-relaxed text-xs sm:text-sm font-medium tracking-wide"
+            style={{ wordSpacing: '0.08em' }}
+          >
             Hi<span className="text-primary-400 font-bold">{currentUser?.name ? ' ' + currentUser.name : ' Guest'}</span>, your profile details have been registered successfully! For security and institutional integrity, new accounts require active administrator review.
           </p>
           
           <div className="flex items-start gap-3 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
             <ShieldAlert className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-            <p className="text-amber-250 text-xs font-semibold leading-relaxed">
+            <p 
+              className="text-amber-300 text-xs font-semibold leading-relaxed tracking-wide"
+              style={{ wordSpacing: '0.08em' }}
+            >
               Verifications are completed within 24 hours. You will receive access instantly once the system administrator triggers activation.
             </p>
           </div>
@@ -71,7 +77,7 @@ export default function PendingApproval() {
           onClick={handleLogout}
           className="w-full py-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 group border border-white/5 hover:border-white/10 cursor-pointer shadow-md"
         >
-          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform text-primary-450" />
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform text-indigo-400" />
           Return to Login
         </motion.button>
       </motion.div>

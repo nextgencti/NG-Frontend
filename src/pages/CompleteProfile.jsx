@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, MapPin, Phone, BookOpen, Lock, CheckCircle, ArrowRight, Camera } from 'lucide-react';
+import { User, MapPin, Phone, BookOpen, Lock, CheckCircle, ArrowRight, Camera, ChevronDown, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import api from '../lib/axios';
@@ -16,6 +16,17 @@ export default function CompleteProfile() {
   const [courses, setCourses] = useState([]);
   const [institutes, setInstitutes] = useState([]);
   const fileInputRef = useRef(null);
+  const [focusedField, setFocusedField] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const getLabelClass = (value, isFocused, hasIcon = true, isTextarea = false) => {
+    if (value || isFocused) {
+      return `absolute left-4 -top-2.5 text-[9px] font-black text-[#4F46E5] bg-white px-1.5 uppercase tracking-wider transition-all duration-200 pointer-events-none z-10`;
+    }
+    const leftPadding = hasIcon ? 'left-11' : 'left-4';
+    const topClass = isTextarea ? 'top-3.5' : 'top-1/2 -translate-y-1/2';
+    return `absolute ${leftPadding} ${topClass} text-slate-400 text-xs font-bold transition-all duration-200 pointer-events-none z-10`;
+  };
   
   // Fetch available courses and institutes for signup
   useEffect(() => {
@@ -51,6 +62,11 @@ export default function CompleteProfile() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === 'phone') {
+      const cleanValue = value.replace(/\D/g, '').slice(0, 10);
+      setFormData((prev) => ({ ...prev, [name]: cleanValue }));
+      return;
+    }
     if (name === 'instituteId') {
       // Reset selected course when changing the institute
       setFormData((prev) => ({ ...prev, instituteId: value, courseId: '' }));
@@ -84,6 +100,12 @@ export default function CompleteProfile() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!formData.password || formData.password.length < 6) {
+      toast.error('Password must be at least 6 characters long');
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
@@ -126,23 +148,37 @@ export default function CompleteProfile() {
       <div className="absolute top-[-20%] left-[-10%] w-[50rem] h-[50rem] bg-primary-600/[0.03] rounded-full blur-[140px] pointer-events-none"></div>
       <div className="absolute bottom-[-20%] right-[-10%] w-[50rem] h-[50rem] bg-primary-600/[0.03] rounded-full blur-[140px] pointer-events-none"></div>
 
-      <div className="z-10 w-full max-w-lg p-8 sm:p-12 bg-white rounded-[24px] border border-[#E5E7EB] m-4 shadow-soft">
+      <div className="z-10 w-full max-w-lg p-6 sm:p-8 bg-white rounded-[24px] border border-[#E5E7EB] m-4 shadow-soft">
         
-        <div className="flex justify-center mb-6">
-          <Logo className="w-20 h-20" />
+        <div className="flex justify-center mb-4">
+          <Logo className="w-14 h-14" />
         </div>
-        <div className="mb-8 text-center">
-          <h2 className="text-2xl font-bold text-[#111827] mb-2 tracking-tight">Complete Profile</h2>
-          <p className="text-[#6B7280] text-[14px] font-medium">Just a few more details to get you started.</p>
+        <div className="mb-5 text-center">
+          <h2 className="text-xl font-bold text-[#111827] mb-1.5 tracking-tight">Complete Profile</h2>
+          <p className="text-[#6B7280] text-[13px] font-semibold">Just a few more details to get you started.</p>
         </div>
 
         {/* Progress Bar */}
-        <div className="flex gap-2 mb-8 px-4">
+        <div className="flex gap-2 mb-5 px-4">
           <div className="h-1.5 flex-1 rounded-full bg-[#4F46E5] shadow-sm"></div>
           <div className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${step >= 2 ? 'bg-[#4F46E5]' : 'bg-[#F1F5F9]'}`}></div>
         </div>
 
-        <form onSubmit={step === 2 ? handleSubmit : (e) => { e.preventDefault(); setStep(2); }} className="space-y-6">
+        <form 
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (step === 1) {
+              if (formData.phone.length !== 10) {
+                toast.error('Mobile number must be exactly 10 digits');
+                return;
+              }
+              setStep(2);
+            } else {
+              handleSubmit(e);
+            }
+          }} 
+          className="space-y-5"
+        >
           
           {step === 1 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
@@ -178,81 +214,104 @@ export default function CompleteProfile() {
                 <p className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-wider">Click to upload photo</p>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[12px] font-semibold text-[#111827] uppercase tracking-wider ml-1">Full Name</label>
-                <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#94A3B8]" />
-                  <input
-                    type="text" name="fullName" required
-                    value={formData.fullName} onChange={handleChange}
-                    className="w-full pl-11 pr-4 py-3 bg-white border border-[#E5E7EB] rounded-[10px] text-[#111827] text-[14px] placeholder-[#94A3B8] focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] transition-all outline-none"
-                    placeholder="Sanjay Rajpoot"
-                  />
-                </div>
+              <div className="relative group">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#94A3B8] group-focus-within:text-[#4F46E5] transition-colors" />
+                <input
+                  type="text" name="fullName" required
+                  value={formData.fullName} onChange={handleChange}
+                  onFocus={() => setFocusedField('fullName')}
+                  onBlur={() => setFocusedField(null)}
+                  className="w-full pl-11 pr-4 py-3 bg-white border border-[#E5E7EB] rounded-[10px] text-[#111827] text-[14px] placeholder-transparent focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] transition-all outline-none font-semibold"
+                  placeholder="Enter Your Name"
+                />
+                <label className={getLabelClass(formData.fullName, focusedField === 'fullName')}>
+                  Enter Your Name
+                </label>
               </div>
               
-              <div className="space-y-2">
-                <label className="text-[12px] font-semibold text-[#111827] uppercase tracking-wider ml-1">Phone Number</label>
-                <div className="relative">
-                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#94A3B8]" />
-                  <input
-                    type="tel" name="phone" required
-                    value={formData.phone} onChange={handleChange}
-                    className="w-full pl-11 pr-4 py-3 bg-white border border-[#E5E7EB] rounded-[10px] text-[#111827] text-[14px] placeholder-[#94A3B8] focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] transition-all outline-none"
-                    placeholder="9876543210"
-                  />
-                </div>
+              <div className="relative group">
+                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#94A3B8] group-focus-within:text-[#4F46E5] transition-colors" />
+                <input
+                  type="tel" name="phone" required
+                  value={formData.phone} onChange={handleChange}
+                  onFocus={() => setFocusedField('phone')}
+                  onBlur={() => setFocusedField(null)}
+                  className="w-full pl-11 pr-4 py-3 bg-white border border-[#E5E7EB] rounded-[10px] text-[#111827] text-[14px] placeholder-transparent focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] transition-all outline-none font-semibold"
+                  placeholder="Enter Phone Number"
+                  maxLength={10}
+                />
+                <label className={getLabelClass(formData.phone, focusedField === 'phone')}>
+                  Enter Phone Number
+                </label>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[12px] font-semibold text-[#111827] uppercase tracking-wider ml-1">Full Address</label>
-                <div className="relative">
-                  <MapPin className="absolute left-4 top-3 h-5 w-5 text-[#94A3B8]" />
-                  <textarea
-                    name="address" required rows="2"
-                    value={formData.address} onChange={handleChange}
-                    className="w-full pl-11 pr-4 py-3 bg-white border border-[#E5E7EB] rounded-[10px] text-[#111827] text-[14px] placeholder-[#94A3B8] focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] transition-all outline-none resize-none"
-                    placeholder="Muskara, Hamirpur..."
-                  ></textarea>
-                </div>
+              <div className="relative group">
+                <MapPin className="absolute left-4 top-3.5 h-5 w-5 text-[#94A3B8] group-focus-within:text-[#4F46E5] transition-colors" />
+                <textarea
+                  name="address" required rows="2"
+                  value={formData.address} onChange={handleChange}
+                  onFocus={() => setFocusedField('address')}
+                  onBlur={() => setFocusedField(null)}
+                  className="w-full pl-11 pr-4 py-3 bg-white border border-[#E5E7EB] rounded-[10px] text-[#111827] text-[14px] placeholder-transparent focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] transition-all outline-none resize-none font-semibold"
+                  placeholder="Enter Full Address"
+                ></textarea>
+                <label className={getLabelClass(formData.address, focusedField === 'address', true, true)}>
+                  Enter Full Address
+                </label>
               </div>
             </div>
           )}
 
           {step === 2 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
-              <div className="space-y-2">
-                <label className="text-[12px] font-semibold text-[#111827] uppercase tracking-wider ml-1">Select Course</label>
-                <div className="relative">
-                  <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#94A3B8] z-10" />
-                  <select
-                    name="courseId" required
-                    value={formData.courseId} onChange={handleChange}
-                    className="w-full pl-11 pr-4 py-3 bg-white border border-[#E5E7EB] rounded-[10px] text-[#111827] text-[14px] focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] transition-all outline-none appearance-none cursor-pointer relative"
-                  >
-                    <option value="" disabled>Choose a course</option>
-                    {courses
-                      .filter(course => !formData.instituteId || course.instituteId === formData.instituteId || !course.instituteId)
-                      .map(course => (
-                      <option key={course.id} value={course.id}>
-                        {course.name}
-                      </option>
-                    ))}
-                  </select>
+              <div className="relative group">
+                <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#94A3B8] group-focus-within:text-[#4F46E5] transition-colors z-10" />
+                <select
+                  name="courseId" required
+                  value={formData.courseId} onChange={handleChange}
+                  onFocus={() => setFocusedField('courseId')}
+                  onBlur={() => setFocusedField(null)}
+                  className="w-full pl-11 pr-10 py-3 bg-white border border-[#E5E7EB] rounded-[10px] text-[#111827] text-[14px] focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] transition-all outline-none appearance-none cursor-pointer relative font-semibold"
+                >
+                  <option value=""></option>
+                  {courses
+                    .filter(course => !formData.instituteId || course.instituteId === formData.instituteId || !course.instituteId)
+                    .map(course => (
+                    <option key={course.id} value={course.id}>
+                      {course.name}
+                    </option>
+                  ))}
+                </select>
+                <label className={getLabelClass(formData.courseId, focusedField === 'courseId')}>
+                  Select Course
+                </label>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#94A3B8]">
+                  <ChevronDown className="w-4 h-4" />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[12px] font-semibold text-[#111827] uppercase tracking-wider ml-1">Setup Password</label>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#94A3B8]" />
-                  <input
-                    type="password" name="password" required minLength="6"
-                    value={formData.password} onChange={handleChange}
-                    className="w-full pl-11 pr-4 py-3 bg-white border border-[#E5E7EB] rounded-[10px] text-[#111827] text-[14px] placeholder-[#94A3B8] focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] transition-all outline-none"
-                    placeholder="••••••••"
-                  />
-                </div>
+              <div className="relative group">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#94A3B8] group-focus-within:text-[#4F46E5] transition-colors" />
+                <input
+                  type={showPassword ? 'text' : 'password'} 
+                  name="password" required minLength="6"
+                  value={formData.password} onChange={handleChange}
+                  onFocus={() => setFocusedField('password')}
+                  onBlur={() => setFocusedField(null)}
+                  className="w-full pl-11 pr-12 py-3 bg-white border border-[#E5E7EB] rounded-[10px] text-[#111827] text-[14px] placeholder-transparent focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] transition-all outline-none font-semibold"
+                  placeholder="Setup Password"
+                />
+                <label className={getLabelClass(formData.password, focusedField === 'password')}>
+                  Setup Password
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#4F46E5] transition-colors focus:outline-none"
+                  title={showPassword ? 'Hide Password' : 'Show Password'}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
             </div>
           )}

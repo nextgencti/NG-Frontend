@@ -21,12 +21,16 @@ export default function About() {
         { name: 'Home', path: '/' },
         { name: 'Courses', path: '/dashboard/courses' },
         { name: 'Classroom', path: '/dashboard/courses' },
-        { name: 'Dashboard', path: '/dashboard' }
+        { name: 'Dashboard', path: '/dashboard' },
+        { name: 'Typing', path: '/tools/typing-test' },
+        { name: 'Services', path: '/services' }
       ]
     : [
         { name: 'Home', path: '/' },
         { name: 'Courses', path: '/#courses' },
-        { name: 'About', path: '/about' }
+        { name: 'About', path: '/about' },
+        { name: 'Typing', path: '/tools/typing-test' },
+        { name: 'Services', path: '/services' }
       ];
 
   return (

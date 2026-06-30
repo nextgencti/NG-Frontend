@@ -291,7 +291,7 @@ export default function PublicTestRunner() {
       textSub: isDarkMode ? 'text-slate-400' : 'text-slate-500',
       btnGhost: isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-100',
       option: isDarkMode ? 'border-slate-800 hover:border-slate-700 bg-slate-900/50' : 'border-slate-100 hover:border-slate-200 bg-white',
-      navBtn: isDarkMode ? 'bg-slate-800 text-slate-400 border-slate-700' : 'bg-slate-100 text-slate-500 border-slate-200',
+      navBtn: isDarkMode ? 'bg-slate-800 text-slate-400 border-slate-700' : 'bg-white text-slate-700 border border-slate-200 hover:border-primary-300 hover:bg-primary-50',
     };
 
     return (
@@ -355,51 +355,62 @@ export default function PublicTestRunner() {
 
         <main className="flex-1 max-w-7xl mx-auto w-full flex flex-col lg:flex-row gap-6 px-4 lg:px-8 py-8">
           {/* Question Navigator */}
-          <div className="hidden lg:block w-72 shrink-0">
-            <div className={`${theme.card} rounded-3xl border p-6 sticky top-28`}>
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Question Matrix</h3>
-                <span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-[9px] font-bold text-slate-500">
-                  {Object.keys(answers).length} / {questions.length}
+          <div className="hidden lg:block w-56 xl:w-64 shrink-0">
+            <div className={`${theme.card} rounded-2xl border sticky top-28`}>
+              <div className="flex items-center justify-between px-4 py-3 bg-[#4f46e5] rounded-t-2xl">
+                <h3 className="text-[9px] font-black uppercase tracking-[0.15em] text-white/80">Question Matrix</h3>
+                <span className="px-2.5 py-1 bg-white/20 backdrop-blur-sm rounded-lg text-[11px] font-extrabold text-white">
+                  {Object.keys(answers).length}/{questions.length}
                 </span>
               </div>
-              <div className="grid grid-cols-5 gap-3">
-                {questions.map((q, idx) => {
-                  const isAnswered = !!answers[q.id];
-                  const isCurrent = idx === currentQuestionIndex;
-                  return (
-                    <button
-                      key={q.id}
-                      onClick={() => setCurrentQuestionIndex(idx)}
-                      className={`w-10 h-10 rounded-xl font-black text-xs flex items-center justify-center transition-all ${
-                        isCurrent
-                          ? 'bg-primary-600 text-white shadow-xl shadow-primary-600/30 ring-2 ring-primary-600 ring-offset-4 ring-offset-transparent'
-                          : isAnswered
-                            ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
-                            : theme.navBtn
-                      }`}
-                    >
-                      {idx + 1}
-                    </button>
-                  );
-                })}
+              <div className="px-3 py-3 overflow-y-auto scrollbar-thin" style={{ maxHeight: 'calc(100vh - 240px)' }}>
+                <div className={`grid gap-1.5 ${questions.length > 50 ? 'grid-cols-6' : 'grid-cols-5'}`}>
+                  {questions.map((q, idx) => {
+                    const isAnswered = !!answers[q.id];
+                    const isCurrent = idx === currentQuestionIndex;
+                    return (
+                      <button
+                        key={q.id}
+                        onClick={() => setCurrentQuestionIndex(idx)}
+                        className={`aspect-square rounded-lg font-bold flex items-center justify-center transition-all cursor-pointer ${
+                          questions.length > 50 ? 'text-[9px]' : 'text-[10px]'
+                        } ${
+                          isCurrent
+                            ? 'bg-primary-600 text-white shadow-md shadow-primary-600/30 ring-2 ring-primary-600 ring-offset-2'
+                            : isAnswered
+                              ? 'bg-emerald-500 text-white shadow-sm'
+                              : theme.navBtn
+                        }`}
+                      >
+                        {idx + 1}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
               
-              <div className="mt-8 space-y-3">
-                <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+              <div className="px-4 py-3 border-t border-slate-100 dark:border-slate-800 space-y-1.5">
+                <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 flex-shrink-0"></div>
                   <span>Answered</span>
                 </div>
-                <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  <div className="w-3 h-3 rounded-full bg-primary-600"></div>
-                  <span>Current Question</span>
+                <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                  <div className="w-2.5 h-2.5 rounded-full bg-primary-600 flex-shrink-0"></div>
+                  <span>Current</span>
                 </div>
-                <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  <div className={`w-3 h-3 rounded-full ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}></div>
+                <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                  <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'}`}></div>
                   <span>Unattempted</span>
                 </div>
               </div>
             </div>
+            <style>{`
+              .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+              .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+              .scrollbar-thin::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 99px; }
+              .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+              .scrollbar-thin { scrollbar-width: thin; scrollbar-color: #e2e8f0 transparent; }
+            `}</style>
           </div>
 
           {/* Question Area */}

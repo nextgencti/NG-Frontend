@@ -14,8 +14,9 @@ import api from '../lib/axios';
  * @param {string} referenceId - courseId or testId
  * @param {string} label - human-readable label like course name or test title
  * @param {boolean} active - set false to pause tracking (e.g., test finished)
+ * @param {string} lessonId - optional ID of active lesson being studied
  */
-export default function useStudyTracker(type, referenceId, label = '', active = true) {
+export default function useStudyTracker(type, referenceId, label = '', active = true, lessonId = null) {
   const intervalRef = useRef(null);
   const isVisibleRef = useRef(true);
 
@@ -31,7 +32,8 @@ export default function useStudyTracker(type, referenceId, label = '', active = 
           type,
           referenceId,
           label,
-          duration: 1 // 1 minute per heartbeat
+          duration: 1, // 1 minute per heartbeat
+          lessonId
         });
       } catch (err) {
         // Silently fail — don't disrupt the user's workflow
@@ -60,5 +62,5 @@ export default function useStudyTracker(type, referenceId, label = '', active = 
       }
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [type, referenceId, active]);
+  }, [type, referenceId, active, lessonId]);
 }

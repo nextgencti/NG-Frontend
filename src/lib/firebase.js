@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 
 // Firebase client config (these are public/safe keys by design)
 const firebaseConfig = {
@@ -24,4 +24,4 @@ export const initFirebase = async () => {
   return { auth, googleProvider };
 };
 
-export { auth, googleProvider, signInWithPopup, signOut };
+export { auth, googleProvider, signInWithPopup, signOut, signInWithEmailAndPassword, sendPasswordResetEmail };

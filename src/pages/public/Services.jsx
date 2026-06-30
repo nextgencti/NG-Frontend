@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { BookOpen, ArrowRight, ShieldCheck, Zap, Users, Trophy, ChevronDown, User, LogOut, Star, Briefcase, FileText, Shield, Download, ExternalLink, ArrowLeft, Search } from 'lucide-react';
 import Footer from '../../components/Footer';
 import Logo from '../../components/Logo';
@@ -45,17 +45,6 @@ export default function Services() {
       ]
     },
     {
-      id: 2,
-      name: "UP Police Recruitment",
-      category: "Job Alerts",
-      description: "Latest notification guidelines and direct recruitment forms for UP Police Constable, Sub-Inspector, and assistant posts.",
-      icon: Briefcase,
-      link: "https://uppbpb.gov.in",
-      links: [
-        { label: "Official Website", url: "https://uppbpb.gov.in" }
-      ]
-    },
-    {
       id: 3,
       name: "Aadhaar Portal (UIDAI)",
       category: "Identity Cards",
@@ -65,41 +54,6 @@ export default function Services() {
       links: [
         { label: "Aadhaar Services Portal", url: "https://myaadhaar.uidai.gov.in" },
         { label: "Verify Aadhaar Status", url: "https://uidai.gov.in" }
-      ]
-    },
-    {
-      id: 4,
-      name: "PAN Card Services (UTIITSL)",
-      category: "Identity Cards",
-      description: "Apply for a new Permanent Account Number card, request correction in PAN details, track card status, or link PAN with Aadhaar.",
-      icon: FileText,
-      link: "https://www.pan.utiitsl.com/PAN/",
-      links: [
-        { label: "UTIITSL Portal", url: "https://www.pan.utiitsl.com/PAN/" },
-        { label: "Income Tax PAN Portal", url: "https://eportal.incometax.gov.in" }
-      ]
-    },
-    {
-      id: 5,
-      name: "Voter Service Portal (NVSP)",
-      category: "Identity Cards",
-      description: "Register as new elector, search name in electoral rolls, check booth level officer details, or download digital Voter Card (e-EPIC).",
-      icon: Shield,
-      link: "https://www.nvsp.in",
-      links: [
-        { label: "National Voter Portal", url: "https://www.nvsp.in" }
-      ]
-    },
-    {
-      id: 6,
-      name: "UP Board Verification",
-      category: "Results & Certs",
-      description: "Direct verification portal to check and confirm class 10th and 12th UP Board results, marks sheets, and duplicate certificates.",
-      icon: Download,
-      link: "https://upresults.nic.in",
-      links: [
-        { label: "UP Results Portal", url: "https://upresults.nic.in" },
-        { label: "UP Board Main site", url: "https://upmsp.edu.in" }
       ]
     },
     {
@@ -144,18 +98,6 @@ export default function Services() {
       link: "https://edistrict.up.gov.in",
       links: [
         { label: "e-District Login", url: "https://edistrict.up.gov.in" }
-      ]
-    },
-    {
-      id: 11,
-      name: "Ration Card (NFSA)",
-      category: "Welfare & Schemes",
-      description: "Check state-wise NFSA ration card lists, verify card holder details, and print online digital ration slips.",
-      icon: FileText,
-      link: "https://nfsa.gov.in",
-      links: [
-        { label: "NFSA National Site", url: "https://nfsa.gov.in" },
-        { label: "UP Supply Portal", url: "https://fcs.up.gov.in" }
       ]
     }
   ];
@@ -250,7 +192,7 @@ export default function Services() {
 
         {/* Grid List of Services */}
         {filteredServices.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
             {filteredServices.map((service) => {
               const categoryIconMap = {
                 'Job Alerts': Briefcase,
@@ -269,7 +211,7 @@ export default function Services() {
                   <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 group-hover:scale-[1.05] group-hover:blur-2xl transition-all duration-500 -z-10" />
                   
                   {/* Card Main Container */}
-                  <div className="bg-white/80 hover:bg-white/95 backdrop-blur-xl rounded-2xl border border-indigo-100/80 group-hover:border-indigo-300/80 shadow-[0_8px_30px_rgba(99,102,241,0.02)] group-hover:shadow-[0_20px_50px_rgba(99,102,241,0.18)] transition-all duration-500 flex flex-col flex-1 overflow-hidden relative p-6">
+                  <div className="bg-white/80 hover:bg-white/95 backdrop-blur-xl rounded-2xl border border-indigo-100/80 group-hover:border-indigo-300/80 shadow-[0_8px_30px_rgba(99,102,241,0.02)] group-hover:shadow-[0_20px_50px_rgba(99,102,241,0.18)] transition-all duration-500 flex flex-col flex-1 overflow-hidden relative p-5">
                     {/* Always visible base top border */}
                     <div className="absolute top-0 left-0 right-0 h-[3px] bg-indigo-950 z-20" />
                     
@@ -315,14 +257,23 @@ export default function Services() {
                     )}
 
                     {/* Primary Portal Action */}
-                    <a
-                      href={service.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-xl font-NeueMachina-Medium font-bold text-[13px] tracking-wide transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/20 active:scale-95 flex items-center justify-center gap-2 cursor-pointer shadow-md"
-                    >
-                      Open Official Portal <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
+                    {service.hasDetailsPage ? (
+                      <Link
+                        to={`/services/${service.id}`}
+                        className="w-full py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-xl font-NeueMachina-Medium font-bold text-[13px] tracking-wide transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/20 active:scale-95 flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                      >
+                        View Details & Apply <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                    ) : (
+                      <a
+                        href={service.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-xl font-NeueMachina-Medium font-bold text-[13px] tracking-wide transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/20 active:scale-95 flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                      >
+                        Open Official Portal <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    )}
                   </div>
                 </motion.div>
               );

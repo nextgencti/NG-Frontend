@@ -4,6 +4,7 @@ import {
   ArrowLeft, 
   BookOpen, 
   ChevronDown, 
+  ChevronLeft,
   ChevronRight, 
   CheckCircle,
   Lock, 
@@ -17,7 +18,9 @@ import {
   PanelLeftOpen, 
   X,
   ClipboardList,
-  Clock
+  Clock,
+  Maximize2,
+  Minimize2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../lib/axios';
@@ -41,13 +44,48 @@ export default function StudentClassroom() {
   const [loading, setLoading] = useState(true);
   const [marking, setMarking] = useState(false);
   const [mobileSidebar, setMobileSidebar] = useState(false);
+  const [isFocusMode, setIsFocusMode] = useState(false);
 
   const [activeModuleId, setActiveModuleId] = useState(null);
   const [activeLesson, setActiveLesson] = useState(null);
   const [expandedModules, setExpandedModules] = useState({});
+  const [lessonTimeSpent, setLessonTimeSpent] = useState({});
 
   // Track study time — heartbeat every 60 seconds while on this page
-  useStudyTracker('classroom', courseId, course?.name || '', !loading);
+  useStudyTracker('classroom', courseId, course?.name || '', !loading, activeLesson?.id);
+
+  useEffect(() => {
+    if (!activeLesson || loading) return;
+
+    // If already completed, no need to run active countdown
+    if (completedLessons.includes(activeLesson.id)) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        setLessonTimeSpent((prev) => {
+          const currentSpent = prev[activeLesson.id] || 0;
+          if (currentSpent >= 600) {
+            clearInterval(interval);
+            return prev;
+          }
+          return {
+            ...prev,
+            [activeLesson.id]: currentSpent + 1
+          };
+        });
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [activeLesson?.id, completedLessons, loading]);
+
+  const formatCountdown = (secs) => {
+    const mins = Math.floor(secs / 60);
+    const remainingSecs = secs % 60;
+    return `${mins.toString().padStart(2, '0')}:${remainingSecs.toString().padStart(2, '0')}`;
+  };
 
   const allLessons = useMemo(() => {
     const list = [];
@@ -62,6 +100,27 @@ export default function StudentClassroom() {
   const getLessonStatus = (lessonId) => {
     if (completedLessons.includes(lessonId)) return 'completed';
     const idx = allLessons.findIndex(l => l.id === lessonId);
+    
+    // Check if the user is in trial mode
+    const isTrial = currentUser?.status === 'trial';
+    if (isTrial) {
+      // Find module and lesson position
+      let isTrialLimitExceeded = true;
+      for (let mIdx = 0; mIdx < curriculum.length; mIdx++) {
+        const mod = curriculum[mIdx];
+        const lIdx = (mod.lessons || []).findIndex(l => l.id === lessonId);
+        if (lIdx !== -1) {
+          if (mIdx === 0 && lIdx < 5) {
+            isTrialLimitExceeded = false;
+          }
+          break;
+        }
+      }
+      if (isTrialLimitExceeded) {
+        return 'locked-trial';
+      }
+    }
+
     if (idx === 0) return 'unlocked';
     const prevId = allLessons[idx - 1]?.id;
     if (prevId && completedLessons.includes(prevId)) return 'unlocked';
@@ -80,6 +139,14 @@ export default function StudentClassroom() {
         setCompletedLessons(res.data.completedLessons || []);
         setProgressPercentage(res.data.progressPercentage || 0);
         setTotalLessons(res.data.totalLessons || 0);
+
+        // Load saved minutes and convert to seconds for countdown
+        const initialSpent = res.data.lessonTimeSpent || {};
+        const initialSpentSeconds = {};
+        Object.keys(initialSpent).forEach(lessonId => {
+          initialSpentSeconds[lessonId] = initialSpent[lessonId] * 60;
+        });
+        setLessonTimeSpent(initialSpentSeconds);
 
         const mods = res.data.curriculum || [];
         const completed = res.data.completedLessons || [];
@@ -162,16 +229,35 @@ export default function StudentClassroom() {
     const ci = allLessons.findIndex(l => l.id === activeLesson.id);
     if (ci < allLessons.length - 1) {
       const next = allLessons[ci + 1];
-      if (getLessonStatus(next.id) !== 'locked') {
+      const status = getLessonStatus(next.id);
+      if (status !== 'locked' && status !== 'locked-trial') {
         selectLesson(next);
       } else {
-        toast('Complete current lesson first', { icon: '🔒' });
+        if (status === 'locked-trial') {
+          toast.error('You have reached the end of your trial preview! 🌟');
+        } else {
+          toast('Complete current lesson first', { icon: '🔒' });
+        }
       }
     }
   };
 
+  const handlePreviousLesson = () => {
+    if (!activeLesson) return;
+    const ci = allLessons.findIndex(l => l.id === activeLesson.id);
+    if (ci > 0) {
+      const prev = allLessons[ci - 1];
+      selectLesson(prev);
+    }
+  };
+
   const selectLesson = (lesson) => {
-    if (getLessonStatus(lesson.id) === 'locked') {
+    const status = getLessonStatus(lesson.id);
+    if (status === 'locked-trial') {
+      toast.error('Unlock full course access to view this premium lesson! 🌟');
+      return;
+    }
+    if (status === 'locked') {
       toast('Complete previous lessons first', { icon: '🔒' });
       return;
     }
@@ -202,6 +288,7 @@ export default function StudentClassroom() {
   const isLessonCompleted = activeLesson ? completedLessons.includes(activeLesson.id) : false;
   const currentIdx = activeLesson ? allLessons.findIndex(l => l.id === activeLesson.id) : -1;
   const hasNext = currentIdx >= 0 && currentIdx < allLessons.length - 1;
+  const hasPrevious = currentIdx > 0;
   const currentModule = curriculum.find(m => m.id === activeLesson?.moduleId);
   const currentModuleIndex = curriculum.indexOf(currentModule);
   const currentLessonIndex = currentModule?.lessons?.findIndex(l => l.id === activeLesson?.id) ?? -1;
@@ -298,28 +385,35 @@ export default function StudentClassroom() {
                             onClick={() => selectLesson({ ...lesson, moduleId: mod.id, moduleTitle: mod.title })}
                             className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-all cursor-pointer ${
                               isActive ? 'bg-primary-50 text-primary-700 border border-primary-100/50'
-                                : status === 'locked' ? 'opacity-30 cursor-not-allowed' : 'hover:bg-slate-50/50'
+                                : (status === 'locked' || status === 'locked-trial') ? 'opacity-30 cursor-not-allowed' : 'hover:bg-slate-50/50'
                             }`}
-                            disabled={status === 'locked'}
+                            disabled={status === 'locked' || status === 'locked-trial'}
                           >
                             {status === 'completed' ? (
                               <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                             ) : isActive ? (
                               <div className="w-3.5 h-3.5 rounded-full bg-primary-600 border-2 border-white shrink-0 shadow-sm" />
-                            ) : status === 'locked' ? (
+                            ) : (status === 'locked' || status === 'locked-trial') ? (
                               <Lock className="w-3 h-3 text-slate-300 shrink-0" />
                             ) : lesson.type === 'test' ? (
                               <ClipboardList className="w-3.5 h-3.5 text-rose-500 shrink-0 animate-pulse" />
                             ) : (
                               <div className="w-3.5 h-3.5 rounded-full border border-slate-300 shrink-0" />
                             )}
-                            <div className="flex-1 min-w-0">
-                              <p className={`text-[10px] font-black truncate leading-tight ${isActive ? 'text-primary-800' : 'text-slate-600'}`}>
-                                {mIdx + 1}.{lIdx + 1} {lesson.title}
-                              </p>
-                              <p className="text-[7.5px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
-                                {lesson.type === 'video' ? 'Video Class' : lesson.type === 'pdf' ? 'Syllabus PDF' : lesson.type === 'image' ? 'Image Graphic' : lesson.type === 'test' ? 'Assessment' : 'Class Note'}
-                              </p>
+                            <div className="flex-1 min-w-0 flex items-center justify-between gap-1.5">
+                              <div className="truncate flex-1">
+                                <p className={`text-[10px] font-black truncate leading-tight ${isActive ? 'text-primary-800' : 'text-slate-600'}`}>
+                                  {mIdx + 1}.{lIdx + 1} {lesson.title}
+                                </p>
+                                <p className="text-[7.5px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                                  {lesson.type === 'video' ? 'Video Class' : lesson.type === 'pdf' ? 'Syllabus PDF' : lesson.type === 'image' ? 'Image Graphic' : lesson.type === 'test' ? 'Assessment' : 'Class Note'}
+                                </p>
+                              </div>
+                              {status === 'locked-trial' && (
+                                <span className="shrink-0 px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-600 text-[6.5px] font-black uppercase tracking-wider border border-amber-500/10">
+                                  Premium
+                                </span>
+                              )}
                             </div>
                           </button>
                         );
@@ -333,20 +427,7 @@ export default function StudentClassroom() {
         })}
       </div>
 
-      {/* Need Help Onboarding */}
-      <div className="p-4 border-t border-slate-100 shrink-0 bg-white">
-        <div className="bg-slate-50 rounded-2xl p-4 text-center border border-slate-100/60">
-          <HelpCircle className="w-5 h-5 text-slate-400 mx-auto mb-1.5" />
-          <p className="text-[10px] font-black text-slate-700 uppercase tracking-wider">Assistance Menu</p>
-          <p className="text-[9px] text-slate-400 mb-3">Facing any issues with modules? contact support.</p>
-          <button
-            onClick={() => toast('Support feature coming soon!', { icon: '📬' })}
-            className="w-full py-2 border border-slate-200 hover:border-primary-200 text-slate-600 hover:text-primary-600 rounded-xl text-[9px] font-black uppercase tracking-wider hover:bg-primary-50 transition-all cursor-pointer"
-          >
-            Contact Tutor
-          </button>
-        </div>
-      </div>
+
     </div>
   );
 
@@ -386,7 +467,7 @@ export default function StudentClassroom() {
       </AnimatePresence>
 
       {/* ═══ DESKTOP SIDEBAR ═══ */}
-      <aside className="w-[260px] min-w-[260px] bg-white/80 backdrop-blur-2xl border-r border-white/60 flex flex-col h-full overflow-hidden hidden xl:flex">
+      <aside className={`w-[260px] min-w-[260px] bg-white/80 backdrop-blur-2xl border-r border-white/60 flex flex-col h-full overflow-hidden ${isFocusMode ? 'hidden' : 'hidden xl:flex'}`}>
         <SidebarContent />
       </aside>
 
@@ -421,40 +502,42 @@ export default function StudentClassroom() {
 
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto bg-dashboard-grid bg-repeat">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className={isFocusMode ? "max-w-full p-3.5" : "max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-5"}>
 
             {/* Breadcrumb */}
-            <nav className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-slate-400 mb-5 flex-wrap">
-              <button onClick={() => navigate('/dashboard/courses')} className="hover:text-primary-600 transition-colors cursor-pointer">Catalog</button>
-              <ChevronRight className="w-3 h-3" />
-              <span className="text-slate-500 max-w-[120px] truncate">{course?.name}</span>
-              {currentModule && (
-                <>
-                  <ChevronRight className="w-3 h-3" />
-                  <span className="text-slate-500">M {currentModuleIndex + 1}</span>
-                </>
-              )}
-              {activeLesson && (
-                <>
-                  <ChevronRight className="w-3 h-3" />
-                  <span className="text-primary-600 font-bold">
-                    L {currentModuleIndex + 1}.{currentLessonIndex + 1}
-                  </span>
-                </>
-              )}
-            </nav>
+            {!isFocusMode && (
+              <nav className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-slate-400 mb-4 flex-wrap">
+                <button onClick={() => navigate('/dashboard/courses')} className="hover:text-primary-600 transition-colors cursor-pointer">Catalog</button>
+                <ChevronRight className="w-3 h-3" />
+                <span className="text-slate-500 max-w-[120px] truncate">{course?.name}</span>
+                {currentModule && (
+                  <>
+                    <ChevronRight className="w-3 h-3" />
+                    <span className="text-slate-500">M {currentModuleIndex + 1}</span>
+                  </>
+                )}
+                {activeLesson && (
+                  <>
+                    <ChevronRight className="w-3 h-3" />
+                    <span className="text-primary-600 font-bold">
+                      L {currentModuleIndex + 1}.{currentLessonIndex + 1}
+                    </span>
+                  </>
+                )}
+              </nav>
+            )}
 
             {activeLesson ? (
               <motion.div 
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
+                className={isFocusMode ? "space-y-3" : "space-y-4"}
               >
                 {/* Lesson Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/70 backdrop-blur-2xl rounded-3xl p-5 border border-white/60 shadow-[0_8px_30px_rgba(0,0,0,0.03)] hover:shadow-[0_15px_40px_rgba(0,0,0,0.06)] hover:border-white transition-all duration-300">
+                <div className={`flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white/70 backdrop-blur-2xl rounded-2xl border border-white/60 shadow-sm transition-all duration-300 ${isFocusMode ? 'p-2.5 px-4' : 'p-3 px-4 sm:py-3.5 sm:px-5'}`}>
                   <div className="min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <span className={`px-2.5 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest shrink-0 border ${
+                    <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+                      <span className={`px-2 py-0.5 rounded-md text-[7px] font-black uppercase tracking-widest shrink-0 border ${
                         activeLesson.type === 'pdf' ? 'bg-blue-50 text-blue-700 border-blue-100/50'
                           : activeLesson.type === 'video' ? 'bg-purple-50 text-purple-700 border-purple-100/50 animate-pulse'
                             : activeLesson.type === 'image' ? 'bg-emerald-50 text-emerald-700 border-emerald-100/50'
@@ -463,35 +546,59 @@ export default function StudentClassroom() {
                       }`}>
                         {activeLesson.type === 'pdf' ? '📄 Syllabus PDF' : activeLesson.type === 'video' ? '🎥 Lecture Video' : activeLesson.type === 'image' ? '🖼️ Image Graphic' : activeLesson.type === 'test' ? '📝 Test Exam' : '📝 Notes Sheet'}
                       </span>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Lesson {currentModuleIndex + 1}.{currentLessonIndex + 1}</p>
+                      <p className="text-[8.5px] text-slate-450 font-bold uppercase tracking-wider">Lesson {currentModuleIndex + 1}.{currentLessonIndex + 1}</p>
                     </div>
-                    <h1 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight leading-snug uppercase">
+                    <h1 className="text-sm sm:text-base font-black text-slate-800 tracking-tight leading-snug uppercase">
                       {activeLesson.title}
                     </h1>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
+                  <div className="flex items-center gap-1.5 shrink-0 self-end md:self-center">
+                    {hasPrevious && (
+                      <button
+                        onClick={handlePreviousLesson}
+                        className="flex items-center gap-1 px-3 py-2 bg-white border border-slate-200 hover:border-slate-350 text-slate-700 hover:bg-slate-50 rounded-lg text-[8.5px] font-black uppercase tracking-widest transition-all shadow-sm active:scale-95 cursor-pointer"
+                      >
+                        <ChevronLeft className="w-3.5 h-3.5 text-slate-500" />
+                        Prev
+                      </button>
+                    )}
                     {isLessonCompleted ? (
-                      <div className="flex items-center gap-1.5 px-4 py-2.5 bg-emerald-50 text-emerald-700 rounded-xl text-[10px] font-black uppercase tracking-widest border border-emerald-100/50 shadow-sm">
+                      <div className="flex items-center gap-1 px-3 py-2 bg-emerald-50 text-emerald-700 rounded-lg text-[8.5px] font-black uppercase tracking-widest border border-emerald-105 shadow-sm">
                         <CheckCircle className="w-3.5 h-3.5" />
                         Completed
                       </div>
-                    ) : (
-                      <button
-                        onClick={handleMarkComplete}
-                        disabled={marking}
-                        className="flex items-center gap-1.5 px-4 py-2.5 bg-white border border-slate-200 hover:border-slate-350 text-slate-700 hover:bg-slate-50 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50 cursor-pointer shadow-sm active:scale-95"
-                      >
-                        {marking ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5 text-primary-500" />}
-                        Complete
-                      </button>
-                    )}
+                    ) : (() => {
+                      const secondsSpent = lessonTimeSpent[activeLesson.id] || 0;
+                      const isTimeRequirementMet = secondsSpent >= 600;
+
+                      return (
+                        <button
+                          onClick={handleMarkComplete}
+                          disabled={marking || !isTimeRequirementMet}
+                          className={`flex items-center gap-1 px-3 py-2 rounded-lg text-[8.5px] font-black uppercase tracking-widest transition-all shadow-sm active:scale-95 cursor-pointer ${
+                            isTimeRequirementMet
+                              ? 'bg-white border border-[#4F46E5] text-[#4F46E5] hover:bg-[#4F46E5]/5'
+                              : 'bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed opacity-80'
+                          }`}
+                        >
+                          {marking ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : isTimeRequirementMet ? (
+                            <CheckCircle className="w-3.5 h-3.5 text-primary-500" />
+                          ) : (
+                            <Clock className="w-3.5 h-3.5 animate-pulse text-amber-500" />
+                          )}
+                          {isTimeRequirementMet ? 'Complete' : `Complete in ${formatCountdown(600 - secondsSpent)}`}
+                        </button>
+                      );
+                    })()}
                     {hasNext && (
                       <button
                         onClick={handleNextLesson}
-                        className="flex items-center gap-1.5 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md active:scale-95 cursor-pointer shadow-primary-500/10 hover:shadow-primary-500/20"
+                        className="flex items-center gap-1 px-3 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-[8.5px] font-black uppercase tracking-widest transition-all shadow-md active:scale-95 cursor-pointer shadow-primary-500/10 hover:shadow-primary-500/20"
                       >
-                        Next Lesson
+                        Next
                         <ChevronRight className="w-3.5 h-3.5 text-white/80" />
                       </button>
                     )}
@@ -499,57 +606,155 @@ export default function StudentClassroom() {
                 </div>
 
                 {/* ═══ CONTENT VIEWER ═══ */}
-                <div className="bg-white/70 backdrop-blur-2xl rounded-[32px] border border-white/60 overflow-hidden shadow-[0_12px_36px_rgba(0,0,0,0.03)]">
+                <div className={`transition-all duration-300 ${
+                  isFocusMode 
+                    ? 'fixed inset-0 z-[100] w-screen h-screen rounded-none border-none flex flex-col bg-[#F8FAFC]' 
+                    : 'bg-white/70 backdrop-blur-2xl rounded-3xl border border-white/60 overflow-hidden shadow-sm flex flex-col'
+                }`}>
+                  
                   {activeLesson.type === 'pdf' && activeLesson.url && (
-                    <div className="flex flex-col">
-                      <div className="flex items-center px-6 py-3.5 bg-slate-50/50 border-b border-slate-100">
-                        <FileText className="w-4 h-4 text-slate-400 mr-2" />
-                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest truncate">{activeLesson.title}.pdf</span>
+                    <div className="flex flex-col flex-1 h-full">
+                      <div className="flex items-center justify-between px-4 py-2 bg-slate-50/50 border-b border-slate-100 shrink-0">
+                        <div className="flex items-center min-w-0">
+                          <FileText className="w-4 h-4 text-slate-400 mr-2 shrink-0" />
+                          <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest truncate">{activeLesson.title}.pdf</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setIsFocusMode(!isFocusMode)}
+                          className="flex items-center gap-1 px-2.5 py-1.5 bg-white border border-slate-200 hover:border-slate-350 text-slate-700 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm cursor-pointer ml-4 shrink-0"
+                          title={isFocusMode ? "Exit Focus Mode" : "Focus Mode"}
+                        >
+                          {isFocusMode ? (
+                            <>
+                              <Minimize2 className="w-3.5 h-3.5 text-indigo-500" />
+                              Exit Focus
+                            </>
+                          ) : (
+                            <>
+                              <Maximize2 className="w-3.5 h-3.5 text-[#4F46E5]" />
+                              Focus Mode
+                            </>
+                          )}
+                        </button>
                       </div>
                       <iframe
                         src={`https://docs.google.com/viewer?url=${encodeURIComponent(activeLesson.url)}&embedded=true`}
-                        className="w-full border-none bg-slate-50"
-                        style={{ height: 'calc(100vh - 280px)', minHeight: '450px' }}
+                        className="w-full border-none bg-slate-50 flex-1 h-full"
+                        style={{ height: isFocusMode ? 'calc(100vh - 50px)' : 'calc(100vh - 240px)', minHeight: isFocusMode ? 'auto' : '500px' }}
                         title="PDF Viewer"
                       />
                     </div>
                   )}
 
                   {activeLesson.type === 'image' && activeLesson.url && (
-                    <div className="flex flex-col">
-                      <div className="flex items-center px-6 py-3.5 bg-slate-50/50 border-b border-slate-100">
-                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest truncate">{activeLesson.title}</span>
+                    <div className="flex flex-col flex-1 h-full">
+                      <div className="flex items-center justify-between px-4 py-2 bg-slate-50/50 border-b border-slate-100 shrink-0">
+                        <div className="flex items-center min-w-0">
+                          <FileText className="w-4 h-4 text-slate-400 mr-2 shrink-0" />
+                          <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest truncate">{activeLesson.title}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setIsFocusMode(!isFocusMode)}
+                          className="flex items-center gap-1 px-2.5 py-1.5 bg-white border border-slate-200 hover:border-slate-350 text-slate-700 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm cursor-pointer ml-4 shrink-0"
+                          title={isFocusMode ? "Exit Focus Mode" : "Focus Mode"}
+                        >
+                          {isFocusMode ? (
+                            <>
+                              <Minimize2 className="w-3.5 h-3.5 text-indigo-500" />
+                              Exit Focus
+                            </>
+                          ) : (
+                            <>
+                              <Maximize2 className="w-3.5 h-3.5 text-[#4F46E5]" />
+                              Focus Mode
+                            </>
+                          )}
+                        </button>
                       </div>
-                      <div className="p-6 bg-slate-50 flex items-center justify-center min-h-[450px]">
+                      <div className="p-4 bg-slate-50 flex items-center justify-center flex-1 min-h-[450px]">
                         <img 
                           src={activeLesson.url} 
                           alt={activeLesson.title} 
-                          className="max-h-[calc(100vh-280px)] object-contain rounded-xl shadow-lg border border-slate-200" 
+                          className={`${isFocusMode ? 'max-h-[calc(100vh-80px)]' : 'max-h-[calc(100vh-250px)]'} object-contain rounded-xl shadow-md border border-slate-200`} 
                         />
                       </div>
                     </div>
                   )}
 
                   {activeLesson.type === 'video' && activeLesson.url && (
-                    <div className="aspect-video bg-slate-950 shadow-inner relative overflow-hidden group">
-                      {/* Cinematic video overlay glow */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none z-10"></div>
-                      <iframe
-                        src={getYouTubeEmbedUrl(activeLesson.url)}
-                        className="w-full h-full border-none relative z-20"
-                        title="Video Player"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                      />
+                    <div className="flex flex-col flex-1 h-full">
+                      <div className="flex items-center justify-between px-4 py-2 bg-slate-50/50 border-b border-slate-100 shrink-0">
+                        <div className="flex items-center min-w-0">
+                          <PlayCircle className="w-4 h-4 text-slate-400 mr-2 shrink-0" />
+                          <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest truncate">{activeLesson.title}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setIsFocusMode(!isFocusMode)}
+                          className="flex items-center gap-1 px-2.5 py-1.5 bg-white border border-slate-200 hover:border-slate-350 text-slate-700 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm cursor-pointer ml-4 shrink-0"
+                          title={isFocusMode ? "Exit Focus Mode" : "Focus Mode"}
+                        >
+                          {isFocusMode ? (
+                            <>
+                              <Minimize2 className="w-3.5 h-3.5 text-indigo-500" />
+                              Exit Focus
+                            </>
+                          ) : (
+                            <>
+                              <Maximize2 className="w-3.5 h-3.5 text-[#4F46E5]" />
+                              Focus Mode
+                            </>
+                          )}
+                        </button>
+                      </div>
+                      <div className={`bg-slate-950 shadow-inner relative overflow-hidden group flex-1 w-full ${isFocusMode ? 'h-[calc(100vh-50px)]' : 'aspect-video'}`}>
+                        {/* Cinematic video overlay glow */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none z-10"></div>
+                        <iframe
+                          src={getYouTubeEmbedUrl(activeLesson.url)}
+                          className="w-full h-full border-none relative z-20"
+                          title="Video Player"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      </div>
                     </div>
                   )}
 
                   {activeLesson.type === 'note' && (
-                    <div className="p-6 sm:p-10 md:p-12">
-                      <div
-                        className="prose prose-slate max-w-none rich-content"
-                        dangerouslySetInnerHTML={{ __html: activeLesson.content || '<p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] text-center">No Content Available</p>' }}
-                      />
+                    <div className="flex flex-col flex-1 h-full">
+                      <div className="flex items-center justify-between px-4 py-2 bg-slate-50/50 border-b border-slate-100 shrink-0">
+                        <div className="flex items-center min-w-0">
+                          <FileText className="w-4 h-4 text-slate-400 mr-2 shrink-0" />
+                          <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest truncate">{activeLesson.title}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setIsFocusMode(!isFocusMode)}
+                          className="flex items-center gap-1 px-2.5 py-1.5 bg-white border border-slate-200 hover:border-slate-350 text-slate-700 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm cursor-pointer ml-4 shrink-0"
+                          title={isFocusMode ? "Exit Focus Mode" : "Focus Mode"}
+                        >
+                          {isFocusMode ? (
+                            <>
+                              <Minimize2 className="w-3.5 h-3.5 text-indigo-500" />
+                              Exit Focus
+                            </>
+                          ) : (
+                            <>
+                              <Maximize2 className="w-3.5 h-3.5 text-[#4F46E5]" />
+                              Focus Mode
+                            </>
+                          )}
+                        </button>
+                      </div>
+                      <div className={`p-6 sm:p-10 ${isFocusMode ? 'prose-xl max-w-none flex-1 overflow-y-auto bg-white' : 'max-w-none'} transition-all`}>
+                        <div
+                          className="prose prose-slate max-w-none rich-content"
+                          dangerouslySetInnerHTML={{ __html: activeLesson.content || '<p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] text-center">No Content Available</p>' }}
+                        />
+                      </div>
                     </div>
                   )}
 
@@ -595,21 +800,7 @@ export default function StudentClassroom() {
                   )}
                 </div>
 
-                {/* Bottom Syllabus Banner */}
-                <div className="bg-gradient-to-r from-primary-50/50 via-indigo-50/30 to-blue-50/30 rounded-3xl p-5 flex items-center justify-between border border-primary-100/30">
-                  <div className="flex items-center gap-3.5">
-                    <div className="w-9 h-9 rounded-xl bg-white border border-primary-100 flex items-center justify-center shrink-0 shadow-sm">
-                      <GraduationCap className="w-5 h-5 text-primary-600" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-black text-slate-800 uppercase tracking-wide">Next Module Progress Indicator</p>
-                      <p className="text-[11px] text-slate-400 font-medium">
-                        {isLessonCompleted ? 'Fabulous work! Move on to the next syllabus module.' : 'Complete this lesson to advance overall syllabus points.'}
-                      </p>
-                    </div>
-                  </div>
-                  <span className="hidden sm:block text-2xl animate-pulse">🎓</span>
-                </div>
+
               </motion.div>
             ) : (
               <div className="flex flex-col items-center justify-center py-24 text-center bg-white/70 backdrop-blur-2xl rounded-[32px] border border-white/60 shadow-[0_10px_30px_rgba(0,0,0,0.02)]">

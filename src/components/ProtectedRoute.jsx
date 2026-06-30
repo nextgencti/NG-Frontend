@@ -2,7 +2,7 @@ import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-export default function ProtectedRoute({ requiredRole = null }) {
+export default function ProtectedRoute({ requiredRole = null, children }) {
   const { isAuthenticated, currentUser, loading } = useAuth();
   const { pathname } = useLocation();
 
@@ -36,9 +36,15 @@ export default function ProtectedRoute({ requiredRole = null }) {
   if (requiredRole) {
     const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
     if (!roles.includes(currentUser?.role)) {
+      if (currentUser?.role === 'superadmin') {
+        return <Navigate to="/superadmin" replace />;
+      }
+      if (currentUser?.role === 'admin') {
+        return <Navigate to="/admin" replace />;
+      }
       return <Navigate to="/dashboard" replace />;
     }
   }
 
-  return <Outlet />;
+  return children ? children : <Outlet />;
 }

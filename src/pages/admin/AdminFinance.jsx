@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   CreditCard, 
   TrendingUp, 
@@ -1424,9 +1425,9 @@ _Thank you for your payment!_`;
       {/* ─── MODAL: INVOICE RECEIPT OVERLAY ─── */}
       {selectedTxn && (() => {
         const dateTime = getTransactionDateTime(selectedTxn);
-        return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 lg:pl-[var(--sidebar-width)] bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200 text-slate-800 print-receipt-overlay">
-            <div className="bg-white border border-slate-200 rounded-[2.5rem] w-full max-w-2xl shadow-2xl overflow-hidden relative border-t-[8px] border-indigo-900">
+        return createPortal(
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 lg:pl-[var(--sidebar-width)] bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200 text-slate-800 print-receipt-overlay">
+            <div className="bg-white border border-slate-200 rounded-[2rem] sm:rounded-[2.5rem] w-full max-w-2xl shadow-2xl overflow-y-auto max-h-[90vh] relative border-t-[8px] border-indigo-900 scrollbar-hide">
               
               {/* Top Corner Ribbon Badge */}
               <div className="absolute top-0 right-12 bg-indigo-900 text-white text-[9px] font-black uppercase tracking-wider px-5 py-2 rounded-b-xl no-print select-none">
@@ -1460,7 +1461,7 @@ _Thank you for your payment!_`;
 
                 {/* Receipt Header (Logo + Institute details) */}
                 <div className="flex justify-between items-start border-b border-slate-100 pb-2">
-                  <div className="flex items-start gap-3">
+                  <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-3.5 pb-1 w-full">
                     <div className="w-12 h-12 bg-white border border-slate-100 rounded-full flex items-center justify-center p-0.5 shadow-sm shrink-0">
                       <img src={logoImg} alt="Logo" className="w-full h-full object-contain" />
                     </div>
@@ -1472,12 +1473,12 @@ _Thank you for your payment!_`;
                         Empowering Minds, Shaping Futures
                       </p>
                       
-                      <div className="flex flex-col gap-0.5 mt-1.5 text-[8.5px] text-slate-500 font-semibold">
+                      <div className="flex flex-col gap-0.5 mt-1.5 text-[8.5px] text-slate-500 font-semibold items-center sm:items-start">
                         <div className="flex items-center gap-1">
                           <MapPin className="w-2.5 h-2.5 text-indigo-700 shrink-0" />
                           <span>Near Shri Jaylal Vidya Mandir , Muskara</span>
                         </div>
-                        <div className="flex items-center gap-2.5 flex-wrap">
+                        <div className="flex items-center justify-center sm:justify-start gap-2.5 flex-wrap">
                           <div className="flex items-center gap-1">
                             <Phone className="w-2 h-2 text-indigo-700 shrink-0" />
                             <span>+91 9140737374</span>
@@ -1494,16 +1495,16 @@ _Thank you for your payment!_`;
                 </div>
 
                 {/* Invoice Meta details columns */}
-                <div className="grid grid-cols-3 gap-4 border-b border-slate-100 pb-2.5 text-[11px]">
+                <div className="grid grid-cols-3 gap-2 sm:gap-4 border-b border-slate-100 pb-2.5 text-[10px] sm:text-[11px]">
                   <div>
                     <span className="text-[7.5px] font-black text-slate-400 uppercase tracking-widest block">Receipt No.</span>
                     <span className="font-mono font-bold text-indigo-900 mt-0.5 block">{selectedTxn.receiptNo}</span>
                   </div>
-                  <div className="border-l border-slate-100 pl-4">
+                  <div className="border-l border-slate-100 pl-2 sm:pl-4">
                     <span className="text-[7.5px] font-black text-slate-400 uppercase tracking-widest block">Date</span>
                     <span className="font-bold text-slate-700 mt-0.5 block">{dateTime.date}</span>
                   </div>
-                  <div className="border-l border-slate-100 pl-4">
+                  <div className="border-l border-slate-100 pl-2 sm:pl-4">
                     <span className="text-[7.5px] font-black text-slate-400 uppercase tracking-widest block">Receipt Time</span>
                     <span className="font-bold text-slate-700 mt-0.5 block">{dateTime.time}</span>
                   </div>
@@ -1514,7 +1515,7 @@ _Thank you for your payment!_`;
                   <div className="absolute -top-1 left-4 bg-indigo-900 text-white text-[7px] font-black uppercase tracking-widest px-2 py-0.5 rounded">
                     Student Details
                   </div>
-                  <div className="border border-slate-200/80 rounded-xl p-3.5 pt-4 bg-white grid grid-cols-2 gap-x-4 gap-y-2.5 text-[11px]">
+                  <div className="border border-slate-200/80 rounded-xl p-3.5 pt-4 bg-white grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2.5 text-[11px]">
                     <div className="flex items-start gap-2">
                       <div className="w-6 h-6 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
                         <User className="w-3 h-3 text-slate-400" />
@@ -1602,7 +1603,7 @@ _Thank you for your payment!_`;
                 {selectedTxn.notes && (
                   <div className="text-[11px] bg-slate-50/50 border border-slate-100 p-2.5 rounded-xl">
                     <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest block leading-none">Transaction Remarks</span>
-                    <span className="italic text-slate-600 mt-0.5 block font-medium">"{selectedTxn.notes}"</span>
+                    <span className="italic text-slate-650 mt-0.5 block font-medium">"{selectedTxn.notes}"</span>
                   </div>
                 )}
 
@@ -1637,7 +1638,7 @@ _Thank you for your payment!_`;
                 <div className="border-t border-dashed border-slate-200 my-2"></div>
 
                 {/* Verification Grid Footer */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-0">
+                <div className="grid grid-cols-1 min-[450px]:grid-cols-2 md:grid-cols-4 gap-4 md:gap-3 pt-0">
                   {/* Scan to Verify QR Code */}
                   <div className="flex items-start gap-2">
                     <div className="w-14 h-14 bg-white border border-slate-200 rounded-xl p-1 flex items-center justify-center shrink-0 shadow-sm">
@@ -1656,7 +1657,7 @@ _Thank you for your payment!_`;
                   </div>
 
                   {/* Metadata Generation details */}
-                  <div className="flex flex-col gap-1.5 text-[8.5px] text-slate-500 font-semibold border-l border-slate-100 pl-3">
+                  <div className="flex flex-col gap-1.5 text-[8.5px] text-slate-500 font-semibold border-t min-[450px]:border-t-0 min-[450px]:border-l border-slate-100 pt-3.5 min-[450px]:pt-0 min-[450px]:pl-3">
                     <div className="flex items-start gap-1">
                       <Calendar className="w-3 h-3 text-indigo-700 shrink-0 mt-0.5" />
                       <div>
@@ -1674,7 +1675,7 @@ _Thank you for your payment!_`;
                   </div>
 
                   {/* Double circular Verified Seal stamp */}
-                  <div className="flex justify-center items-center border-l border-slate-100 pl-3 shrink-0">
+                  <div className="flex justify-center items-center border-t md:border-t-0 md:border-l border-slate-100 pt-3.5 md:pt-0 md:pl-3 shrink-0">
                     <div className="w-14 h-14 rounded-full border-[3px] border-double border-indigo-700/60 flex flex-col items-center justify-center relative select-none rotate-[-6deg]">
                       <div className="text-[4.5px] font-black text-indigo-700/60 uppercase tracking-widest text-center leading-tight">
                         NEXTGEN
@@ -1690,7 +1691,7 @@ _Thank you for your payment!_`;
                   </div>
 
                   {/* Mock handwritten Signature */}
-                  <div className="flex flex-col items-center justify-end border-l border-slate-100 pl-3 h-full shrink-0 text-center font-sans">
+                  <div className="flex flex-col items-center justify-end border-t min-[450px]:border-t-0 min-[450px]:border-l border-slate-100 pt-3.5 min-[450px]:pt-0 min-[450px]:pl-3 h-full shrink-0 text-center font-sans">
                     <span className="font-serif text-indigo-700/80 text-base font-medium tracking-wide leading-none" style={{ fontFamily: "'Brush Script MT', cursive" }}>
                       Sanjay Rajoot
                     </span>
@@ -1707,24 +1708,24 @@ _Thank you for your payment!_`;
                 </div>
 
                 {/* Actions panel (No Print) */}
-                <div className="flex justify-between items-center pt-3 border-t border-slate-100 no-print">
+                <div className="flex flex-col sm:flex-row gap-3 justify-between items-stretch sm:items-center pt-3 border-t border-slate-100 no-print">
                   <button
                     onClick={handleWhatsAppShare}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-600/10 transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
+                    className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-600/10 transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5 w-full sm:w-auto"
                   >
                     <MessageCircle className="w-3.5 h-3.5" /> Share on WhatsApp
                   </button>
                   
-                  <div className="flex gap-3">
+                  <div className="flex gap-2.5 sm:gap-3 justify-end w-full sm:w-auto">
                     <button
                       onClick={() => setSelectedTxn(null)}
-                      className="px-4 py-2 bg-slate-50 hover:bg-slate-100 text-slate-500 rounded-xl text-[9px] font-black uppercase tracking-widest border border-slate-200 transition-colors cursor-pointer"
+                      className="flex-1 sm:flex-initial px-4 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-500 rounded-xl text-[9px] font-black uppercase tracking-widest border border-slate-200 transition-colors cursor-pointer text-center"
                     >
                       Close Receipt
                     </button>
                     <button
                       onClick={handlePrint}
-                      className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-indigo-600/10 transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
+                      className="flex-1 sm:flex-initial px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-indigo-600/10 transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5 text-center"
                     >
                       <Printer className="w-3.5 h-3.5" /> Print Receipt
                     </button>
@@ -1733,7 +1734,8 @@ _Thank you for your payment!_`;
               </div>
 
             </div>
-          </div>
+          </div>,
+          document.body
         );
       })()}
 

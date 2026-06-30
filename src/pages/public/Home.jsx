@@ -34,8 +34,6 @@ export default function Home() {
     { name: "SSC Job Alerts", tagline: "SSC CGL, CHSL, MTS recruitment", icon: Briefcase, link: "https://ssc.gov.in" },
     { name: "Aadhaar Services", tagline: "Download Aadhaar, verify status", icon: Shield, link: "https://myaadhaar.uidai.gov.in" },
     { name: "PAN Card Apply", tagline: "Apply new PAN, corrections", icon: FileText, link: "https://www.pan.utiitsl.com/PAN/" },
-    { name: "UP Police Bharti", tagline: "Job alerts & admit cards", icon: Briefcase, link: "https://uppbpb.gov.in" },
-    { name: "UP Board Results", tagline: "Check 10th & 12th verify marks", icon: Download, link: "https://upresults.nic.in" },
     { name: "NIELIT CCC Portal", tagline: "Download CCC results & certs", icon: Download, link: "https://student.nielit.gov.in" },
     { name: "UP Scholarship", tagline: "Apply fresh & renewals online", icon: FileText, link: "https://scholarship.up.gov.in" },
     { name: "Voter ID Card", tagline: "New registration & voter lists", icon: Shield, link: "https://www.nvsp.in" },
@@ -230,12 +228,16 @@ export default function Home() {
         { name: 'Home', path: '/' },
         { name: 'Courses', path: '/dashboard/courses' },
         { name: 'Classroom', path: '/dashboard/courses' },
-        { name: 'Dashboard', path: '/dashboard' }
+        { name: 'Dashboard', path: '/dashboard' },
+        { name: 'Typing', path: '/tools/typing-test' },
+        { name: 'Services', path: '/services' }
       ]
     : [
         { name: 'Home', path: '/' },
         { name: 'Courses', path: '#courses' },
-        { name: 'About', path: '#about' }
+        { name: 'About', path: '#about' },
+        { name: 'Typing', path: '/tools/typing-test' },
+        { name: 'Services', path: '/services' }
       ];
 
   const defaultCourses = [
