@@ -1,8 +1,71 @@
 import React, { useState } from 'react';
 import { WifiOff, RefreshCw } from 'lucide-react';
-import offlineImg from '../../assets/offline_illustration.png';
 import toast from 'react-hot-toast';
 import api from '../../lib/axios';
+
+const OfflineIllustration = () => (
+  <svg viewBox="0 0 200 200" className="w-56 h-56 mx-auto drop-shadow-[0_8px_24px_rgba(99,102,241,0.25)] animate-in zoom-in-75 duration-500 relative z-10" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Outer pulse rings */}
+    <circle cx="100" cy="100" r="80" stroke="url(#pulse-grad)" strokeWidth="1.5" strokeDasharray="4 8" opacity="0.3" />
+    <circle cx="100" cy="100" r="65" stroke="url(#pulse-grad)" strokeWidth="1" strokeDasharray="3 6" opacity="0.5" />
+    
+    {/* Center Glow */}
+    <circle cx="100" cy="100" r="30" fill="url(#glow-grad)" opacity="0.45" />
+
+    {/* Cloud body */}
+    <path d="M70 120H130C138.284 120 145 113.284 145 105C145 96.7157 138.284 90 130 90C129.584 90 129.176 90.017 128.775 90.0503C126.793 78.4907 116.745 70 104.667 70C94.5029 70 85.7481 75.9221 82.0298 84.7077C79.8824 81.7699 76.381 80 72.5 80C65.5964 80 60 85.5964 60 92.5C60 93.3052 60.0763 94.0926 60.222 94.8569C54.3413 97.433 50.3333 103.248 50.3333 110C50.3333 115.523 54.8105 120 60.3333 120H70Z" 
+          fill="url(#cloud-grad)" 
+          stroke="url(#cloud-stroke)" 
+          strokeWidth="2.5" 
+          strokeLinejoin="round" 
+    />
+
+    {/* Danger Exclamation / Warning Inside Cloud */}
+    <circle cx="100" cy="103" r="8" fill="url(#error-glow)" />
+    
+    {/* Wi-Fi Waves with Slash */}
+    <circle cx="100" cy="140" r="4.5" fill="#EF4444" />
+    
+    {/* Wave 1 */}
+    <path d="M89 129C95.0751 122.925 104.925 122.925 111 129" stroke="#EF4444" strokeWidth="2.5" strokeLinecap="round" opacity="0.8" />
+    {/* Wave 2 */}
+    <path d="M80 120C91.0457 108.954 108.954 108.954 120 120" stroke="#F43F5E" strokeWidth="2.5" strokeLinecap="round" opacity="0.5" />
+    {/* Wave 3 */}
+    <path d="M71 111C87.0163 94.9837 112.984 94.9837 129 111" stroke="#F43F5E" strokeWidth="2.5" strokeLinecap="round" opacity="0.2" />
+
+    {/* Disconnect Slash */}
+    <line x1="65" y1="65" x2="135" y2="135" stroke="url(#slash-grad)" strokeWidth="4.5" strokeLinecap="round" />
+    <line x1="65" y1="65" x2="135" y2="135" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" />
+
+    <defs>
+      <linearGradient id="pulse-grad" x1="20" y1="20" x2="180" y2="180" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#6366F1" />
+        <stop offset="50%" stopColor="#EC4899" />
+        <stop offset="100%" stopColor="#F43F5E" />
+      </linearGradient>
+      <linearGradient id="glow-grad" x1="70" y1="70" x2="130" y2="130" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#6366F1" stopOpacity="0.8" />
+        <stop offset="100%" stopColor="#EC4899" stopOpacity="0" />
+      </linearGradient>
+      <linearGradient id="cloud-grad" x1="50" y1="70" x2="145" y2="120" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#1E1B4B" />
+        <stop offset="100%" stopColor="#312E81" />
+      </linearGradient>
+      <linearGradient id="cloud-stroke" x1="50" y1="70" x2="145" y2="120" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#4F46E5" />
+        <stop offset="100%" stopColor="#F43F5E" />
+      </linearGradient>
+      <linearGradient id="slash-grad" x1="65" y1="65" x2="135" y2="135" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#EF4444" />
+        <stop offset="100%" stopColor="#F43F5E" />
+      </linearGradient>
+      <linearGradient id="error-glow" x1="92" y1="95" x2="108" y2="111" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#EF4444" />
+        <stop offset="100%" stopColor="#991B1B" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
 
 const OfflineScreen = ({ onRetry }) => {
   const [isChecking, setIsChecking] = useState(false);
@@ -49,12 +112,7 @@ const OfflineScreen = ({ onRetry }) => {
 
         {/* Offline Illustration */}
         <div className="relative group flex justify-center">
-          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-rose-500 rounded-full blur-2xl opacity-15 scale-75 group-hover:scale-95 transition-all duration-700"></div>
-          <img 
-            src={offlineImg} 
-            alt="Offline Illustration" 
-            className="w-64 h-64 object-contain relative z-10 filter drop-shadow-[0_8px_24px_rgba(99,102,241,0.2)] animate-in zoom-in-75 duration-500" 
-          />
+          <OfflineIllustration />
         </div>
 
         {/* Info Text */}

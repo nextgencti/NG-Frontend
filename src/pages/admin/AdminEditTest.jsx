@@ -28,6 +28,14 @@ export default function AdminEditTest() {
   const [isPPTModalOpen, setIsPPTModalOpen] = useState(false);
   const [isPPTExporting, setIsPPTExporting] = useState(false);
 
+  // AI Question Generator States
+  const [isAiGeneratorOpen, setIsAiGeneratorOpen] = useState(false);
+  const [aiTopic, setAiTopic] = useState('');
+  const [aiQCount, setAiQCount] = useState(5);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [generatedQuestions, setGeneratedQuestions] = useState([]);
+  const [selectedGenQuestions, setSelectedGenQuestions] = useState({});
+
   const handleExportPPT = async (isTeachingMode) => {
     setIsPPTExporting(true);
     const toastId = toast.loading(`Preparing PowerPoint slides... 🎥`);
@@ -177,6 +185,73 @@ export default function AdminEditTest() {
       }
     } catch (error) {
       toast.error('Failed to delete question');
+    }
+  };
+
+  const handleGenerateQuestions = async (e) => {
+    e.preventDefault();
+    if (!aiTopic.trim()) {
+      toast.error('Please enter a topic');
+      return;
+    }
+    setAiLoading(true);
+    const toastId = toast.loading('Generating questions with Sanju AI...');
+    try {
+      const response = await api.post('/admin/generate-questions', {
+        topic: aiTopic,
+        count: aiQCount
+      });
+      if (response.data.success) {
+        setGeneratedQuestions(response.data.questions || []);
+        const selectionMap = {};
+        (response.data.questions || []).forEach((_, idx) => {
+          selectionMap[idx] = true;
+        });
+        setSelectedGenQuestions(selectionMap);
+        toast.success('Successfully generated questions!', { id: toastId });
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to generate questions: ' + (error.response?.data?.message || error.message), { id: toastId });
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleAddSelectedQuestions = async () => {
+    const questionsToInsert = generatedQuestions.filter((_, idx) => selectedGenQuestions[idx]);
+    if (questionsToInsert.length === 0) {
+      toast.error('No questions selected');
+      return;
+    }
+
+    setAiLoading(true);
+    const toastId = toast.loading(`Saving ${questionsToInsert.length} questions to assessment...`);
+    try {
+      let addedCount = 0;
+      const newSavedQuestions = [...questions];
+      
+      for (const q of questionsToInsert) {
+        const response = await api.post(`/admin/tests/${testId}/questions`, q);
+        if (response.data.success) {
+          newSavedQuestions.push(response.data.question);
+          addedCount++;
+        }
+      }
+      
+      setQuestions(newSavedQuestions);
+      setTest({ ...test, questions: test.questions + addedCount });
+      toast.success(`Successfully added ${addedCount} questions to assessment!`, { id: toastId });
+      
+      setIsAiGeneratorOpen(false);
+      setAiTopic('');
+      setGeneratedQuestions([]);
+      setSelectedGenQuestions({});
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to save generated questions to database');
+    } finally {
+      setAiLoading(false);
     }
   };
 
@@ -387,12 +462,20 @@ export default function AdminEditTest() {
                 </span>
                 Question Database
               </h3>
-              <button
-                onClick={() => openQuestionModal()}
-                className="flex items-center gap-2 px-4 py-2 bg-primary-50 hover:bg-primary-100 text-primary-600 border border-primary-100 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all shadow-sm active:scale-95"
-              >
-                <Plus className="w-4 h-4" /> Add Question
-              </button>
+              <div className="flex gap-2.5">
+                <button
+                  onClick={() => setIsAiGeneratorOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#EEF2FF] hover:bg-[#E0E7FF] text-[#4F46E5] border border-[#C7D2FE] rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all shadow-sm active:scale-95 cursor-pointer"
+                >
+                  <Sparkles className="w-4 h-4" /> Generate with AI
+                </button>
+                <button
+                  onClick={() => openQuestionModal()}
+                  className="flex items-center gap-2 px-4 py-2 bg-primary-50 hover:bg-primary-100 text-primary-600 border border-primary-100 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all shadow-sm active:scale-95 cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" /> Add Question
+                </button>
+              </div>
             </div>
 
             {questions.length === 0 ? (
@@ -703,6 +786,166 @@ export default function AdminEditTest() {
               >
                 Close Hub
               </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* AI Question Generator Modal */}
+      {isAiGeneratorOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center shrink-0">
+              <div className="flex items-center gap-2">
+                <span className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shadow-sm">
+                  <Sparkles className="w-4 h-4" />
+                </span>
+                <div>
+                  <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest leading-none">Sanju AI Test Builder</h3>
+                  <span className="text-[9px] text-slate-400 font-bold mt-1 block">Generate custom assessment questions using AI</span>
+                </div>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => { setIsAiGeneratorOpen(false); setGeneratedQuestions([]); }}
+                className="text-slate-400 hover:text-slate-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-6 min-h-0">
+              {/* Prompt form */}
+              <form onSubmit={handleGenerateQuestions} className="space-y-4 p-4 rounded-2xl bg-indigo-50/20 border border-indigo-100/30">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                  <div className="md:col-span-3 space-y-1.5">
+                    <label className="text-[9px] font-bold text-slate-500 uppercase tracking-wider ml-1">Question Topic / Subject</label>
+                    <input 
+                      type="text" 
+                      required
+                      value={aiTopic}
+                      onChange={(e) => setAiTopic(e.target.value)}
+                      placeholder="e.g. Loops in Python, HTML Forms, basic MS Excel" 
+                      className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 font-semibold outline-none focus:border-indigo-500 transition-all placeholder:text-slate-400" 
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-bold text-slate-500 uppercase tracking-wider ml-1">No. of Questions</label>
+                    <select 
+                      value={aiQCount}
+                      onChange={(e) => setAiQCount(Number(e.target.value))}
+                      className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 font-semibold outline-none cursor-pointer animate-none"
+                    >
+                      <option value={3}>3 Questions</option>
+                      <option value={5}>5 Questions</option>
+                      <option value={10}>10 Questions</option>
+                      <option value={15}>15 Questions</option>
+                      <option value={25}>25 Questions</option>
+                      <option value={50}>50 Questions</option>
+                      <option value={100}>100 Questions</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <button 
+                    type="submit"
+                    disabled={aiLoading || !aiTopic.trim()}
+                    className="flex items-center gap-1.5 px-4 py-2.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all disabled:opacity-50 shadow-md shadow-indigo-600/10 active:scale-95 cursor-pointer"
+                  >
+                    {aiLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                    Generate Questions
+                  </button>
+                </div>
+              </form>
+
+              {/* Show Generated Questions */}
+              {generatedQuestions.length > 0 && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-wider">AI Generated Questions ({generatedQuestions.length})</h4>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const allSelected = generatedQuestions.every((_, idx) => selectedGenQuestions[idx]);
+                        const selectionMap = {};
+                        generatedQuestions.forEach((_, idx) => {
+                          selectionMap[idx] = !allSelected;
+                        });
+                        setSelectedGenQuestions(selectionMap);
+                      }}
+                      className="text-[9px] font-bold text-indigo-650 hover:text-indigo-800 uppercase tracking-wider"
+                    >
+                      {generatedQuestions.every((_, idx) => selectedGenQuestions[idx]) ? 'Deselect All' : 'Select All'}
+                    </button>
+                  </div>
+
+                  <div className="space-y-4 max-h-[45vh] overflow-y-auto pr-2 custom-scrollbar">
+                    {generatedQuestions.map((q, idx) => (
+                      <div key={idx} className="p-4 rounded-xl border border-slate-100 bg-slate-50 hover:border-indigo-100 transition-all flex gap-3.5 items-start">
+                        <input
+                          type="checkbox"
+                          checked={!!selectedGenQuestions[idx]}
+                          onChange={() => setSelectedGenQuestions(prev => ({ ...prev, [idx]: !prev[idx] }))}
+                          className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 mt-1 cursor-pointer"
+                        />
+                        <div className="flex-1 space-y-3">
+                          <div className="flex items-center gap-2">
+                            <span className="px-2 py-0.5 rounded bg-white text-[9px] font-bold text-slate-400 tracking-wider border border-slate-150">Q{idx + 1}</span>
+                            <span className="px-2 py-0.5 rounded bg-amber-50 text-[9px] font-bold text-amber-600 border border-amber-100">1 Mark</span>
+                          </div>
+                          <p className="text-xs font-bold text-slate-800 leading-relaxed">{q.question}</p>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {['A', 'B', 'C', 'D'].map(key => {
+                              const isCorrect = q.correctAnswer === key;
+                              return (
+                                <div 
+                                  key={key} 
+                                  className={`px-3 py-2 rounded-lg border text-[11px] flex gap-2 items-center transition-all ${
+                                    isCorrect 
+                                      ? 'border-emerald-200 bg-emerald-50 text-emerald-950 font-semibold' 
+                                      : 'border-slate-200/60 bg-white text-slate-500'
+                                  }`}
+                                >
+                                  <span className="font-bold text-slate-400">{key}.</span>
+                                  <span className="flex-1 break-words">{q.options[key]}</span>
+                                  {isCorrect && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 shrink-0">
+              <button
+                type="button"
+                onClick={() => { setIsAiGeneratorOpen(false); setGeneratedQuestions([]); }}
+                className="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-slate-700 bg-white border border-slate-200 rounded-xl transition-all cursor-pointer shadow-sm active:scale-95"
+              >
+                Cancel
+              </button>
+              {generatedQuestions.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleAddSelectedQuestions}
+                  disabled={aiLoading || !generatedQuestions.some((_, idx) => selectedGenQuestions[idx])}
+                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all disabled:opacity-50 shadow-md shadow-indigo-650/15 cursor-pointer active:scale-95 flex items-center gap-1.5"
+                >
+                  {aiLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+                  Add Selected ({generatedQuestions.filter((_, idx) => selectedGenQuestions[idx]).length}) to Test
+                </button>
+              )}
             </div>
 
           </div>

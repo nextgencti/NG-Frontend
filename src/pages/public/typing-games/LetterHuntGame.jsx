@@ -240,24 +240,24 @@ export default function LetterHuntGame({ onBack, isAuthenticated }) {
       </div>
 
       {gameState === 'lobby' && (
-        <div className="bg-[#151230]/75 border border-indigo-500/20 rounded-3xl p-8 text-center max-w-md mx-auto shadow-2xl animate-in zoom-in-95">
-          <div className="w-16 h-16 bg-indigo-500/10 border border-indigo-500/30 rounded-2xl flex items-center justify-center mx-auto mb-5 text-indigo-400">
-            <Sparkles className="w-8 h-8" />
+        <div className="bg-[#151230]/75 border border-indigo-500/20 rounded-2xl p-6 text-center max-w-sm mx-auto shadow-2xl animate-in zoom-in-95 mt-2">
+          <div className="w-14 h-14 bg-indigo-500/10 border border-indigo-500/30 rounded-xl flex items-center justify-center mx-auto mb-4 text-indigo-400">
+            <Sparkles className="w-6 h-6" />
           </div>
-          <h3 className="text-xl font-black text-white mb-2">Letter Hunt</h3>
-          <p className="text-xs text-slate-400 font-medium leading-relaxed mb-6">
+          <h3 className="text-lg font-black text-white mb-1">Letter Hunt</h3>
+          <p className="text-xs text-slate-400 font-medium leading-relaxed mb-4">
             Press the correct key showing on screen before time runs out. Great for practicing reactive muscle memory and finger positioning!
           </p>
 
           {/* Difficulty Selector */}
-          <div className="mb-6">
-            <span className="text-[10px] text-slate-500 font-black uppercase tracking-wider block mb-2">Difficulty Mode</span>
+          <div className="mb-4">
+            <span className="text-[9.5px] text-slate-500 font-black uppercase tracking-wider block mb-2">Difficulty Mode</span>
             <div className="flex justify-center bg-slate-950/40 rounded-xl p-1 border border-indigo-950">
               {['easy', 'medium', 'hard'].map((level) => (
                 <button
                   key={level}
                   onClick={() => setDifficulty(level)}
-                  className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all duration-200 cursor-pointer flex-1 ${difficulty === level ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                  className={`px-3 py-1.5 rounded-lg text-[9.5px] font-black uppercase tracking-wider transition-all duration-200 cursor-pointer flex-1 ${difficulty === level ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}
                 >
                   {level}
                 </button>
@@ -267,7 +267,7 @@ export default function LetterHuntGame({ onBack, isAuthenticated }) {
 
           <button
             onClick={startGame}
-            className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 cursor-pointer"
+            className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 cursor-pointer"
           >
             <Play className="w-4 h-4 fill-current" /> Start Hunt
           </button>
@@ -275,12 +275,12 @@ export default function LetterHuntGame({ onBack, isAuthenticated }) {
       )}
 
       {gameState === 'playing' && (
-        <div className="w-full flex flex-col gap-5 max-w-sm mx-auto">
+        <div className="w-full flex flex-col gap-4 max-w-sm mx-auto mt-2">
           {/* Stats Bar */}
-          <div className="flex justify-between items-center bg-slate-950/40 border border-indigo-950 rounded-2xl px-5 py-3 text-xs font-bold text-slate-400">
+          <div className="flex justify-between items-center bg-slate-950/40 border border-indigo-950 rounded-xl px-4 py-2 text-[10px] font-bold text-slate-400">
             <div>
               <span>Hits:</span>
-              <span className="text-indigo-400 text-sm font-black font-mono ml-1">{score / 10}</span>
+              <span className="text-indigo-400 text-xs font-black font-mono ml-1">{score / 10}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span>Lives:</span>
@@ -288,7 +288,7 @@ export default function LetterHuntGame({ onBack, isAuthenticated }) {
                 {[1, 2, 3].map((heart) => (
                   <Heart
                     key={heart}
-                    className={`w-4 h-4 ${heart <= lives ? 'text-rose-500 fill-rose-500' : 'text-slate-600'}`}
+                    className={`w-3.5 h-3.5 ${heart <= lives ? 'text-rose-500 fill-rose-500' : 'text-slate-600'}`}
                   />
                 ))}
               </div>
@@ -296,17 +296,17 @@ export default function LetterHuntGame({ onBack, isAuthenticated }) {
           </div>
 
           {/* Letter Target Display Box */}
-          <div className="bg-[#151230]/75 border border-indigo-500/20 rounded-3xl p-10 flex flex-col items-center justify-center relative min-h-[200px]">
+          <div className="bg-[#151230]/75 border border-indigo-500/20 rounded-2xl p-6 flex flex-col items-center justify-center relative min-h-[140px] mt-1">
             {/* Visual timer radial/line indicator */}
-            <div className="absolute top-0 left-0 right-0 h-1.5 bg-slate-950/50 rounded-t-3xl overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-slate-950/50 rounded-t-2xl overflow-hidden">
               <div 
                 style={{ width: `${progressPercentage}%` }}
                 className="h-full bg-indigo-500 transition-all duration-100"
               />
             </div>
 
-            <p className="text-[10px] text-slate-500 font-black uppercase tracking-wider mb-2">Press This Key</p>
-            <h1 className="text-6xl sm:text-7xl font-mono font-black text-indigo-400 animate-pulse tracking-wide select-none">
+            <p className="text-[10px] text-slate-500 font-black uppercase tracking-wider mb-1">Press This Key</p>
+            <h1 className="text-5xl sm:text-6xl font-mono font-black text-indigo-400 animate-pulse tracking-wide select-none">
               {currentLetter === ' ' ? 'Space' : currentLetter}
             </h1>
           </div>
@@ -316,42 +316,42 @@ export default function LetterHuntGame({ onBack, isAuthenticated }) {
       )}
 
       {gameState === 'gameover' && (
-        <div className="bg-[#151230]/75 border border-indigo-500/20 rounded-3xl p-8 text-center max-w-md mx-auto shadow-2xl animate-in zoom-in-95">
-          <div className="w-16 h-16 bg-indigo-500/10 border border-indigo-500/30 rounded-2xl flex items-center justify-center mx-auto mb-5 text-indigo-400">
-            <Award className="w-8 h-8" />
+        <div className="bg-[#151230]/75 border border-indigo-500/20 rounded-2xl p-6 text-center max-w-sm mx-auto shadow-2xl animate-in zoom-in-95 mt-2">
+          <div className="w-14 h-14 bg-indigo-500/10 border border-indigo-500/30 rounded-xl flex items-center justify-center mx-auto mb-4 text-indigo-400">
+            <Award className="w-6 h-6" />
           </div>
-          <h3 className="text-xl font-black text-white mb-2">Hunt Over!</h3>
-          <p className="text-xs text-slate-400 font-medium leading-relaxed mb-6">
+          <h3 className="text-lg font-black text-white mb-1">Hunt Over!</h3>
+          <p className="text-xs text-slate-400 font-medium leading-relaxed mb-4">
             Nice try! You successfully reacted to <span className="text-indigo-400 font-bold font-mono">{score / 10}</span> letters.
           </p>
 
-          <div className="grid grid-cols-2 gap-3 bg-slate-950/40 border border-indigo-950 rounded-2xl p-4 mb-6">
+          <div className="grid grid-cols-2 gap-2.5 bg-slate-950/40 border border-indigo-950 rounded-xl p-3 mb-4">
             <div>
-              <p className="text-xl font-black text-indigo-400 font-mono">{score}</p>
+              <p className="text-lg font-black text-indigo-400 font-mono">{score}</p>
               <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wider block">Score</span>
             </div>
             <div>
-              <p className="text-xl font-black text-indigo-400 font-mono">{avgReaction ? `${avgReaction}ms` : '0ms'}</p>
+              <p className="text-lg font-black text-indigo-400 font-mono">{avgReaction ? `${avgReaction}ms` : '0ms'}</p>
               <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wider block">Avg Reaction</span>
             </div>
           </div>
 
           {!isAuthenticated && (
-            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mb-6 text-[10px] text-amber-300 font-semibold leading-relaxed">
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-2.5 mb-4 text-[10px] text-amber-300 font-semibold leading-relaxed">
               🔑 Log in or create an account to save your typing stats and compete on the leaderboards!
             </div>
           )}
 
-          <div className="flex gap-3">
+          <div className="flex gap-2.5">
             <button
               onClick={startGame}
-              className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <RotateCcw className="w-4 h-4" /> Start Hunt Again
             </button>
             <button
               onClick={onBack}
-              className="flex-1 py-3 bg-white/5 hover:bg-white/10 text-indigo-300 border border-indigo-500/20 rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer"
+              className="flex-1 py-2.5 bg-white/5 hover:bg-white/10 text-indigo-300 border border-indigo-500/20 rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer"
             >
               All Games
             </button>

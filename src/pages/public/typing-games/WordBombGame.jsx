@@ -82,6 +82,13 @@ export default function WordBombGame({ onBack, isAuthenticated }) {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
+  useEffect(() => {
+    if (gameState === 'playing' && inputRef.current) {
+      // Focus input without scrolling the viewport down
+      inputRef.current.focus({ preventScroll: true });
+    }
+  }, [gameState]);
+
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       containerRef.current?.requestFullscreen?.().catch(err => {
@@ -127,7 +134,7 @@ export default function WordBombGame({ onBack, isAuthenticated }) {
     playSound('diffuse');
 
     setTimeout(() => {
-      if (inputRef.current) inputRef.current.focus();
+      if (inputRef.current) inputRef.current.focus({ preventScroll: true });
     }, 50);
   };
 
@@ -254,16 +261,16 @@ export default function WordBombGame({ onBack, isAuthenticated }) {
       </div>
 
       {gameState === 'lobby' && (
-        <div className="bg-white border-4 border-rose-400 rounded-[2rem] p-8 text-center max-w-md mx-auto shadow-[0_12px_0_0_rgba(251,113,133,1)] animate-in zoom-in-95 mt-4">
-          <div className="text-6xl mb-4 animate-bounce">💣</div>
-          <h3 className="text-3xl font-black text-slate-800 mb-2">Word Bomb</h3>
-          <p className="text-sm text-slate-600 font-bold leading-relaxed mb-6">
+        <div className="bg-white border-4 border-rose-400 rounded-3xl p-6 text-center max-w-sm mx-auto shadow-[0_8px_0_0_rgba(251,113,133,1)] animate-in zoom-in-95 mt-2">
+          <div className="text-5xl mb-3 animate-bounce">💣</div>
+          <h3 className="text-2xl font-black text-slate-800 mb-1">Word Bomb</h3>
+          <p className="text-[11.5px] text-slate-500 font-bold leading-relaxed mb-4">
             Type the code before the bomb explodes! Every successful diffusion gives you a streak bonus. Ready?
           </p>
 
           {/* Difficulty Selector */}
-          <div className="mb-6">
-            <span className="text-xs text-rose-500 font-black uppercase tracking-wider block mb-3">Choose Level</span>
+          <div className="mb-4">
+            <span className="text-[9.5px] text-rose-500 font-black uppercase tracking-wider block mb-2">Choose Level</span>
             <div className="flex justify-center gap-3">
               {[
                 { level: 'easy', color: 'emerald', bg: 'bg-emerald-500', border: 'border-emerald-600', hoverBg: 'hover:bg-emerald-50', hoverBorder: 'hover:border-emerald-400', text: 'text-emerald-700', label: '🟢 Easy' },
@@ -273,7 +280,7 @@ export default function WordBombGame({ onBack, isAuthenticated }) {
                 <button
                   key={s.level}
                   onClick={() => setDifficulty(s.level)}
-                  className={`px-3 py-2 rounded-2xl font-black tracking-wider transition-all duration-200 cursor-pointer flex-1 border-2 border-b-4 ${difficulty === s.level ? `${s.bg} ${s.border} text-white translate-y-[2px] border-b-2` : `bg-white border-${s.color}-200 ${s.text} ${s.hoverBorder} ${s.hoverBg}`}`}
+                  className={`px-2 py-1.5 rounded-xl text-xs font-black tracking-wider transition-all duration-200 cursor-pointer flex-1 border-2 border-b-4 ${difficulty === s.level ? `${s.bg} ${s.border} text-white translate-y-[1px] border-b-2` : `bg-white border-${s.color}-200 ${s.text} ${s.hoverBorder} ${s.hoverBg}`}`}
                 >
                   {s.label}
                 </button>
@@ -283,7 +290,7 @@ export default function WordBombGame({ onBack, isAuthenticated }) {
 
           <button
             onClick={startGame}
-            className="w-full py-4 bg-rose-500 hover:bg-rose-400 text-white rounded-2xl font-black text-lg uppercase tracking-widest transition-all flex items-center justify-center gap-3 shadow-[0_8px_0_0_rgba(225,29,72,1)] hover:shadow-[0_4px_0_0_rgba(225,29,72,1)] hover:translate-y-1 active:shadow-none active:translate-y-2 cursor-pointer"
+            className="w-full py-2.5 bg-rose-500 hover:bg-rose-400 text-white rounded-xl font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-[0_4px_0_0_rgba(225,29,72,1)] hover:shadow-[0_2px_0_0_rgba(225,29,72,1)] hover:translate-y-[2px] active:shadow-none active:translate-y-1 cursor-pointer"
           >
             Start Diffusing! 🚀
           </button>
@@ -291,42 +298,48 @@ export default function WordBombGame({ onBack, isAuthenticated }) {
       )}
 
       {gameState === 'playing' && (
-        <div className="w-full flex flex-col gap-6 max-w-2xl mx-auto mt-4">
+        <div className="w-full flex flex-col gap-4 max-w-md mx-auto mt-2">
           {/* Stats Bar */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-white border-4 border-sky-400 rounded-3xl p-4 text-center shadow-[0_6px_0_0_rgba(56,189,248,1)]">
-              <div className="text-3xl mb-1">⭐</div>
-              <p className="text-3xl font-black text-sky-500">{score}</p>
-              <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Score</span>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-white border-4 border-sky-400 rounded-2xl py-1.5 px-2.5 flex items-center justify-center gap-2 shadow-[0_4px_0_0_rgba(56,189,248,1)]">
+              <span className="text-lg">⭐</span>
+              <div className="flex flex-col items-start leading-none">
+                <span className="text-lg font-black text-sky-500 leading-none">{score}</span>
+                <span className="text-[8px] text-slate-400 font-black uppercase tracking-widest mt-0.5">Score</span>
+              </div>
             </div>
-            <div className="bg-white border-4 border-amber-400 rounded-3xl p-4 text-center shadow-[0_6px_0_0_rgba(251,191,36,1)] z-10 transform scale-110">
-              <div className="text-4xl mb-1 animate-pulse">🔥</div>
-              <p className="text-4xl font-black text-amber-500">{streak}</p>
-              <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Streak</span>
+            <div className="bg-white border-4 border-amber-400 rounded-2xl py-1.5 px-2.5 flex items-center justify-center gap-2 shadow-[0_4px_0_0_rgba(251,191,36,1)] z-10 animate-pulse">
+              <span className="text-lg">🔥</span>
+              <div className="flex flex-col items-start leading-none">
+                <span className="text-lg font-black text-amber-500 leading-none">{streak}</span>
+                <span className="text-[8px] text-slate-400 font-black uppercase tracking-widest mt-0.5">Streak</span>
+              </div>
             </div>
-            <div className="bg-white border-4 border-emerald-400 rounded-3xl p-4 text-center shadow-[0_6px_0_0_rgba(52,211,153,1)]">
-              <div className="text-3xl mb-1">⏳</div>
-              <p className={`text-3xl font-black ${timeLeft < 1.5 ? 'text-rose-500 animate-pulse' : 'text-emerald-500'}`}>{timeLeft.toFixed(1)}s</p>
-              <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Time</span>
+            <div className="bg-white border-4 border-emerald-400 rounded-2xl py-1.5 px-2.5 flex items-center justify-center gap-2 shadow-[0_4px_0_0_rgba(52,211,153,1)]">
+              <span className="text-lg">⏳</span>
+              <div className="flex flex-col items-start leading-none">
+                <span className={`text-lg font-black leading-none ${timeLeft < 1.5 ? 'text-rose-500 animate-pulse' : 'text-emerald-500'}`}>{timeLeft.toFixed(1)}s</span>
+                <span className="text-[8px] text-slate-400 font-black uppercase tracking-widest mt-0.5">Time</span>
+              </div>
             </div>
           </div>
 
           {/* Bomb Visual Area */}
-          <div className="bg-white border-4 border-rose-400 rounded-[3rem] p-10 flex flex-col items-center justify-center relative min-h-[200px] shadow-[0_12px_0_0_rgba(251,113,133,1)] mt-4 overflow-hidden">
+          <div className="bg-white border-4 border-rose-400 rounded-2xl p-6 flex flex-col items-center justify-center relative min-h-[160px] shadow-[0_6px_0_0_rgba(251,113,133,1)] mt-1 overflow-hidden">
             {/* Visual fuse bar */}
-            <div className="absolute top-0 left-0 right-0 h-4 bg-slate-100 overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-3 bg-slate-100 overflow-hidden">
               <div 
                 style={{ width: `${progressPercentage}%` }}
                 className={`h-full transition-all duration-100 ${progressPercentage > 50 ? 'bg-emerald-400' : progressPercentage > 25 ? 'bg-amber-400' : 'bg-rose-500 animate-pulse'}`}
               />
             </div>
 
-            <div className={`mt-6 mb-4 ${timeLeft < 1.5 ? 'animate-ping' : timeLeft < 3 ? 'animate-bounce' : 'animate-pulse'}`}>
-              <div className="text-7xl">💣</div>
+            <div className={`mt-3 mb-2 ${timeLeft < 1.5 ? 'animate-ping' : timeLeft < 3 ? 'animate-bounce' : 'animate-pulse'}`}>
+              <div className="text-5xl">💣</div>
             </div>
 
-            <p className="text-sm text-rose-400 font-black uppercase tracking-wider mb-2">Diffuse Code</p>
-            <h1 className="text-5xl sm:text-6xl font-black text-slate-800 tracking-wide mt-2 mb-4">
+            <p className="text-xs text-rose-400 font-black uppercase tracking-wider mb-1">Diffuse Code</p>
+            <h1 className="text-4xl sm:text-5xl font-black text-slate-800 tracking-wide mt-1 mb-2">
               {currentWord}
             </h1>
           </div>
@@ -338,36 +351,35 @@ export default function WordBombGame({ onBack, isAuthenticated }) {
             value={inputValue}
             onChange={handleInputChange}
             placeholder="Type code here! 🎯"
-            className="w-full bg-white border-4 border-amber-400 focus:border-amber-500 focus:ring-4 focus:ring-amber-200 text-slate-800 rounded-full py-5 px-8 text-2xl font-black outline-none text-center shadow-[0_8px_0_0_rgba(251,191,36,1)] transition-all placeholder:text-amber-200 mt-2"
-            autoFocus
+            className="w-full bg-white border-4 border-amber-400 focus:border-amber-500 focus:ring-4 focus:ring-amber-200 text-slate-800 rounded-2xl py-3 px-6 text-lg font-black outline-none text-center shadow-[0_4px_0_0_rgba(251,191,36,1)] transition-all placeholder:text-amber-255 mt-1"
           />
         </div>
       )}
 
       {gameState === 'gameover' && (
-        <div className="bg-white border-4 border-rose-500 rounded-[2rem] p-8 text-center max-w-md mx-auto shadow-[0_12px_0_0_rgba(225,29,72,1)] animate-in zoom-in-95 mt-4">
-          <div className="text-7xl mb-4 animate-bounce">💥</div>
-          <h3 className="text-4xl font-black text-rose-500 mb-2">BOOM!</h3>
-          <p className="text-sm text-slate-600 font-bold leading-relaxed mb-6">
+        <div className="bg-white border-4 border-rose-500 rounded-3xl p-6 text-center max-w-sm mx-auto shadow-[0_8px_0_0_rgba(225,29,72,1)] animate-in zoom-in-95 mt-2">
+          <div className="text-5xl mb-3 animate-bounce">💥</div>
+          <h3 className="text-3xl font-black text-rose-500 mb-1">BOOM!</h3>
+          <p className="text-xs text-slate-500 font-bold leading-relaxed mb-4">
             The bomb exploded! You diffused <span className="text-pink-500 font-black text-lg">{score / 10}</span> words with a top streak of <span className="text-amber-500 font-black text-lg">{streak}</span>🔥!
           </p>
 
           {!isAuthenticated && (
-            <div className="bg-amber-100 border border-amber-200 rounded-xl p-3 mb-6 text-xs text-amber-700 font-bold">
+            <div className="bg-amber-100 border border-amber-250 rounded-xl p-2.5 mb-4 text-[10px] text-amber-800 font-black">
               🔑 Log in to save your awesome scores!
             </div>
           )}
 
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2.5">
             <button
               onClick={startGame}
-              className="w-full py-4 bg-rose-500 hover:bg-rose-400 text-white rounded-2xl font-black text-lg uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-[0_6px_0_0_rgba(159,18,57,1)] hover:translate-y-1 hover:shadow-[0_3px_0_0_rgba(159,18,57,1)] cursor-pointer"
+              className="w-full py-2.5 bg-rose-500 hover:bg-rose-400 text-white rounded-xl font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 shadow-[0_4px_0_0_rgba(159,18,57,1)] hover:translate-y-[1px] hover:shadow-[0_2px_0_0_rgba(159,18,57,1)] cursor-pointer"
             >
               🔄 Try Again!
             </button>
             <button
               onClick={onBack}
-              className="w-full py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl font-black text-sm uppercase tracking-widest transition-all cursor-pointer border-2 border-slate-200"
+              className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all cursor-pointer border border-slate-200"
             >
               Back to Games
             </button>

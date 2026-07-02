@@ -1233,7 +1233,8 @@ export default function Home() {
                   'Job Alerts': Briefcase,
                   'Identity Cards': Shield,
                   'Results & Certs': Download,
-                  'Welfare & Schemes': FileText
+                  'Welfare & Schemes': FileText,
+                  'Other': FileText
                 };
                 const displayServices = customServices.length > 0 ? customServices : govServicesList;
                 return [...displayServices, ...displayServices].map((item, itemIdx) => {

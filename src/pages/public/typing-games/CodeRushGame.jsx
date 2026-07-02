@@ -83,7 +83,7 @@ export default function CodeRushGame({ onBack, isAuthenticated }) {
     playSound('success');
 
     setTimeout(() => {
-      if (inputRef.current) inputRef.current.focus();
+      if (inputRef.current) inputRef.current.focus({ preventScroll: true });
     }, 50);
   };
 
@@ -157,6 +157,13 @@ export default function CodeRushGame({ onBack, isAuthenticated }) {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
+  useEffect(() => {
+    if (gameState === 'playing' && inputRef.current) {
+      // Focus input without scrolling the viewport down
+      inputRef.current.focus({ preventScroll: true });
+    }
+  }, [gameState]);
+
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       containerRef.current?.requestFullscreen?.().catch(err => {
@@ -214,24 +221,24 @@ export default function CodeRushGame({ onBack, isAuthenticated }) {
       </div>
 
       {gameState === 'lobby' && (
-        <div className="bg-[#151230]/75 border border-indigo-500/20 rounded-3xl p-8 text-center max-w-md mx-auto shadow-2xl animate-in zoom-in-95">
-          <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex items-center justify-center mx-auto mb-5 text-emerald-400">
-            <Keyboard className="w-8 h-8" />
+        <div className="bg-[#151230]/75 border border-indigo-500/20 rounded-2xl p-6 text-center max-w-sm mx-auto shadow-2xl animate-in zoom-in-95 mt-2">
+          <div className="w-14 h-14 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-center mx-auto mb-4 text-emerald-400">
+            <Keyboard className="w-6 h-6" />
           </div>
-          <h3 className="text-xl font-black text-white mb-2">Code Rush</h3>
-          <p className="text-xs text-slate-400 font-medium leading-relaxed mb-6">
+          <h3 className="text-lg font-black text-white mb-1">Code Rush</h3>
+          <p className="text-xs text-slate-400 font-medium leading-relaxed mb-4">
             Practice typing actual syntax and syntax formatting tokens: semicolons, curly brackets, parenthesis, and function calls. Crucial for web developer muscle memory!
           </p>
 
           {/* Difficulty Selector */}
-          <div className="mb-6">
-            <span className="text-[10px] text-slate-500 font-black uppercase tracking-wider block mb-2">Difficulty Mode</span>
+          <div className="mb-4">
+            <span className="text-[9.5px] text-slate-500 font-black uppercase tracking-wider block mb-2">Difficulty Mode</span>
             <div className="flex justify-center bg-slate-950/40 rounded-xl p-1 border border-indigo-950">
               {['easy', 'medium', 'hard'].map((level) => (
                 <button
                   key={level}
                   onClick={() => setDifficulty(level)}
-                  className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all duration-200 cursor-pointer flex-1 ${difficulty === level ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                  className={`px-3 py-1.5 rounded-lg text-[9.5px] font-black uppercase tracking-wider transition-all duration-200 cursor-pointer flex-1 ${difficulty === level ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}
                 >
                   {level}
                 </button>
@@ -241,7 +248,7 @@ export default function CodeRushGame({ onBack, isAuthenticated }) {
 
           <button
             onClick={startGame}
-            className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 cursor-pointer"
+            className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 cursor-pointer"
           >
             <Play className="w-4 h-4 fill-current" /> Start Code Rush
           </button>
@@ -249,27 +256,27 @@ export default function CodeRushGame({ onBack, isAuthenticated }) {
       )}
 
       {gameState === 'playing' && (
-        <div className="w-full flex flex-col gap-5 max-w-2xl mx-auto">
+        <div className="w-full flex flex-col gap-4 max-w-md mx-auto mt-2">
           {/* Stats Bar */}
-          <div className="flex justify-between items-center bg-slate-950/40 border border-indigo-950 rounded-2xl px-5 py-3 text-xs font-bold text-slate-400">
+          <div className="flex justify-between items-center bg-slate-950/40 border border-indigo-950 rounded-xl px-4 py-2 text-[10px] font-bold text-slate-400">
             <div>
               <span>Coding WPM:</span>
-              <span className="text-indigo-400 text-sm font-black font-mono ml-1">{wpm}</span>
+              <span className="text-indigo-400 text-xs font-black font-mono ml-1">{wpm}</span>
             </div>
             <div>
               <span>Accuracy:</span>
-              <span className="text-indigo-400 text-sm font-black font-mono ml-1">{accuracy}%</span>
+              <span className="text-indigo-400 text-xs font-black font-mono ml-1">{accuracy}%</span>
             </div>
             <div>
               <span>Syntax Errors:</span>
-              <span className="text-rose-500 text-sm font-black font-mono ml-1">{errors}</span>
+              <span className="text-rose-500 text-xs font-black font-mono ml-1">{errors}</span>
             </div>
           </div>
 
           {/* Code Typing Box */}
           <div 
-            onClick={() => inputRef.current && inputRef.current.focus()}
-            className="bg-[#0F0C20]/90 border border-indigo-500/20 hover:border-indigo-500/30 rounded-3xl p-8 shadow-2xl relative cursor-text min-h-[140px] text-left leading-relaxed flex items-center justify-center select-none"
+            onClick={() => inputRef.current && inputRef.current.focus({ preventScroll: true })}
+            className="bg-[#0F0C20]/90 border border-indigo-500/20 hover:border-indigo-500/30 rounded-2xl p-5 shadow-2xl relative cursor-text min-h-[120px] text-left leading-relaxed flex items-center justify-center select-none"
           >
             <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-emerald-500 via-indigo-500 to-purple-500 opacity-35" />
             <div className="w-full font-mono text-slate-300 tracking-wide break-all">
@@ -283,45 +290,44 @@ export default function CodeRushGame({ onBack, isAuthenticated }) {
             value={typedText}
             onChange={handleInputChange}
             className="absolute opacity-0 w-0 h-0 pointer-events-none"
-            autoFocus
           />
         </div>
       )}
 
       {gameState === 'gameover' && (
-        <div className="bg-[#151230]/75 border border-indigo-500/20 rounded-3xl p-8 text-center max-w-md mx-auto shadow-2xl animate-in zoom-in-95">
-          <div className="w-16 h-16 bg-indigo-500/10 border border-indigo-500/30 rounded-2xl flex items-center justify-center mx-auto mb-5 text-indigo-400">
-            <Award className="w-8 h-8" />
+        <div className="bg-[#151230]/75 border border-indigo-500/20 rounded-2xl p-6 text-center max-w-sm mx-auto shadow-2xl animate-in zoom-in-95 mt-2">
+          <div className="w-14 h-14 bg-indigo-500/10 border border-indigo-500/30 rounded-xl flex items-center justify-center mx-auto mb-4 text-indigo-400">
+            <Award className="w-6 h-6" />
           </div>
-          <h3 className="text-xl font-black text-white mb-2">Code Snippet Clear!</h3>
+          <h3 className="text-lg font-black text-white mb-1">Code Snippet Clear!</h3>
           
-          <div className="grid grid-cols-2 gap-3 bg-slate-950/40 border border-indigo-950 rounded-2xl p-4 mb-6">
+          <div className="grid grid-cols-2 gap-2.5 bg-slate-950/40 border border-indigo-950 rounded-xl p-3 mb-4">
             <div>
-              <p className="text-xl font-black text-indigo-400 font-mono">{wpm}</p>
+              <p className="text-lg font-black text-indigo-400 font-mono">{wpm}</p>
               <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wider block">WPM</span>
             </div>
             <div>
-              <p className="text-xl font-black text-indigo-400 font-mono">{accuracy}%</p>
+              <p className="text-lg font-black text-indigo-400 font-mono">{accuracy}%</p>
               <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wider block">Accuracy</span>
             </div>
           </div>
 
           {!isAuthenticated && (
-            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mb-6 text-[10px] text-amber-300 font-semibold leading-relaxed">
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-2.5 mb-4 text-[10px] text-amber-300 font-semibold leading-relaxed">
               🔑 Log in or create an account to save your typing stats and compete on the leaderboards!
             </div>
           )}
 
-          <div className="flex gap-3">
+          <div className="flex gap-2.5">
             <button
               onClick={startGame}
-              className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <RotateCcw className="w-4 h-4" /> Next Snippet
             </button>
             <button
               onClick={onBack}
-              className="flex-1 py-3 bg-white/5 hover:bg-white/10 text-indigo-300 border border-indigo-500/20 rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer"
+              className="flex-1 py-2.5 bg-white/5 hover:bg-white/10 text-indigo-300 border border-indigo-500/20 rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer"
             >
               All Games
             </button>

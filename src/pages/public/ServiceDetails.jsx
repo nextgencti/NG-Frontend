@@ -9,6 +9,7 @@ import Footer from '../../components/Footer';
 import Logo from '../../components/Logo';
 import { motion } from 'framer-motion';
 import axios from 'axios';
+import { useAuth } from '../../context/AuthContext';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'https://ng-backend-91oz.onrender.com/api';
 
@@ -176,6 +177,7 @@ const renderMarkdown = (text) => {
 export default function ServiceDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [service, setService] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -212,7 +214,8 @@ export default function ServiceDetails() {
       'Job Alerts': Briefcase,
       'Identity Cards': Shield,
       'Results & Certs': Download,
-      'Welfare & Schemes': FileText
+      'Welfare & Schemes': FileText,
+      'Other': FileText
     };
     return categoryIconMap[category] || Briefcase;
   };
@@ -477,15 +480,31 @@ export default function ServiceDetails() {
             <div className="bg-[#0F0C20] text-slate-300 rounded-2xl p-5 border border-indigo-950 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-xl pointer-events-none" />
               <h4 className="text-[11px] font-black uppercase tracking-wider text-indigo-400 mb-2">NextGen Support</h4>
-              <p className="text-[11px] leading-relaxed text-slate-400 font-semibold mb-3">
-                अगर आपको इस सर्विस का फॉर्म भरने में कोई परेशानी आ रही है, तो आप अपने छात्र पोर्टल से **Sanju AI** से तुरंत लाइव मदद ले सकते हैं!
-              </p>
-              <Link 
-                to="/dashboard/ai-tutor" 
-                className="inline-flex items-center gap-1 text-[11px] font-black text-indigo-400 hover:text-indigo-300 transition-colors uppercase tracking-wider"
-              >
-                Ask Sanju AI <ArrowLeft className="w-3.5 h-3.5 rotate-180" />
-              </Link>
+              {isAuthenticated ? (
+                <>
+                  <p className="text-[11px] leading-relaxed text-slate-400 font-semibold mb-3">
+                    अगर आपको इस सर्विस का फॉर्म भरने में कोई परेशानी आ रही है, तो आप अपने छात्र पोर्टल से **Sanju AI** से तुरंत लाइव मदद ले सकते हैं!
+                  </p>
+                  <Link 
+                    to="/dashboard/ai-tutor" 
+                    className="inline-flex items-center gap-1 text-[11px] font-black text-indigo-400 hover:text-indigo-300 transition-colors uppercase tracking-wider"
+                  >
+                    Ask Sanju AI <ArrowLeft className="w-3.5 h-3.5 rotate-180" />
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <p className="text-[11px] leading-relaxed text-slate-400 font-semibold mb-3">
+                    अगर आपको इस सर्विस का फॉर्म भरने में कोई परेशानी आ रही है, तो **लॉगिन करके** आप **Sanju AI** से तुरंत लाइव मदद ले सकते हैं।
+                  </p>
+                  <Link 
+                    to="/login" 
+                    className="inline-flex items-center gap-1 text-[11px] font-black text-indigo-400 hover:text-indigo-300 transition-colors uppercase tracking-wider"
+                  >
+                    Login to Ask AI <ArrowLeft className="w-3.5 h-3.5 rotate-180" />
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>

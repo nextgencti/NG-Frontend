@@ -970,24 +970,24 @@ export default function SkyStrikeGame({ onBack, isAuthenticated }) {
       </div>
 
       {gameState === 'lobby' && (
-        <div className="bg-[#151230]/75 border border-indigo-500/20 rounded-3xl p-8 text-center max-w-md mx-auto shadow-2xl animate-in zoom-in-95">
-          <div className="w-16 h-16 bg-cyan-500/10 border border-cyan-500/30 rounded-2xl flex items-center justify-center mx-auto mb-5 text-cyan-400">
-            <Zap className="w-8 h-8 fill-current text-cyan-400" />
+        <div className="bg-[#151230]/75 border border-indigo-500/20 rounded-2xl p-6 text-center max-w-sm mx-auto shadow-2xl animate-in zoom-in-95 mt-2">
+          <div className="w-14 h-14 bg-cyan-500/10 border border-cyan-500/30 rounded-xl flex items-center justify-center mx-auto mb-4 text-cyan-400">
+            <Zap className="w-6 h-6 fill-current text-cyan-400" />
           </div>
-          <h3 className="text-xl font-black text-white mb-2">Sky Strike</h3>
-          <p className="text-xs text-slate-400 font-medium leading-relaxed mb-6">
+          <h3 className="text-lg font-black text-white mb-1">Sky Strike</h3>
+          <p className="text-xs text-slate-400 font-medium leading-relaxed mb-4">
             An advanced typing shoot-em-up. Lock lasers and fire upon incoming asteroid debris by typing their text codes. Beat the motherships!
           </p>
 
           {/* Difficulty selector */}
-          <div className="mb-6">
-            <span className="text-[10px] text-slate-500 font-black uppercase tracking-wider block mb-2">Defense Level</span>
+          <div className="mb-4">
+            <span className="text-[9.5px] text-slate-500 font-black uppercase tracking-wider block mb-2">Defense Level</span>
             <div className="flex justify-center bg-slate-950/40 rounded-xl p-1 border border-indigo-950">
               {['easy', 'medium', 'hard'].map((level) => (
                 <button
                   key={level}
                   onClick={() => setDifficulty(level)}
-                  className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all duration-200 cursor-pointer flex-1 ${difficulty === level ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                  className={`px-3 py-1.5 rounded-lg text-[9.5px] font-black uppercase tracking-wider transition-all duration-200 cursor-pointer flex-1 ${difficulty === level ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}
                 >
                   {level}
                 </button>
@@ -997,7 +997,7 @@ export default function SkyStrikeGame({ onBack, isAuthenticated }) {
 
           <button
             onClick={startGame}
-            className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 cursor-pointer"
+            className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 cursor-pointer"
           >
             <Play className="w-4 h-4 fill-current" /> Play
           </button>
@@ -1005,149 +1005,148 @@ export default function SkyStrikeGame({ onBack, isAuthenticated }) {
       )}
 
       {gameState === 'playing' && (
-        <div className="w-full flex flex-col gap-4">
+        <div className="w-full flex flex-col gap-3 max-w-2xl mx-auto mt-1">
           {/* Glassmorphism HUD Bar */}
-          <div className="bg-[#151230]/75 backdrop-blur-md border border-indigo-500/20 rounded-2xl p-4 grid grid-cols-2 md:grid-cols-5 gap-3 text-center">
+          <div className="bg-[#151230]/75 backdrop-blur-md border border-indigo-500/20 rounded-xl p-2.5 grid grid-cols-5 gap-2 text-center">
             <div className="border-r border-indigo-950/40">
-              <p className="text-[9px] text-slate-500 font-black uppercase tracking-wider leading-none mb-1">🏆 Score</p>
-              <span className="text-lg font-black text-cyan-400 font-mono">{score}</span>
+              <p className="text-[8px] text-slate-500 font-black uppercase tracking-wider leading-none mb-1">🏆 Score</p>
+              <span className="text-base font-black text-cyan-400 font-mono">{score}</span>
             </div>
             <div className="border-r border-indigo-950/40">
-              <p className="text-[9px] text-slate-500 font-black uppercase tracking-wider leading-none mb-1">⚡ Speed</p>
-              <span className="text-lg font-black text-white font-mono">{wpm} <span className="text-[10px] text-slate-400">WPM</span></span>
+              <p className="text-[8px] text-slate-500 font-black uppercase tracking-wider leading-none mb-1">⚡ Speed</p>
+              <span className="text-base font-black text-white font-mono">{wpm} <span className="text-[9px] text-slate-400">WPM</span></span>
             </div>
             <div className="border-r border-indigo-950/40">
-              <p className="text-[9px] text-slate-500 font-black uppercase tracking-wider leading-none mb-1">🎯 Accuracy</p>
-              <span className="text-lg font-black text-white font-mono">{accuracy}%</span>
+              <p className="text-[8px] text-slate-500 font-black uppercase tracking-wider leading-none mb-1">🎯 Accuracy</p>
+              <span className="text-base font-black text-white font-mono">{accuracy}%</span>
             </div>
             <div className="border-r border-indigo-950/40 flex flex-col items-center justify-center">
-              <p className="text-[9px] text-slate-500 font-black uppercase tracking-wider leading-none mb-1">❤️ Shields</p>
+              <p className="text-[8px] text-slate-500 font-black uppercase tracking-wider leading-none mb-1">❤️ Shields</p>
               <div className="flex gap-1 mt-0.5">
                 {[1, 2, 3].map((s) => (
-                  <Heart key={s} className={`w-3.5 h-3.5 ${s <= shields ? 'text-cyan-400 fill-cyan-400/20' : 'text-slate-700'}`} />
+                  <Heart key={s} className={`w-3 h-3 ${s <= shields ? 'text-cyan-400 fill-cyan-400/20' : 'text-slate-700'}`} />
                 ))}
               </div>
             </div>
             <div>
-              <p className="text-[9px] text-slate-500 font-black uppercase tracking-wider leading-none mb-1">🔥 Combo</p>
-              <span className="text-lg font-black text-amber-400 font-mono">x{combo}</span>
+              <p className="text-[8px] text-slate-500 font-black uppercase tracking-wider leading-none mb-1">🔥 Combo</p>
+              <span className="text-base font-black text-amber-400 font-mono">x{combo}</span>
             </div>
           </div>
 
           {/* Level Progress Indicator */}
-          <div className="flex items-center gap-3 bg-slate-950/40 border border-indigo-950 rounded-xl px-4 py-2 text-xs font-bold text-slate-400">
+          <div className="flex items-center gap-3 bg-slate-950/40 border border-indigo-950 rounded-lg px-3 py-1.5 text-[10px] font-bold text-slate-400">
             <span>LEVEL {level}</span>
-            <div className="flex-1 bg-slate-950 h-2 rounded-full overflow-hidden">
+            <div className="flex-1 bg-slate-950 h-1.5 rounded-full overflow-hidden">
               <div 
                 style={{ width: `${levelProgress}%` }}
                 className="h-full bg-indigo-500 transition-all duration-300"
               />
             </div>
-            <span className="text-[10px] text-slate-500 uppercase tracking-wider">{Math.round(levelProgress)}% EXP</span>
+            <span className="text-[9px] text-slate-550 uppercase tracking-wider">{Math.round(levelProgress)}% EXP</span>
           </div>
 
           {/* Boss warning HUD overlay */}
           {bossActive && (
-            <div className="bg-rose-500/10 border border-rose-500/30 text-rose-500 text-xs font-black uppercase tracking-widest py-2 rounded-xl animate-pulse">
+            <div className="bg-rose-500/10 border border-rose-500/30 text-rose-500 text-[10px] font-black uppercase tracking-widest py-1.5 rounded-lg animate-pulse">
               🚨 WARNING: Boss Invader Detected! Eliminate immediately! 🚨
             </div>
           )}
 
-          <div className="w-full bg-[#0B091B] border border-indigo-500/20 rounded-3xl p-1 shadow-2xl relative">
+          <div className="w-full bg-[#0B091B] border border-indigo-500/20 rounded-2xl p-0.5 shadow-2xl relative">
             <canvas 
               ref={canvasRef} 
               width={800} 
               height={460} 
-              className={`w-full block rounded-2xl mx-auto object-contain ${isFullscreen ? 'max-h-[55vh] sm:max-h-[65vh]' : 'h-auto max-w-full'}`}
+              className={`w-full block rounded-xl mx-auto object-contain ${isFullscreen ? 'max-h-[55vh] sm:max-h-[65vh]' : 'h-auto max-w-full'}`}
             />
           </div>
         </div>
       )}
 
       {gameState === 'gameover' && analytics && (
-        <div className="bg-[#151230]/75 border border-indigo-500/20 rounded-3xl p-8 max-w-2xl mx-auto shadow-2xl animate-in zoom-in-95 text-left">
-          <div className="flex items-center gap-4 border-b border-indigo-950/60 pb-5 mb-6">
-            <div className="w-12 h-12 bg-rose-500/10 border border-rose-500/30 rounded-xl flex items-center justify-center text-rose-500 shrink-0">
-              <ShieldAlert className="w-6 h-6" />
+        <div className="bg-[#151230]/75 border border-indigo-500/20 rounded-2xl p-6 max-w-md mx-auto shadow-2xl animate-in zoom-in-95 text-left mt-2">
+          <div className="flex items-center gap-3 border-b border-indigo-950/60 pb-4 mb-4">
+            <div className="w-10 h-10 bg-rose-500/10 border border-rose-500/30 rounded-xl flex items-center justify-center text-rose-500 shrink-0">
+              <ShieldAlert className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-xl font-black text-white">Fighter Base Shield Collapsed</h3>
-              <p className="text-xs text-slate-500 font-semibold mt-1">Excellent combat run! View your analytics logs below.</p>
+              <h3 className="text-lg font-black text-white">Fighter Shield Collapsed</h3>
+              <p className="text-[10px] text-slate-500 font-semibold mt-0.5">Excellent combat run! View analytics logs below.</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Stat columns */}
-            <div className="md:col-span-2 grid grid-cols-2 gap-4">
-              <div className="bg-slate-950/45 border border-indigo-950 rounded-xl p-4 text-center">
-                <p className="text-2xl font-black text-cyan-400 font-mono">{analytics.score}</p>
+          <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-2 gap-2.5">
+              <div className="bg-slate-950/45 border border-indigo-950 rounded-xl p-3 text-center">
+                <p className="text-xl font-black text-cyan-400 font-mono">{analytics.score}</p>
                 <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wider">Final Score</span>
               </div>
-              <div className="bg-slate-950/45 border border-indigo-950 rounded-xl p-4 text-center">
-                <p className="text-2xl font-black text-white font-mono">{analytics.wpm} <span className="text-xs font-semibold text-slate-400">WPM</span></p>
+              <div className="bg-slate-950/45 border border-indigo-950 rounded-xl p-3 text-center">
+                <p className="text-xl font-black text-white font-mono">{analytics.wpm} <span className="text-[10px] font-semibold text-slate-400">WPM</span></p>
                 <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wider">Combat Speed</span>
               </div>
-              <div className="bg-slate-950/45 border border-indigo-950 rounded-xl p-4 text-center">
-                <p className="text-2xl font-black text-white font-mono">{analytics.accuracy}%</p>
+              <div className="bg-slate-950/45 border border-indigo-950 rounded-xl p-3 text-center">
+                <p className="text-xl font-black text-white font-mono">{analytics.accuracy}%</p>
                 <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wider">Accuracy Rating</span>
               </div>
-              <div className="bg-slate-950/45 border border-indigo-950 rounded-xl p-4 text-center">
-                <p className="text-2xl font-black text-amber-400 font-mono">x{analytics.maxCombo}</p>
+              <div className="bg-slate-950/45 border border-indigo-950 rounded-xl p-3 text-center">
+                <p className="text-xl font-black text-amber-400 font-mono">x{analytics.maxCombo}</p>
                 <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wider">Max Key Combo</span>
               </div>
-              <div className="bg-slate-950/45 border border-indigo-950 rounded-xl p-4 text-center col-span-2 flex justify-around items-center">
+              <div className="bg-slate-950/45 border border-indigo-950 rounded-xl p-3 text-center col-span-2 flex justify-around items-center">
                 <div>
-                  <p className="text-base font-black text-indigo-200 font-mono">{analytics.wordsCleared}</p>
+                  <p className="text-sm font-black text-indigo-200 font-mono">{analytics.wordsCleared}</p>
                   <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wider">Debris Smashed</span>
                 </div>
-                <div className="w-[1px] h-6 bg-indigo-950" />
+                <div className="w-[1px] h-5 bg-indigo-950" />
                 <div>
-                  <p className="text-base font-black text-indigo-200 font-mono">{Math.floor(analytics.time)}s</p>
+                  <p className="text-sm font-black text-indigo-200 font-mono">{Math.floor(analytics.time)}s</p>
                   <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wider">Time Survived</span>
                 </div>
               </div>
             </div>
 
             {/* Badges unlocked */}
-            <div className="bg-slate-950/45 border border-indigo-950 rounded-xl p-4 flex flex-col">
-              <span className="text-[8px] text-slate-500 font-black uppercase tracking-wider block mb-3">🏅 Badge Achievements</span>
-              <div className="flex flex-col gap-2.5 overflow-y-auto flex-grow max-h-48 pr-1">
+            <div className="bg-slate-950/45 border border-indigo-950 rounded-xl p-3 flex flex-col">
+              <span className="text-[8px] text-slate-500 font-black uppercase tracking-wider block mb-2">🏅 Badge Achievements</span>
+              <div className="flex flex-col gap-2 overflow-y-auto flex-grow max-h-32 pr-1">
                 {unlockedBadges.length > 0 ? (
                   unlockedBadges.map((badgeId) => {
                     const badge = ACHIEVEMENTS.find(a => a.id === badgeId);
                     return (
-                      <div key={badgeId} className="flex items-center gap-2 bg-[#151230]/40 border border-indigo-500/10 p-2 rounded-lg text-xs">
-                        <span className="text-lg">{badge.icon}</span>
+                      <div key={badgeId} className="flex items-center gap-2 bg-[#151230]/40 border border-indigo-500/10 p-1.5 rounded-lg text-[10px]">
+                        <span className="text-base">{badge.icon}</span>
                         <div>
                           <p className="font-black text-slate-200 leading-none">{badge.name}</p>
-                          <span className="text-[9px] text-slate-500 font-bold leading-none mt-0.5 block">{badge.desc}</span>
+                          <span className="text-[8px] text-slate-500 font-bold leading-none mt-0.5 block">{badge.desc}</span>
                         </div>
                       </div>
                     );
                   })
                 ) : (
-                  <span className="text-xs text-slate-600 font-bold">No badges unlocked</span>
+                  <span className="text-[10px] text-slate-650 font-bold">No badges unlocked</span>
                 )}
               </div>
             </div>
           </div>
 
           {!isAuthenticated && (
-            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mt-6 text-[10px] text-amber-300 font-semibold leading-relaxed">
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-2.5 mt-4 text-[9px] text-amber-300 font-semibold leading-relaxed">
               🔑 Log in or create an account to save your space typing stats and list on leaderboards!
             </div>
           )}
 
-          <div className="flex gap-3 mt-6">
+          <div className="flex gap-2.5 mt-4">
             <button
               onClick={startGame}
-              className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-indigo-600/15"
+              className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-lg shadow-indigo-600/15"
             >
-              <RotateCcw className="w-4 h-4" /> Start Next Run
+              <RotateCcw className="w-3.5 h-3.5" /> Next Run
             </button>
             <button
               onClick={onBack}
-              className="flex-1 py-3 bg-white/5 hover:bg-white/10 text-indigo-300 border border-indigo-500/20 rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer"
+              className="flex-1 py-2.5 bg-white/5 hover:bg-white/10 text-indigo-300 border border-indigo-500/20 rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer"
             >
               All Games
             </button>

@@ -67,6 +67,7 @@ export default function WordRainGame({ onBack, isAuthenticated }) {
   
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
+  const inputRef = useRef(null);
   const stateRef = useRef({
     words: [],
     particles: [],
@@ -87,6 +88,13 @@ export default function WordRainGame({ onBack, isAuthenticated }) {
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
+
+  useEffect(() => {
+    if (gameState === 'playing' && inputRef.current) {
+      // Focus input without scrolling the viewport down
+      inputRef.current.focus({ preventScroll: true });
+    }
+  }, [gameState]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -386,16 +394,16 @@ export default function WordRainGame({ onBack, isAuthenticated }) {
       </div>
 
       {gameState === 'lobby' && (
-        <div className="bg-white border-4 border-sky-400 rounded-[2rem] p-8 text-center max-w-md mx-auto shadow-[0_12px_0_0_rgba(56,189,248,1)] animate-in zoom-in-95 mt-4">
-          <div className="text-7xl mb-4 animate-bounce">🎈</div>
-          <h3 className="text-3xl font-black text-slate-800 mb-2">Word Rain</h3>
-          <p className="text-sm text-slate-600 font-bold leading-relaxed mb-6">
+        <div className="bg-white border-4 border-sky-400 rounded-3xl p-6 text-center max-w-sm mx-auto shadow-[0_8px_0_0_rgba(56,189,248,1)] animate-in zoom-in-95 mt-2">
+          <div className="text-5xl mb-3 animate-bounce">🎈</div>
+          <h3 className="text-2xl font-black text-slate-800 mb-1">Word Rain</h3>
+          <p className="text-[11.5px] text-slate-500 font-bold leading-relaxed mb-4">
             Pop the balloons by typing the letters or words before they float away! 
           </p>
 
           {/* Game Type Selector */}
-          <div className="mb-5">
-            <span className="text-xs text-sky-500 font-black uppercase tracking-wider block mb-3">Game Type</span>
+          <div className="mb-4">
+            <span className="text-[9.5px] text-sky-500 font-black uppercase tracking-wider block mb-2">Game Type</span>
             <div className="flex justify-center gap-3">
               {[
                 { type: 'letter', label: '🅰️ Letter Rain', color: 'pink', bg: 'bg-pink-500', border: 'border-pink-600', text: 'text-pink-700', hoverBg: 'hover:bg-pink-50', hoverBorder: 'hover:border-pink-400' },
@@ -404,7 +412,7 @@ export default function WordRainGame({ onBack, isAuthenticated }) {
                 <button
                   key={m.type}
                   onClick={() => setGameType(m.type)}
-                  className={`px-3 py-2 rounded-2xl font-black tracking-wider transition-all duration-200 cursor-pointer flex-1 border-2 border-b-4 ${gameType === m.type ? `${m.bg} ${m.border} text-white translate-y-[2px] border-b-2` : `bg-white border-${m.color}-200 ${m.text} ${m.hoverBorder} ${m.hoverBg}`}`}
+                  className={`px-2.5 py-1.5 rounded-xl text-xs font-black tracking-wider transition-all duration-200 cursor-pointer flex-1 border-2 border-b-4 ${gameType === m.type ? `${m.bg} ${m.border} text-white translate-y-[1px] border-b-2` : `bg-white border-${m.color}-200 ${m.text} ${m.hoverBorder} ${m.hoverBg}`}`}
                 >
                   {m.label}
                 </button>
@@ -413,8 +421,8 @@ export default function WordRainGame({ onBack, isAuthenticated }) {
           </div>
 
           {/* Difficulty Selector */}
-          <div className="mb-6">
-            <span className="text-xs text-sky-500 font-black uppercase tracking-wider block mb-3">Difficulty Level</span>
+          <div className="mb-4">
+            <span className="text-[9.5px] text-sky-500 font-black uppercase tracking-wider block mb-2">Difficulty Level</span>
             <div className="flex justify-center gap-3">
               {[
                 { level: 'easy', color: 'emerald', bg: 'bg-emerald-500', border: 'border-emerald-600', text: 'text-emerald-700', hoverBg: 'hover:bg-emerald-50', hoverBorder: 'hover:border-emerald-400', label: '🟢 Easy' },
@@ -424,7 +432,7 @@ export default function WordRainGame({ onBack, isAuthenticated }) {
                 <button
                   key={s.level}
                   onClick={() => setDifficulty(s.level)}
-                  className={`px-3 py-2 rounded-2xl font-black tracking-wider transition-all duration-200 cursor-pointer flex-1 border-2 border-b-4 ${difficulty === s.level ? `${s.bg} ${s.border} text-white translate-y-[2px] border-b-2` : `bg-white border-${s.color}-200 ${s.text} ${s.hoverBorder} ${s.hoverBg}`}`}
+                  className={`px-2 py-1.5 rounded-xl text-xs font-black tracking-wider transition-all duration-200 cursor-pointer flex-1 border-2 border-b-4 ${difficulty === s.level ? `${s.bg} ${s.border} text-white translate-y-[1px] border-b-2` : `bg-white border-${s.color}-200 ${s.text} ${s.hoverBorder} ${s.hoverBg}`}`}
                 >
                   {s.label}
                 </button>
@@ -432,79 +440,83 @@ export default function WordRainGame({ onBack, isAuthenticated }) {
             </div>
           </div>
 
-          <button onClick={startGame} className="w-full py-4 bg-sky-500 hover:bg-sky-400 text-white rounded-2xl font-black text-lg uppercase tracking-widest transition-all flex items-center justify-center gap-3 shadow-[0_8px_0_0_rgba(14,165,233,1)] hover:shadow-[0_4px_0_0_rgba(14,165,233,1)] hover:translate-y-1 active:shadow-none active:translate-y-2 cursor-pointer">
+          <button onClick={startGame} className="w-full py-2.5 bg-sky-500 hover:bg-sky-400 text-white rounded-xl font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-[0_4px_0_0_rgba(14,165,233,1)] hover:shadow-[0_2px_0_0_rgba(14,165,233,1)] hover:translate-y-[2px] active:shadow-none active:translate-y-1 cursor-pointer">
             Start Popping! 🎈
           </button>
         </div>
       )}
 
       {gameState === 'playing' && (
-        <div className="flex flex-col gap-6 max-w-2xl mx-auto mt-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white border-4 border-amber-400 rounded-3xl p-4 text-center shadow-[0_6px_0_0_rgba(251,191,36,1)]">
-              <div className="text-3xl mb-1">⭐</div>
-              <p className="text-4xl font-black text-amber-500">{score}</p>
-              <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Score</span>
+        <div className="flex flex-col gap-4 max-w-md mx-auto mt-2">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-white border-4 border-amber-400 rounded-2xl py-1.5 px-3 flex items-center justify-center gap-2.5 shadow-[0_4px_0_0_rgba(251,191,36,1)]">
+              <span className="text-lg">⭐</span>
+              <div className="flex flex-col items-start leading-none">
+                <span className="text-lg font-black text-amber-500 leading-none">{score}</span>
+                <span className="text-[8px] text-slate-400 font-black uppercase tracking-widest mt-0.5">Score</span>
+              </div>
             </div>
-            <div className="bg-white border-4 border-rose-400 rounded-3xl p-4 text-center shadow-[0_6px_0_0_rgba(251,113,133,1)] flex flex-col items-center justify-center">
-              <div className="flex gap-2 mb-2">
+            <div className="bg-white border-4 border-rose-400 rounded-2xl py-1.5 px-3 flex items-center justify-center gap-2.5 shadow-[0_4px_0_0_rgba(251,113,133,1)]">
+              <div className="flex gap-1">
                 {[...Array(3)].map((_, i) => (
-                  <Heart key={i} className={`w-8 h-8 transition-all ${i < lives ? 'text-rose-500 fill-rose-500 animate-pulse' : 'text-slate-200 fill-slate-200'}`} />
+                  <Heart key={i} className={`w-5 h-5 transition-all ${i < lives ? 'text-rose-500 fill-rose-500 animate-pulse' : 'text-slate-200 fill-slate-200'}`} />
                 ))}
               </div>
-              <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Lives Remaining</span>
+              <div className="flex flex-col items-start leading-none">
+                <span className="text-[8px] text-slate-400 font-black uppercase tracking-widest leading-none">Lives</span>
+              </div>
             </div>
           </div>
 
-          <div className="w-full bg-white border-4 border-sky-400 rounded-[3rem] overflow-hidden shadow-[0_12px_0_0_rgba(56,189,248,1)] relative mt-2">
+          <div className="w-full bg-white border-4 border-sky-400 rounded-2xl overflow-hidden shadow-[0_6px_0_0_rgba(56,189,248,1)] relative mt-1">
             <canvas ref={canvasRef} width={600} height={400} className="w-full h-auto block" />
-            <div className="absolute bottom-0 left-0 right-0 h-4 bg-rose-500 animate-pulse opacity-20"></div>
-            <div className="absolute top-2 left-2 px-3 py-1 bg-sky-100 text-sky-600 rounded-lg text-xs font-black uppercase shadow-sm">
+            <div className="absolute bottom-0 left-0 right-0 h-3 bg-rose-500 animate-pulse opacity-20"></div>
+            <div className="absolute top-2 left-2 px-2.5 py-1 bg-sky-100 text-sky-600 rounded-lg text-[9.5px] font-black uppercase shadow-sm">
               {gameType === 'letter' ? '🅰️ Letter Mode' : '🔤 Word Mode'}
             </div>
           </div>
 
           <input
-            autoFocus
+            ref={inputRef}
             type="text"
             value={inputValue}
             onChange={handleInputChange}
             placeholder={gameType === 'letter' ? "Type the letters!" : "Type the words!"}
-            className="w-full bg-white border-4 border-emerald-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-200 text-slate-800 rounded-full py-5 px-8 text-2xl font-black outline-none text-center shadow-[0_8px_0_0_rgba(52,211,153,1)] transition-all placeholder:text-emerald-200 mt-2"
+            className="w-full bg-white border-4 border-emerald-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-200 text-slate-800 rounded-2xl py-3 px-6 text-lg font-black outline-none text-center shadow-[0_4px_0_0_rgba(52,211,153,1)] transition-all placeholder:text-emerald-250 mt-1"
           />
         </div>
       )}
 
       {gameState === 'gameover' && analytics && (
-        <div className="bg-white border-4 border-rose-500 rounded-[2rem] p-8 text-center max-w-md mx-auto shadow-[0_12px_0_0_rgba(225,29,72,1)] animate-in zoom-in-95 mt-4">
-          <div className="text-7xl mb-4 animate-bounce">🎈💥</div>
-          <h3 className="text-4xl font-black text-rose-500 mb-2">Game Over!</h3>
-          <p className="text-sm text-slate-600 font-bold leading-relaxed mb-6">
+        <div className="bg-white border-4 border-rose-500 rounded-3xl p-6 text-center max-w-sm mx-auto shadow-[0_8px_0_0_rgba(225,29,72,1)] animate-in zoom-in-95 mt-2">
+          <div className="text-5xl mb-3 animate-bounce">🎈💥</div>
+          <h3 className="text-3xl font-black text-rose-500 mb-1">Game Over!</h3>
+          <p className="text-xs text-slate-500 font-bold leading-relaxed mb-4">
             The balloons got away!
           </p>
 
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="bg-amber-100 border-2 border-amber-300 rounded-2xl p-4">
-              <p className="text-3xl font-black text-amber-500">{analytics.score}</p>
-              <span className="text-[10px] text-amber-700 font-bold uppercase tracking-wider block mt-1">Final Score</span>
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="bg-amber-100 border-2 border-amber-300 rounded-xl p-3">
+              <p className="text-2xl font-black text-amber-500">{analytics.score}</p>
+              <span className="text-[9px] text-amber-700 font-bold uppercase tracking-wider block mt-0.5">Final Score</span>
             </div>
-            <div className="bg-sky-100 border-2 border-sky-300 rounded-2xl p-4">
-              <p className="text-3xl font-black text-sky-500">{analytics.wpm}</p>
-              <span className="text-[10px] text-sky-700 font-bold uppercase tracking-wider block mt-1">{gameType === 'letter' ? 'LPM' : 'WPM'}</span>
+            <div className="bg-sky-100 border-2 border-sky-300 rounded-xl p-3">
+              <p className="text-2xl font-black text-sky-500">{analytics.wpm}</p>
+              <span className="text-[9px] text-sky-700 font-bold uppercase tracking-wider block mt-0.5">{gameType === 'letter' ? 'LPM' : 'WPM'}</span>
             </div>
           </div>
           
           {!isAuthenticated && (
-            <div className="bg-amber-100 border border-amber-200 rounded-xl p-3 mb-6 text-xs text-amber-700 font-bold">
+            <div className="bg-amber-100 border border-amber-250 rounded-xl p-2.5 mb-4 text-[10px] text-amber-800 font-black">
               🔑 Log in to save your awesome scores!
             </div>
           )}
 
-          <div className="flex flex-col gap-3">
-            <button onClick={startGame} className="w-full py-4 bg-rose-500 hover:bg-rose-400 text-white rounded-2xl font-black text-lg uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-[0_6px_0_0_rgba(159,18,57,1)] hover:translate-y-1 hover:shadow-[0_3px_0_0_rgba(159,18,57,1)] cursor-pointer">
+          <div className="flex flex-col gap-2.5">
+            <button onClick={startGame} className="w-full py-2.5 bg-rose-500 hover:bg-rose-400 text-white rounded-xl font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 shadow-[0_4px_0_0_rgba(159,18,57,1)] hover:translate-y-[1px] hover:shadow-[0_2px_0_0_rgba(159,18,57,1)] cursor-pointer">
               🔄 Play Again!
             </button>
-            <button onClick={onBack} className="w-full py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl font-black text-sm uppercase tracking-widest transition-all cursor-pointer border-2 border-slate-200">
+            <button onClick={onBack} className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all cursor-pointer border border-slate-200">
               Back to Games
             </button>
           </div>

@@ -29,80 +29,9 @@ export default function Services() {
     }
   };
 
-  const categories = ['All', 'Job Alerts', 'Identity Cards', 'Results & Certs', 'Welfare & Schemes'];
+  const categories = ['All', 'Job Alerts', 'Identity Cards', 'Results & Certs', 'Welfare & Schemes', 'Other'];
 
-  const servicesData = [
-    {
-      id: 1,
-      name: "Sarkari Result",
-      category: "Job Alerts",
-      description: "Direct alerts for online forms, exam schedules, admit cards, and exam results across all major central and state government sectors.",
-      icon: Briefcase,
-      link: "https://www.sarkariresult.com",
-      links: [
-        { label: "SSC Official Portal", url: "https://ssc.gov.in" },
-        { label: "UPSC Official Portal", url: "https://www.upsc.gov.in" }
-      ]
-    },
-    {
-      id: 3,
-      name: "Aadhaar Portal (UIDAI)",
-      category: "Identity Cards",
-      description: "Check status of Aadhaar update request, retrieve virtual ID, check linked mobile numbers, and download digital copy of Aadhaar card.",
-      icon: Shield,
-      link: "https://myaadhaar.uidai.gov.in",
-      links: [
-        { label: "Aadhaar Services Portal", url: "https://myaadhaar.uidai.gov.in" },
-        { label: "Verify Aadhaar Status", url: "https://uidai.gov.in" }
-      ]
-    },
-    {
-      id: 7,
-      name: "NIELIT CCC Certificate",
-      category: "Results & Certs",
-      description: "Download Course on Computer Concepts (CCC) exam admit cards, check results, and print digitally signed official certificates.",
-      icon: Download,
-      link: "https://student.nielit.gov.in",
-      links: [
-        { label: "Student Portal NIELIT", url: "https://student.nielit.gov.in" }
-      ]
-    },
-    {
-      id: 8,
-      name: "DigiLocker Services",
-      category: "Results & Certs",
-      description: "Secure cloud wallet by Gov of India to store and access authentic digital documents (Marksheets, License, RC, Identity cards).",
-      icon: Download,
-      link: "https://digilocker.gov.in",
-      links: [
-        { label: "Official Web App", url: "https://digilocker.gov.in" }
-      ]
-    },
-    {
-      id: 9,
-      name: "UP Scholarship Portal",
-      category: "Welfare & Schemes",
-      description: "Apply fresh or renewal scholarships for pre-matric, post-matric, and other professional courses in Uttar Pradesh colleges.",
-      icon: FileText,
-      link: "https://scholarship.up.gov.in",
-      links: [
-        { label: "Scholarship Portal", url: "https://scholarship.up.gov.in" }
-      ]
-    },
-    {
-      id: 10,
-      name: "UP e-District Portal",
-      category: "Welfare & Schemes",
-      description: "Apply income, caste, domicile, birth, and death certificates online directly from UP state public service dashboard.",
-      icon: FileText,
-      link: "https://edistrict.up.gov.in",
-      links: [
-        { label: "e-District Login", url: "https://edistrict.up.gov.in" }
-      ]
-    }
-  ];
-
-  const displayServices = customServices.length > 0 ? customServices : servicesData;
+  const displayServices = customServices;
 
   const filteredServices = displayServices.filter(service => {
     const matchesCategory = selectedCategory === 'All' || service.category === selectedCategory;
@@ -198,7 +127,8 @@ export default function Services() {
                 'Job Alerts': Briefcase,
                 'Identity Cards': Shield,
                 'Results & Certs': Download,
-                'Welfare & Schemes': FileText
+                'Welfare & Schemes': FileText,
+                'Other': FileText
               };
               const ServiceIcon = service.icon || categoryIconMap[service.category] || Briefcase;
               return (
@@ -211,46 +141,47 @@ export default function Services() {
                   <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 group-hover:scale-[1.05] group-hover:blur-2xl transition-all duration-500 -z-10" />
                   
                   {/* Card Main Container */}
-                  <div className="bg-white/80 hover:bg-white/95 backdrop-blur-xl rounded-2xl border border-indigo-100/80 group-hover:border-indigo-300/80 shadow-[0_8px_30px_rgba(99,102,241,0.02)] group-hover:shadow-[0_20px_50px_rgba(99,102,241,0.18)] transition-all duration-500 flex flex-col flex-1 overflow-hidden relative p-5">
+                  <div className="bg-white/80 hover:bg-white/95 backdrop-blur-xl rounded-2xl border border-indigo-100/80 group-hover:border-indigo-300/80 shadow-[0_8px_30px_rgba(99,102,241,0.02)] group-hover:shadow-[0_20px_50px_rgba(99,102,241,0.18)] transition-all duration-500 flex flex-col flex-1 overflow-hidden relative p-4">
                     {/* Always visible base top border */}
                     <div className="absolute top-0 left-0 right-0 h-[3px] bg-indigo-950 z-20" />
                     
                     {/* Hover state gradient top border */}
                     <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-30" />
                     
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-9 h-9 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 border border-indigo-100/50 overflow-hidden">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="w-8 h-8 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 border border-indigo-100/50 overflow-hidden">
                         {service.imageUrl ? (
                           <img src={service.imageUrl} alt={service.name} className="w-full h-full object-cover" />
                         ) : (
-                          <ServiceIcon className="w-5 h-5" />
+                          <ServiceIcon className="w-4.5 h-4.5" />
                         )}
                       </div>
-                      <span className="bg-indigo-50 border border-indigo-100 text-indigo-700 text-[9px] font-black uppercase px-2 py-0.5 rounded">
+                      <span className="bg-indigo-50 border border-indigo-100 text-indigo-700 text-[8px] font-black uppercase px-2 py-0.5 rounded">
                         {service.category}
                       </span>
                     </div>
 
-                    <h3 className="text-base font-NeueMachina-Medium text-slate-800 leading-snug mb-3">
+                    <h3 className="text-sm font-NeueMachina-Medium text-slate-800 leading-snug mb-1.5 line-clamp-1">
                       {service.name}
                     </h3>
-                    <p className="text-slate-500 text-xs font-semibold leading-relaxed mb-6 flex-1">
+                    <p className="text-slate-500 text-[11px] font-semibold leading-relaxed mb-4 line-clamp-2">
                       {service.description}
                     </p>
+                    <div className="flex-grow" />
 
                     {/* Secondary links */}
                     {service.links && service.links.length > 0 && (
-                      <div className="space-y-2 mb-5 font-NeueMachina-Medium">
+                      <div className="space-y-1.5 mb-4 font-NeueMachina-Medium">
                         {service.links.map((sublink, idx) => (
                           <a 
                             key={idx} 
                             href={sublink.url} 
                             target="_blank" 
                             rel="noopener noreferrer" 
-                            className="flex items-center justify-between text-[10px] text-indigo-600 hover:text-indigo-800 font-bold bg-indigo-50/40 hover:bg-indigo-50 px-2.5 py-1.5 rounded-lg border border-indigo-100/30 transition-all"
+                            className="flex items-center justify-between text-[9px] text-indigo-600 hover:text-indigo-800 font-bold bg-indigo-50/40 hover:bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100/30 transition-all"
                           >
                             <span>{sublink.label}</span>
-                            <ExternalLink className="w-3 h-3" />
+                            <ExternalLink className="w-2.5 h-2.5" />
                           </a>
                         ))}
                       </div>
@@ -260,18 +191,18 @@ export default function Services() {
                     {service.hasDetailsPage ? (
                       <Link
                         to={`/services/${service.id}`}
-                        className="w-full py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-xl font-NeueMachina-Medium font-bold text-[13px] tracking-wide transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/20 active:scale-95 flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                        className="w-full py-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-xl font-NeueMachina-Medium font-bold text-[12px] tracking-wide transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/20 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
                       >
-                        View Details & Apply <ArrowRight className="w-3.5 h-3.5" />
+                        View Details & Apply <ArrowRight className="w-3 h-3" />
                       </Link>
                     ) : (
                       <a
                         href={service.link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="w-full py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-xl font-NeueMachina-Medium font-bold text-[13px] tracking-wide transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/20 active:scale-95 flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                        className="w-full py-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-xl font-NeueMachina-Medium font-bold text-[12px] tracking-wide transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/20 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
                       >
-                        Open Official Portal <ExternalLink className="w-3.5 h-3.5" />
+                        Open Official Portal <ExternalLink className="w-3 h-3" />
                       </a>
                     )}
                   </div>

@@ -793,6 +793,7 @@ export default function SuperAdminControls() {
                   <option value="Identity Cards">Identity Cards</option>
                   <option value="Results & Certs">Results & Certs</option>
                   <option value="Welfare & Schemes">Welfare & Schemes</option>
+                  <option value="Other">Other</option>
                 </select>
               </div>
 
