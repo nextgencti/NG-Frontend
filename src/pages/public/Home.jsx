@@ -212,6 +212,27 @@ export default function Home() {
     Hard: 'bg-rose-100 text-rose-700'
   };
 
+  const isNewTest = (createdAt, dateStr) => {
+    let createdDate;
+    if (createdAt) {
+      if (createdAt._seconds) {
+        createdDate = new Date(createdAt._seconds * 1000);
+      } else if (createdAt.seconds) {
+        createdDate = new Date(createdAt.seconds * 1000);
+      } else {
+        createdDate = new Date(createdAt);
+      }
+    } else if (dateStr) {
+      createdDate = new Date(dateStr);
+    } else {
+      return false;
+    }
+    if (isNaN(createdDate.getTime())) return false;
+    const diffTime = Math.abs(new Date() - createdDate);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays <= 10;
+  };
+
   const handleNavClick = (path) => {
     if (path.startsWith('#')) {
       const element = document.getElementById(path.substring(1));
@@ -1037,7 +1058,7 @@ export default function Home() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {publicTests.map((test) => (
+              {publicTests.slice(0, 4).map((test) => (
                 <div
                   key={test.id}
                   className="relative group h-full hover:-translate-y-2 transition-all duration-500 isolate"
@@ -1053,16 +1074,25 @@ export default function Home() {
                     {/* Hover state gradient top border */}
                     <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-30" />
                     
+                    {isNewTest(test.createdAt, test.date) && (
+                      <span className="absolute top-[32px] right-[70px] z-30 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider bg-rose-600 text-white shadow-lg shadow-rose-500/35 border border-rose-400/20 animate-pulse">
+                        <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>
+                        New
+                      </span>
+                    )}
+
                     <div className="p-6 flex flex-col h-full">
                       <div className="flex items-start justify-between mb-4">
                         <div className="space-y-2.5">
-                          <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${
-                            test.difficulty === 'Easy' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                            test.difficulty === 'Medium' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                            'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                          }`}>
-                            {test.difficulty}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${
+                              test.difficulty === 'Easy' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                              test.difficulty === 'Medium' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                              'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                            }`}>
+                              {test.difficulty}
+                            </span>
+                          </div>
                           <h3 className="text-base font-black text-white leading-snug group-hover:text-indigo-300 transition-colors duration-300">
                             {test.title}
                           </h3>
@@ -1117,6 +1147,19 @@ export default function Home() {
                 </div>
               ))}
             </div>
+
+            {/* View All Button */}
+            {publicTests.length > 4 && (
+              <div className="flex justify-center mt-12">
+                <button
+                  onClick={() => navigate('/practice-tests')}
+                  className="px-8 py-3 bg-[#0F0C20]/40 hover:bg-indigo-600 border border-indigo-500/35 hover:border-indigo-500 text-indigo-300 hover:text-white rounded-full font-bold text-xs uppercase tracking-wider transition-all duration-300 shadow-lg shadow-indigo-600/5 hover:shadow-indigo-600/25 active:scale-95 flex items-center gap-2 cursor-pointer"
+                >
+                  View All Practice Tests
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -21,6 +21,27 @@ const gradeColor = (pct) => {
   return 'text-rose-600';
 };
 
+const isNewTest = (createdAt, dateStr) => {
+  let createdDate;
+  if (createdAt) {
+    if (createdAt._seconds) {
+      createdDate = new Date(createdAt._seconds * 1000);
+    } else if (createdAt.seconds) {
+      createdDate = new Date(createdAt.seconds * 1000);
+    } else {
+      createdDate = new Date(createdAt);
+    }
+  } else if (dateStr) {
+    createdDate = new Date(dateStr);
+  } else {
+    return false;
+  }
+  if (isNaN(createdDate.getTime())) return false;
+  const diffTime = Math.abs(new Date() - createdDate);
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays <= 10;
+};
+
 const containerVariants = {
   hidden: { opacity: 0 },
   show: {
@@ -50,6 +71,7 @@ export default function Tests() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('Upcoming');
   const [filterDifficulty, setFilterDifficulty] = useState('All');
+  const [sortBy, setSortBy] = useState('newest');
 
   useEffect(() => {
     fetchTests();
@@ -72,12 +94,46 @@ export default function Tests() {
 
   const tabs = ['Upcoming', 'Completed'];
 
-  const filteredTests = tests.filter(test => {
-    const isCompleted = test.hasAttempts || test.status === 'completed';
-    const matchTab = activeTab === 'Upcoming' ? !isCompleted : isCompleted;
-    const matchDifficulty = filterDifficulty === 'All' || test.difficulty === filterDifficulty;
-    return matchTab && matchDifficulty;
-  });
+  const getSortedAndFilteredTests = () => {
+    let result = tests.filter(test => {
+      const isCompleted = test.hasAttempts || test.status === 'completed';
+      const matchTab = activeTab === 'Upcoming' ? !isCompleted : isCompleted;
+      const matchDifficulty = filterDifficulty === 'All' || test.difficulty === filterDifficulty;
+      return matchTab && matchDifficulty;
+    });
+
+    const getTestTime = (t) => {
+      if (t.createdAt) {
+        if (t.createdAt._seconds) return t.createdAt._seconds * 1000;
+        if (t.createdAt.seconds) return t.createdAt.seconds * 1000;
+        return new Date(t.createdAt).getTime();
+      }
+      return t.date ? new Date(t.date).getTime() : 0;
+    };
+
+    return result.sort((a, b) => {
+      switch (sortBy) {
+        case 'newest':
+          return getTestTime(b) - getTestTime(a);
+        case 'oldest':
+          return getTestTime(a) - getTestTime(b);
+        case 'questions_desc':
+          return (Number(b.questions) || 0) - (Number(a.questions) || 0);
+        case 'questions_asc':
+          return (Number(a.questions) || 0) - (Number(b.questions) || 0);
+        case 'marks_desc':
+          return (Number(b.totalMarks) || 0) - (Number(a.totalMarks) || 0);
+        case 'duration_desc':
+          const durA = parseInt(a.duration) || 0;
+          const durB = parseInt(b.duration) || 0;
+          return durB - durA;
+        default:
+          return 0;
+      }
+    });
+  };
+
+  const filteredTests = getSortedAndFilteredTests();
 
   // Calculate Stats
   const totalTests = tests.length;
@@ -251,7 +307,7 @@ export default function Tests() {
           })}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-4">
           <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200/60 w-fit">
             {['All', 'Easy', 'Medium', 'Hard'].map(diff => (
               <button
@@ -266,6 +322,22 @@ export default function Tests() {
                 {diff}
               </button>
             ))}
+          </div>
+
+          <div className="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200/60 w-fit">
+            <span className="text-[9px] font-black uppercase tracking-widest text-slate-450 pl-2">Sort:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="bg-white border border-slate-200 text-slate-700 rounded-xl px-3 py-1.5 text-[9px] font-black uppercase tracking-widest outline-none focus:border-primary-500 cursor-pointer"
+            >
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="questions_desc">Questions (High-Low)</option>
+              <option value="questions_asc">Questions (Low-High)</option>
+              <option value="marks_desc">Total Marks</option>
+              <option value="duration_desc">Duration</option>
+            </select>
           </div>
         </div>
       </motion.div>
@@ -300,6 +372,13 @@ export default function Tests() {
                   {/* Subtle Grid Accent */}
                   <div className="absolute inset-0 bg-dot-pattern opacity-[0.25] pointer-events-none"></div>
 
+                  {isNewTest(test.createdAt, test.date) && (
+                    <span className="absolute top-[32px] right-[70px] z-30 inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[8px] font-black uppercase tracking-widest bg-rose-500 text-white shadow-sm border border-rose-450 animate-pulse">
+                      <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>
+                      New
+                    </span>
+                  )}
+
                   <div className="space-y-5 relative z-10">
                     {/* Card Header */}
                     <div className="flex justify-between items-start gap-4">
@@ -321,7 +400,12 @@ export default function Tests() {
                         
                         <div className="flex items-center gap-1 pt-1 min-w-0">
                           <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500 shrink-0" />
-                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest truncate">{test.course || 'CCC Class'}</span>
+                          <span 
+                            className="text-[9px] font-black text-slate-400 uppercase tracking-widest truncate"
+                            title={Array.isArray(test.courses) && test.courses.length > 0 ? test.courses.join(', ') : test.course}
+                          >
+                            {Array.isArray(test.courses) && test.courses.length > 0 ? test.courses.join(', ') : (test.course || 'CCC Class')}
+                          </span>
                         </div>
                         <h4 className="text-base font-black text-slate-800 group-hover:text-primary-600 transition-colors uppercase leading-snug line-clamp-1">
                           {test.title}

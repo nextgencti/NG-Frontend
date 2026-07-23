@@ -51,8 +51,8 @@ export const exportTestToPPTX = async (test, questions, options = {}) => {
     fontFace: 'Arial'
   });
 
-  // Course Subtitle
-  coverSlide.addText(`COURSE: ${test.course.toUpperCase()}`, {
+  const courseStr = Array.isArray(test.courses) && test.courses.length > 0 ? test.courses.join(', ') : test.course || '';
+  coverSlide.addText(`COURSE: ${courseStr.toUpperCase()}`, {
     x: 0.5,
     y: 3.0,
     w: 9.0,

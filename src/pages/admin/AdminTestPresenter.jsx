@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Play, Pause, X, Maximize, Minimize, Timer, Sparkles, CheckCircle2, Volume2, VolumeX, BarChart3, HelpCircle, RefreshCw, ClipboardList, BookOpen, Clock, ChevronRight, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Play, Pause, X, Maximize, Minimize, Timer, Sparkles, CheckCircle2, Volume2, VolumeX, BarChart3, HelpCircle, RefreshCw, ClipboardList, BookOpen, Clock, ChevronRight, Loader2, Globe } from 'lucide-react';
 import api from '../../lib/axios';
 import toast from 'react-hot-toast';
 import logoImg from '../../assets/logo.png';
@@ -83,9 +83,115 @@ export default function AdminTestPresenter() {
   const [autoplayTimeLeft, setAutoplayTimeLeft] = useState(15);
   const [isAutoplaySettingsOpen, setIsAutoplaySettingsOpen] = useState(false);
 
+  // Language & Translation States
+  const [selectedLanguage, setSelectedLanguage] = useState('Hindi');
+  const [translationsCache, setTranslationsCache] = useState({});
+  const [isTranslating, setIsTranslating] = useState(false);
+
   const timerIntervalRef = useRef(null);
   const presenterContainerRef = useRef(null);
   const currentQuestion = currentSlide > 0 && currentSlide <= questions.length ? questions[currentSlide - 1] : null;
+
+  // Background Pre-fetching for Language Translation
+  useEffect(() => {
+    let isCancelled = false;
+
+    const prefetchUpcomingTranslations = async () => {
+      if (!questions || questions.length === 0 || !selectedLanguage) return;
+
+      const currentQIdx = currentSlide > 0 && currentSlide <= questions.length ? currentSlide - 1 : 0;
+      const currentQ = questions[currentQIdx];
+
+      // 1. Translate current question immediately if needed
+      if (currentQ) {
+        const isCurrentHindi = /[\u0900-\u097F]/.test(currentQ.question || '');
+        const currentNeedsTrans = (selectedLanguage === 'Hindi' && !isCurrentHindi && (!currentQ.questionHindi || !currentQ.optionsHindi)) ||
+                                  (selectedLanguage === 'English' && isCurrentHindi && (!currentQ.questionEnglish || !currentQ.optionsEnglish));
+        const currentCacheKey = `${currentQ.id || currentQIdx}_${selectedLanguage}`;
+
+        if (currentNeedsTrans && !translationsCache[currentCacheKey]) {
+          setIsTranslating(true);
+          try {
+            const res = await api.post('/public/translate', {
+              question: currentQ.question,
+              options: currentQ.options,
+              targetLang: selectedLanguage
+            });
+            if (!isCancelled && res.data.success && res.data.translation) {
+              setTranslationsCache(prev => ({ ...prev, [currentCacheKey]: res.data.translation }));
+            }
+          } catch (err) {
+            console.error('Presenter translation error:', err);
+          } finally {
+            if (!isCancelled) setIsTranslating(false);
+          }
+        }
+      }
+
+      // 2. Pre-fetch remaining untranslated questions in background chunks
+      const untranslatedList = [];
+      questions.forEach((q, idx) => {
+        const isHindi = /[\u0900-\u097F]/.test(q.question || '');
+        const needsTrans = (selectedLanguage === 'Hindi' && !isHindi && (!q.questionHindi || !q.optionsHindi)) ||
+                           (selectedLanguage === 'English' && isHindi && (!q.questionEnglish || !q.optionsEnglish));
+        const cKey = `${q.id || idx}_${selectedLanguage}`;
+        if (needsTrans && !translationsCache[cKey]) {
+          untranslatedList.push({ id: q.id || idx, question: q.question, options: q.options, originalIndex: idx });
+        }
+      });
+
+      if (untranslatedList.length === 0 || isCancelled) return;
+
+      for (let i = 0; i < untranslatedList.length; i += 8) {
+        if (isCancelled) break;
+        const chunk = untranslatedList.slice(i, i + 8);
+        try {
+          const res = await api.post('/public/translate-batch', {
+            questions: chunk,
+            targetLang: selectedLanguage
+          });
+          if (!isCancelled && res.data.success && Array.isArray(res.data.translations)) {
+            const newCache = {};
+            res.data.translations.forEach((t, tIdx) => {
+              const originalItem = chunk[tIdx] || chunk.find(c => c.id === t.id);
+              if (originalItem) {
+                const cKey = `${originalItem.id}_${selectedLanguage}`;
+                newCache[cKey] = { question: t.question, options: t.options };
+              }
+            });
+            setTranslationsCache(prev => ({ ...prev, ...newCache }));
+          }
+        } catch (batchErr) {
+          console.error('Batch presenter pre-translation error:', batchErr);
+        }
+      }
+    };
+
+    prefetchUpcomingTranslations();
+
+    return () => { isCancelled = true; };
+  }, [currentSlide, selectedLanguage, questions]);
+
+  const getDisplayedQuestionDetails = (q, qIdx) => {
+    if (!q) return { question: '', options: {} };
+
+    if (selectedLanguage === 'Hindi') {
+      if (q.questionHindi && q.optionsHindi) return { question: q.questionHindi, options: q.optionsHindi };
+      if (/[\u0900-\u097F]/.test(q.question || '')) return { question: q.question, options: q.options };
+    }
+
+    if (selectedLanguage === 'English') {
+      if (q.questionEnglish && q.optionsEnglish) return { question: q.questionEnglish, options: q.optionsEnglish };
+      if (!/[\u0900-\u097F]/.test(q.question || '')) return { question: q.question, options: q.options };
+    }
+
+    const cacheKey = `${q.id || qIdx}_${selectedLanguage}`;
+    if (translationsCache[cacheKey]) {
+      return translationsCache[cacheKey];
+    }
+
+    return { question: q.question, options: q.options };
+  };
 
   // Synthesize tick sound using Web Audio API
   const playTick = useCallback(() => {
@@ -460,6 +566,8 @@ export default function AdminTestPresenter() {
 
   if (!test) return null;
 
+  const displayedQuestion = currentQuestion ? getDisplayedQuestionDetails(currentQuestion, currentSlide - 1) : { question: '', options: {} };
+
 
 
   return (
@@ -481,15 +589,47 @@ export default function AdminTestPresenter() {
             <h1 className="text-xs font-black uppercase tracking-wider text-indigo-300 max-w-[300px] truncate" title={test.title}>
               {test.title}
             </h1>
-            <p className="text-[9.5px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
-              Course: {test.course}
+            <p className="text-[9.5px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 animate-none">
+              Course: {Array.isArray(test.courses) && test.courses.length > 0 ? test.courses.join(', ') : test.course}
             </p>
           </div>
         </div>
 
-        {/* Slide Counter Indicator */}
-        <div className="px-4 py-1.5 rounded-full bg-indigo-950/60 border border-indigo-900/40 text-[10px] font-extrabold uppercase tracking-widest text-indigo-200">
-          {currentSlide === 0 ? 'Cover' : currentSlide === questions.length + 1 ? 'Answer Key' : `Slide ${currentSlide} / ${questions.length}`}
+        {/* Slide Counter & Language Segmented Controls */}
+        <div className="flex items-center gap-3">
+          {/* Language Toggle Capsule */}
+          <div className="flex items-center bg-indigo-950/80 p-1 rounded-full border border-indigo-800/50 backdrop-blur-md shadow-inner">
+            <button
+              type="button"
+              onClick={() => setSelectedLanguage('Hindi')}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold tracking-wide transition-all duration-200 cursor-pointer ${
+                selectedLanguage === 'Hindi'
+                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-500/30'
+                  : 'text-slate-400 hover:text-white hover:bg-indigo-900/40'
+              }`}
+              title="Switch to Hindi"
+            >
+              <Globe className="w-3.5 h-3.5" />
+              <span>हिंदी</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedLanguage('English')}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold tracking-wide transition-all duration-200 cursor-pointer ${
+                selectedLanguage === 'English'
+                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-500/30'
+                  : 'text-slate-400 hover:text-white hover:bg-indigo-900/40'
+              }`}
+              title="Switch to English"
+            >
+              <Globe className="w-3.5 h-3.5" />
+              <span>ENGLISH</span>
+            </button>
+          </div>
+
+          <div className="px-4 py-1.5 rounded-full bg-indigo-950/60 border border-indigo-900/40 text-[10px] font-extrabold uppercase tracking-widest text-indigo-200">
+            {currentSlide === 0 ? 'Cover' : currentSlide === questions.length + 1 ? 'Answer Key' : `Slide ${currentSlide} / ${questions.length}`}
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
@@ -535,8 +675,8 @@ export default function AdminTestPresenter() {
               <h2 className="text-3xl md:text-4xl font-black tracking-tight leading-tight uppercase text-white max-w-3xl mx-auto drop-shadow-md">
                 {test.title}
               </h2>
-              <p className="text-xs md:text-sm font-bold text-indigo-300 uppercase tracking-widest">
-                DEPARTMENT: {test.course}
+              <p className="text-xs md:text-sm font-bold text-indigo-300 uppercase tracking-widest animate-none">
+                DEPARTMENT: {Array.isArray(test.courses) && test.courses.length > 0 ? test.courses.join(', ') : test.course}
               </p>
             </div>
 
@@ -576,172 +716,183 @@ export default function AdminTestPresenter() {
         {/* ─── QUESTIONS SLIDES (Index 1 to N) ─── */}
         {currentQuestion && (
           <div className="w-full max-w-7xl flex flex-col lg:flex-row gap-8 items-stretch justify-center animate-in fade-in slide-in-from-right-8 duration-300">
-            {/* Left Column: Question and Options */}
-            <div className="flex-1 flex flex-col justify-center py-2 min-w-0">
-              {/* Question Header Meta */}
-              <div className="flex justify-between items-center mb-4">
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-black tracking-widest text-indigo-400 uppercase">
-                    QUESTION {currentSlide} OF {questions.length}
-                  </span>
-                </div>
-                <span className="px-3 py-1 rounded bg-indigo-950/60 border border-indigo-900/40 text-[10px] font-black text-indigo-300 tracking-wider">
-                  {currentQuestion.marks || 1} MARKS
-                </span>
-              </div>
-
-              {/* Centered Circular Autoplay Timer */}
-              {isAutoplayActive && (
-                <div className="flex flex-col items-center justify-center mb-8 animate-in zoom-in-95 duration-300">
-                  <style>{`
-                    @keyframes timerPulse {
-                      0%, 100% {
-                        transform: scale(1);
-                        filter: drop-shadow(0 0 12px rgba(244, 63, 94, 0.4));
-                      }
-                      50% {
-                        transform: scale(1.06);
-                        filter: drop-shadow(0 0 24px rgba(244, 63, 94, 0.8));
-                      }
-                    }
-                    @keyframes timerPulseNormal {
-                      0%, 100% {
-                        transform: scale(1);
-                        filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.25));
-                      }
-                      50% {
-                        transform: scale(1.03);
-                        filter: drop-shadow(0 0 16px rgba(99, 102, 241, 0.5));
-                      }
-                    }
-                    @keyframes progressReveal {
-                      0%, 100% {
-                        transform: scale(1);
-                        filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.25));
-                      }
-                      50% {
-                        transform: scale(1.03);
-                        filter: drop-shadow(0 0 16px rgba(16, 185, 129, 0.5));
-                      }
-                    }
-                    .timer-pulse-critical {
-                      animation: timerPulse 0.5s infinite ease-in-out;
-                    }
-                    .timer-pulse-normal {
-                      animation: timerPulseNormal 2s infinite ease-in-out;
-                    }
-                    .timer-pulse-reveal {
-                      animation: progressReveal 1.5s infinite ease-in-out;
-                    }
-                  `}</style>
-                  <div className={`relative w-20 h-20 flex items-center justify-center ${
-                    autoplayPhase === 'question'
-                      ? (autoplayTimeLeft <= 3 ? 'timer-pulse-critical' : 'timer-pulse-normal')
-                      : 'timer-pulse-reveal'
-                  }`}>
-                    {/* Backdrop glass circle */}
-                    <div className="absolute inset-1.5 rounded-full bg-indigo-950/45 border border-indigo-900/40 backdrop-blur-sm shadow-inner shadow-indigo-950/60"></div>
-                    
-                    <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 80 80">
-                      {/* Circle Track */}
-                      <circle 
-                        cx="40" 
-                        cy="40" 
-                        r="34" 
-                        stroke="#151336" 
-                        strokeWidth="4" 
-                        fill="transparent" 
-                      />
-                      {/* Dynamic Circle Progress Indicator */}
-                      <circle 
-                        cx="40" 
-                        cy="40" 
-                        r="34" 
-                        stroke={autoplayPhase === 'question' ? (autoplayTimeLeft <= 3 ? '#f43f5e' : '#6366f1') : '#10b981'} 
-                        strokeWidth="5" 
-                        fill="transparent"
-                        strokeDasharray={2 * Math.PI * 34}
-                        strokeDashoffset={2 * Math.PI * 34 * (1 - autoplayTimeLeft / (autoplayPhase === 'question' ? autoplayQuestionTime : autoplayRevealTime))}
-                        className="transition-all duration-1000 ease-linear"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                    
-                    {/* Timer Text in Circle */}
-                    <div className="flex flex-col items-center justify-center z-10">
-                      <span className={`text-2xl font-black tracking-tight leading-none ${
-                        autoplayPhase === 'question' 
-                          ? (autoplayTimeLeft <= 3 ? 'text-rose-500 animate-pulse font-black' : 'text-white')
-                          : 'text-emerald-400 animate-pulse'
-                      }`}>
-                        {autoplayTimeLeft}
-                      </span>
-                      <span className="text-[6.5px] font-black uppercase tracking-widest text-slate-400 mt-0.5">secs</span>
-                    </div>
+              {/* Left Column: Question and Options */}
+              <div className="flex-1 flex flex-col justify-center py-2 min-w-0">
+                {/* Question Header Meta */}
+                <div className="flex justify-between items-center mb-4">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-black tracking-widest text-indigo-400 uppercase">
+                      QUESTION {currentSlide} OF {questions.length}
+                    </span>
                   </div>
-                  
-                  {/* Timer Subtext */}
-                  <span className={`text-[9px] font-black uppercase tracking-widest mt-2.5 px-2.5 py-0.5 rounded-full border transition-all ${
-                    autoplayPhase === 'question' 
-                      ? 'text-indigo-300 bg-indigo-950/60 border-indigo-900/40'
-                      : 'text-emerald-400 bg-emerald-950/40 border-emerald-900/40 font-extrabold animate-pulse'
-                  }`}>
-                    {autoplayPhase === 'question' ? '• Thinking Time' : '✓ Reveal Answer'}
+                  <span className="px-3 py-1 rounded bg-indigo-950/60 border border-indigo-900/40 text-[10px] font-black text-indigo-300 tracking-wider">
+                    {currentQuestion.marks || 1} MARKS
                   </span>
                 </div>
-              )}
 
-              {/* Question Statement */}
-              <div className="mb-4 min-h-[50px] flex items-center">
-                <h3 className="text-xl md:text-2xl font-extrabold text-white leading-relaxed tracking-wide select-text">
-                  {currentQuestion.question}
-                </h3>
-              </div>
-
-              {/* Options grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {['A', 'B', 'C', 'D'].filter(key => currentQuestion.options && currentQuestion.options[key]).map((key) => {
-                  const optText = currentQuestion.options[key];
-                  const isCorrect = currentQuestion.correctAnswer === key || 
-                                    (currentQuestion.correctAnswer && 
-                                     (currentQuestion.correctAnswer.toString().toUpperCase() === key || 
-                                      currentQuestion.correctAnswer.toString().toUpperCase() === optText.toString().toUpperCase()));
-                  const highlight = showAnswer && isCorrect;
-
-                  return (
-                    <div
-                      key={key}
-                      className={`p-5 rounded-2xl border transition-all duration-300 flex items-center gap-4 relative group ${
-                        highlight 
-                          ? 'bg-emerald-950/40 border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.25)] text-emerald-100'
-                          : showAnswer
-                            ? 'bg-indigo-950/10 border-indigo-950/50 text-slate-500 opacity-40'
-                            : 'bg-indigo-950/30 border-indigo-900/30 hover:border-indigo-700/50 hover:bg-indigo-950/50 text-slate-200'
-                      }`}
-                    >
-                      {/* Circle badge */}
-                      <div className={`w-8 h-8 rounded-full border flex items-center justify-center shrink-0 font-bold transition-all ${
-                        highlight 
-                          ? 'bg-emerald-600 border-emerald-500 text-white shadow-sm'
-                          : showAnswer
-                            ? 'bg-indigo-950/20 border-indigo-950/50 text-indigo-900'
-                            : 'bg-indigo-900/50 border-indigo-800 text-indigo-200 group-hover:bg-indigo-500 group-hover:text-white group-hover:border-indigo-400'
-                      }`}>
-                        {key}
+                {/* Centered Circular Autoplay Timer */}
+                {isAutoplayActive && (
+                  <div className="flex flex-col items-center justify-center mb-8 animate-in zoom-in-95 duration-300">
+                    <style>{`
+                      @keyframes timerPulse {
+                        0%, 100% {
+                          transform: scale(1);
+                          filter: drop-shadow(0 0 12px rgba(244, 63, 94, 0.4));
+                        }
+                        50% {
+                          transform: scale(1.06);
+                          filter: drop-shadow(0 0 24px rgba(244, 63, 94, 0.8));
+                        }
+                      }
+                      @keyframes timerPulseNormal {
+                        0%, 100% {
+                          transform: scale(1);
+                          filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.25));
+                        }
+                        50% {
+                          transform: scale(1.03);
+                          filter: drop-shadow(0 0 16px rgba(99, 102, 241, 0.5));
+                        }
+                      }
+                      @keyframes progressReveal {
+                        0%, 100% {
+                          transform: scale(1);
+                          filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.25));
+                        }
+                        50% {
+                          transform: scale(1.03);
+                          filter: drop-shadow(0 0 16px rgba(16, 185, 129, 0.5));
+                        }
+                      }
+                      .timer-pulse-critical {
+                        animation: timerPulse 0.5s infinite ease-in-out;
+                      }
+                      .timer-pulse-normal {
+                        animation: timerPulseNormal 2s infinite ease-in-out;
+                      }
+                      .timer-pulse-reveal {
+                        animation: progressReveal 1.5s infinite ease-in-out;
+                      }
+                    `}</style>
+                    <div className={`relative w-20 h-20 flex items-center justify-center ${
+                      autoplayPhase === 'question'
+                        ? (autoplayTimeLeft <= 3 ? 'timer-pulse-critical' : 'timer-pulse-normal')
+                        : 'timer-pulse-reveal'
+                    }`}>
+                      {/* Backdrop glass circle */}
+                      <div className="absolute inset-1.5 rounded-full bg-indigo-950/45 border border-indigo-900/40 backdrop-blur-sm shadow-inner shadow-indigo-950/60"></div>
+                      
+                      <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 80 80">
+                        {/* Circle Track */}
+                        <circle 
+                          cx="40" 
+                          cy="40" 
+                          r="34" 
+                          className="stroke-indigo-950/50" 
+                          strokeWidth="5" 
+                          fill="none" 
+                        />
+                        {/* Progress Ring */}
+                        <circle 
+                          cx="40" 
+                          cy="40" 
+                          r="34" 
+                          className={`transition-all duration-1000 ease-linear ${
+                            autoplayPhase === 'question'
+                              ? (autoplayTimeLeft <= 3 ? 'stroke-rose-500' : 'stroke-indigo-500')
+                              : 'stroke-emerald-500'
+                          }`} 
+                          strokeWidth="5" 
+                          strokeDasharray={2 * Math.PI * 34}
+                          strokeDashoffset={
+                            2 * Math.PI * 34 * (1 - (autoplayTimeLeft / (autoplayPhase === 'question' ? autoplayQuestionTime : autoplayRevealTime)))
+                          }
+                          strokeLinecap="round" 
+                          fill="none" 
+                        />
+                      </svg>
+                      
+                      <div className="relative z-10 flex flex-col items-center justify-center">
+                        <span className={`text-xl font-black tracking-tight ${
+                          autoplayPhase === 'question'
+                            ? (autoplayTimeLeft <= 3 ? 'text-rose-400' : 'text-white')
+                            : 'text-emerald-400'
+                        }`}>
+                          {autoplayTimeLeft}
+                        </span>
+                        <span className="text-[7.5px] font-black uppercase tracking-widest text-slate-400 -mt-1">SEC</span>
                       </div>
-
-                      <div className="flex-1 text-sm font-semibold select-text break-words pr-6">
-                        {optText}
-                      </div>
-
-                      {highlight && (
-                        <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 absolute right-5 top-1/2 -translate-y-1/2 animate-in zoom-in-75 duration-300" />
-                      )}
                     </div>
-                  );
-                })}
+                    
+                    {/* Timer Subtext */}
+                    <span className={`text-[9px] font-black uppercase tracking-widest mt-2.5 px-2.5 py-0.5 rounded-full border transition-all ${
+                      autoplayPhase === 'question' 
+                        ? 'text-indigo-300 bg-indigo-950/60 border-indigo-900/40'
+                        : 'text-emerald-400 bg-emerald-950/40 border-emerald-900/40 font-extrabold animate-pulse'
+                    }`}>
+                      {autoplayPhase === 'question' ? '• Thinking Time' : '✓ Reveal Answer'}
+                    </span>
+                  </div>
+                )}
+
+                {/* Question Statement */}
+                <div className="mb-4 min-h-[50px] flex items-center justify-between gap-4">
+                  <h3 className="text-xl md:text-2xl font-extrabold text-white leading-relaxed tracking-wide select-text">
+                    {displayedQuestion.question || currentQuestion.question}
+                  </h3>
+                  {isTranslating && (
+                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-950/80 border border-indigo-800/50 text-[10px] font-bold text-indigo-300 animate-pulse shrink-0">
+                      <Loader2 className="w-3 h-3 animate-spin text-indigo-400" />
+                      <span>Translating...</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Options grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {['A', 'B', 'C', 'D'].filter(key => currentQuestion.options && currentQuestion.options[key]).map((key) => {
+                    const origText = currentQuestion.options[key];
+                    const optText = (displayedQuestion.options && displayedQuestion.options[key]) ? displayedQuestion.options[key] : origText;
+                    const isCorrect = currentQuestion.correctAnswer === key || 
+                                      (currentQuestion.correctAnswer && 
+                                       (currentQuestion.correctAnswer.toString().toUpperCase() === key || 
+                                        currentQuestion.correctAnswer.toString().toUpperCase() === origText.toString().toUpperCase()));
+                    const highlight = showAnswer && isCorrect;
+
+                    return (
+                      <div
+                        key={key}
+                        className={`p-5 rounded-2xl border transition-all duration-300 flex items-center gap-4 relative group ${
+                          highlight 
+                            ? 'bg-emerald-950/40 border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.25)] text-emerald-100'
+                            : showAnswer
+                              ? 'bg-indigo-950/10 border-indigo-950/50 text-slate-500 opacity-40'
+                              : 'bg-indigo-950/30 border-indigo-900/30 hover:border-indigo-700/50 hover:bg-indigo-950/50 text-slate-200'
+                        }`}
+                      >
+                        {/* Circle badge */}
+                        <div className={`w-8 h-8 rounded-full border flex items-center justify-center shrink-0 font-bold transition-all ${
+                          highlight 
+                            ? 'bg-emerald-600 border-emerald-500 text-white shadow-sm'
+                            : showAnswer
+                              ? 'bg-indigo-950/20 border-indigo-950/50 text-indigo-900'
+                              : 'bg-indigo-900/50 border-indigo-800 text-indigo-200 group-hover:bg-indigo-500 group-hover:text-white group-hover:border-indigo-400'
+                        }`}>
+                          {key}
+                        </div>
+
+                        <div className="flex-1 text-sm font-semibold select-text break-words pr-6">
+                          {optText}
+                        </div>
+
+                        {highlight && (
+                          <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 absolute right-5 top-1/2 -translate-y-1/2 animate-in zoom-in-75 duration-300" />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
 
             {/* Right Column: AI Explanation Panel */}
             {showAnswer && (

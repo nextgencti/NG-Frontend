@@ -39,6 +39,7 @@ const Home = lazy(() => import('./pages/public/Home'));
 const StudentSignup = lazy(() => import('./pages/public/StudentSignup'));
 const InstituteSignup = lazy(() => import('./pages/public/InstituteSignup'));
 const PublicTestRunner = lazy(() => import('./pages/public/PublicTestRunner'));
+const PracticeTests = lazy(() => import('./pages/public/PracticeTests'));
 const About = lazy(() => import('./pages/public/About'));
 const Services = lazy(() => import('./pages/public/Services'));
 const ServiceDetails = lazy(() => import('./pages/public/ServiceDetails'));
@@ -150,6 +151,7 @@ function App() {
             <Route path="/register-institute" element={<InstituteSignup />} />
             <Route path="/verify-otp" element={<VerifyOTP />} />
             <Route path="/tests/public/:testId" element={<PublicTestRunner />} />
+            <Route path="/practice-tests" element={<PracticeTests />} />
             <Route path="/services" element={<Services />} />
             <Route path="/services/:id" element={<ServiceDetails />} />
             <Route path="/tools" element={<Tools />} />

@@ -67,7 +67,9 @@ export default function AdminTests() {
   };
 
   const filtered = tests.filter(t => {
-    const matchSearch = t.title.toLowerCase().includes(search.toLowerCase()) || t.course.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = t.title.toLowerCase().includes(search.toLowerCase()) || 
+      (t.course || '').toLowerCase().includes(search.toLowerCase()) ||
+      (Array.isArray(t.courses) && t.courses.some(c => c.toLowerCase().includes(search.toLowerCase())));
     const matchStatus = statusFilter === 'all' || t.status === statusFilter;
     return matchSearch && matchStatus;
   });
@@ -265,7 +267,12 @@ export default function AdminTests() {
                     <td className="py-3 px-4.5">
                       <div className="flex items-center gap-1.5">
                         <BookOpen className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
-                        <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest max-w-[140px] truncate">{test.course}</span>
+                        <span 
+                          className="text-[9px] font-bold text-slate-500 uppercase tracking-widest max-w-[140px] truncate animate-none"
+                          title={Array.isArray(test.courses) && test.courses.length > 0 ? test.courses.join(', ') : test.course}
+                        >
+                          {Array.isArray(test.courses) && test.courses.length > 0 ? test.courses.join(', ') : (test.course || 'Unassigned')}
+                        </span>
                       </div>
                     </td>
                     <td className="py-3 px-4.5">

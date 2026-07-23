@@ -78,7 +78,16 @@ export default function AdminEditTest() {
     try {
       const response = await api.get(`/admin/tests/${testId}/full`);
       if (response.data.success) {
-        setTest(response.data.test);
+        const testData = response.data.test;
+        if (testData) {
+          if (!Array.isArray(testData.courses)) {
+            testData.courses = testData.course ? [testData.course] : [];
+          }
+          if (!Array.isArray(testData.courseIds)) {
+            testData.courseIds = [];
+          }
+        }
+        setTest(testData);
         setQuestions(response.data.questions || []);
       }
     } catch (error) {
@@ -94,8 +103,32 @@ export default function AdminEditTest() {
     setTest({ ...test, [e.target.name]: e.target.value });
   };
 
+  const handleToggleCourse = (courseName) => {
+    setTest(prev => {
+      const currentCourses = prev.courses || [];
+      const updatedCourses = currentCourses.includes(courseName)
+        ? currentCourses.filter(c => c !== courseName)
+        : [...currentCourses, courseName];
+      
+      const updatedCourseIds = courses
+        .filter(c => c && c.name && updatedCourses.includes(c.name))
+        .map(c => c.id);
+
+      return {
+        ...prev,
+        course: updatedCourses[0] || '',
+        courses: updatedCourses,
+        courseIds: updatedCourseIds
+      };
+    });
+  };
+
   const handleSaveTest = async (e) => {
     e.preventDefault();
+    if (!test.title || !test.courses || test.courses.length === 0 || !test.duration) {
+      toast.error('Please fill in required fields (Title, Select Courses, Duration).');
+      return;
+    }
     setIsSaving(true);
     try {
       const response = await api.put(`/admin/tests/${testId}`, test);
@@ -334,14 +367,10 @@ export default function AdminEditTest() {
                 />
               </div>
 
-              {/* Course */}
+              {/* Course Selection */}
               <div className="space-y-3">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Course</label>
-                <select
-                  name="course" required value={test.course} onChange={handleTestChange}
-                  className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm text-slate-900 focus:ring-2 focus:ring-primary-500/20 transition-all cursor-pointer font-bold appearance-none"
-                >
-                  <option value="">Select a course</option>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Select Courses <span className="text-rose-500">*</span></label>
+                <div className="border border-slate-200 rounded-2xl bg-slate-50 p-3 max-h-[150px] overflow-y-auto space-y-2.5 custom-scrollbar">
                   {(() => {
                     const uniqueCourses = [];
                     const seenNames = new Set();
@@ -351,11 +380,36 @@ export default function AdminEditTest() {
                         uniqueCourses.push(c);
                       }
                     });
-                    return uniqueCourses.map(c => (
-                      <option key={c.id || c.name} value={c.name}>{c.name}</option>
-                    ));
+
+                    if (uniqueCourses.length === 0) {
+                      return <div className="text-slate-400 text-xs italic text-center py-2">No courses found</div>;
+                    }
+
+                    const selectedCourses = test.courses || [];
+
+                    return uniqueCourses.map(c => {
+                      const isChecked = selectedCourses.includes(c.name);
+                      return (
+                        <label 
+                          key={c.id || c.name} 
+                          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all cursor-pointer select-none text-[11px] font-extrabold uppercase tracking-wider ${
+                            isChecked 
+                              ? 'border-primary-500/30 bg-primary-50/70 text-primary-900' 
+                              : 'border-transparent bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 shadow-sm'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => handleToggleCourse(c.name)}
+                            className="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500/20 cursor-pointer"
+                          />
+                          <span>{c.name}</span>
+                        </label>
+                      );
+                    });
                   })()}
-                </select>
+                </div>
               </div>
 
               {/* Status */}

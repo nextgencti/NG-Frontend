@@ -19,6 +19,7 @@ const initialForm = {
 
 export default function AddTestModal({ isOpen, onClose, onTestAdded }) {
   const [form, setForm] = useState(initialForm);
+  const [selectedCourseNames, setSelectedCourseNames] = useState([]);
   const [courses, setCourses] = useState([]);
   const [csvFile, setCsvFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -50,6 +51,14 @@ export default function AddTestModal({ isOpen, onClose, onTestAdded }) {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const handleToggleCourse = (courseName) => {
+    setSelectedCourseNames(prev => 
+      prev.includes(courseName)
+        ? prev.filter(c => c !== courseName)
+        : [...prev, courseName]
+    );
+  };
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file && (file.type === 'text/csv' || file.name.endsWith('.csv'))) {
@@ -73,8 +82,8 @@ export default function AddTestModal({ isOpen, onClose, onTestAdded }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.title || !form.course || !form.duration) {
-      toast.error('Please fill in required fields (Title, Course, Duration).');
+    if (!form.title || selectedCourseNames.length === 0 || !form.duration) {
+      toast.error('Please fill in required fields (Title, Select Courses, Duration).');
       return;
     }
     if (form.type === 'Live' && (!form.date || !form.time)) {
@@ -84,10 +93,19 @@ export default function AddTestModal({ isOpen, onClose, onTestAdded }) {
     
     setIsLoading(true);
     try {
+      const selectedCourseIds = courses
+        .filter(c => c && c.name && selectedCourseNames.includes(c.name))
+        .map(c => c.id);
+
       const formData = new FormData();
       Object.keys(form).forEach(key => {
-        formData.append(key, form[key]);
+        if (key !== 'course') {
+          formData.append(key, form[key]);
+        }
       });
+      formData.append('course', selectedCourseNames[0] || '');
+      formData.append('courses', JSON.stringify(selectedCourseNames));
+      formData.append('courseIds', JSON.stringify(selectedCourseIds));
       
       if (csvFile) {
         formData.append('questionsCSV', csvFile);
@@ -101,6 +119,7 @@ export default function AddTestModal({ isOpen, onClose, onTestAdded }) {
         onTestAdded(response.data.test);
         toast.success(response.data.message || 'Test added successfully! 🎉');
         setForm(initialForm);
+        setSelectedCourseNames([]);
         setCsvFile(null);
         onClose();
       }
@@ -150,31 +169,53 @@ export default function AddTestModal({ isOpen, onClose, onTestAdded }) {
             </div>
           </div>
 
-          {/* Course */}
+          {/* Courses selection */}
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Select Course <span className="text-rose-500">*</span></label>
-            <div className="relative group">
-              <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-primary-600 transition-colors" />
-              <select
-                name="course" required value={form.course} onChange={handleChange}
-                className="w-full pl-11 pr-5 py-3 bg-slate-50 border border-slate-200 rounded-[14px] text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all appearance-none cursor-pointer disabled:opacity-50 uppercase font-bold"
-                disabled={isFetchingCourses}
-              >
-                <option value="">{isFetchingCourses ? 'Loading courses...' : 'Select a course'}</option>
-                {(() => {
-                  const uniqueCourses = [];
-                  const seenNames = new Set();
-                  courses.forEach(c => {
-                    if (c && c.name && !seenNames.has(c.name.trim().toLowerCase())) {
-                      seenNames.add(c.name.trim().toLowerCase());
-                      uniqueCourses.push(c);
-                    }
-                  });
-                  return uniqueCourses.map(c => (
-                    <option key={c.id || c.name} value={c.name}>{c.name}</option>
-                  ));
-                })()}
-              </select>
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">
+              Select Courses <span className="text-rose-500">*</span>
+            </label>
+            <div className="border border-slate-200 rounded-[14px] bg-slate-50 p-3 max-h-[150px] overflow-y-auto space-y-2.5 custom-scrollbar">
+              {isFetchingCourses ? (
+                <div className="text-slate-400 text-xs italic text-center py-2 flex items-center justify-center gap-2">
+                  <span className="w-3.5 h-3.5 rounded-full border-2 border-slate-350 border-t-primary-500 animate-spin"></span>
+                  Loading courses...
+                </div>
+              ) : (() => {
+                const uniqueCourses = [];
+                const seenNames = new Set();
+                courses.forEach(c => {
+                  if (c && c.name && !seenNames.has(c.name.trim().toLowerCase())) {
+                    seenNames.add(c.name.trim().toLowerCase());
+                    uniqueCourses.push(c);
+                  }
+                });
+
+                if (uniqueCourses.length === 0) {
+                  return <div className="text-slate-400 text-xs italic text-center py-2">No courses found</div>;
+                }
+
+                return uniqueCourses.map(c => {
+                  const isChecked = selectedCourseNames.includes(c.name);
+                  return (
+                    <label 
+                      key={c.id || c.name} 
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all cursor-pointer select-none text-[11px] font-extrabold uppercase tracking-wider ${
+                        isChecked 
+                          ? 'border-primary-500/30 bg-primary-50/70 text-primary-900' 
+                          : 'border-transparent bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 shadow-sm'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => handleToggleCourse(c.name)}
+                        className="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500/20 cursor-pointer"
+                      />
+                      <span>{c.name}</span>
+                    </label>
+                  );
+                });
+              })()}
             </div>
           </div>
 

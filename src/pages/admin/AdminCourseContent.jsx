@@ -24,7 +24,11 @@ import {
   ClipboardList,
   CloudUpload,
   Image,
-  GripVertical
+  GripVertical,
+  Sparkles,
+  BookOpen,
+  Layers,
+  Zap
 } from 'lucide-react';
 import api from '../../lib/axios';
 import toast from 'react-hot-toast';
@@ -274,6 +278,7 @@ export default function AdminCourseContent() {
 
   // Topic Modal States
   const [isTopicModalOpen, setIsTopicModalOpen] = useState(false);
+  const [editingTopicId, setEditingTopicId] = useState(null);
   const [newTopicTitle, setNewTopicTitle] = useState('');
   const [availableTests, setAvailableTests] = useState([]);
 
@@ -302,6 +307,144 @@ export default function AdminCourseContent() {
   const [aiMessages, setAiMessages] = useState([]);
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
+
+  // Sanju AI Lesson Test Generator States
+  const [isAiLessonModalOpen, setIsAiLessonModalOpen] = useState(false);
+  const [aiTestTitle, setAiTestTitle] = useState('');
+  const [aiSelectedLessons, setAiSelectedLessons] = useState({});
+  const [aiQuestionCount, setAiQuestionCount] = useState(10);
+  const [aiDifficulty, setAiDifficulty] = useState('Easy');
+  const [aiDuration, setAiDuration] = useState(15);
+  const [aiTotalMarks, setAiTotalMarks] = useState(15);
+  const [aiIsPublic, setAiIsPublic] = useState(true);
+  const [aiGenLoading, setAiGenLoading] = useState(false);
+  const [createdTestResult, setCreatedTestResult] = useState(null);
+
+  const openAiTestGenerator = (targetModuleId = null) => {
+    const initialSelected = {};
+    let defaultTitle = course?.name ? `${course.name} - Assessment Test` : 'Course Assessment Test';
+
+    modules.forEach(mod => {
+      const isTarget = !targetModuleId || mod.id === targetModuleId;
+      if (isTarget && targetModuleId) {
+        defaultTitle = `${mod.title} - Chapter Test`;
+      }
+      (mod.lessons || []).forEach(les => {
+        initialSelected[les.id] = isTarget;
+      });
+    });
+
+    setAiSelectedLessons(initialSelected);
+    setAiTestTitle(defaultTitle);
+    setCreatedTestResult(null);
+    setIsAiLessonModalOpen(true);
+  };
+
+  const toggleAllAiLessons = (select) => {
+    const updated = {};
+    modules.forEach(m => {
+      (m.lessons || []).forEach(l => {
+        updated[l.id] = select;
+      });
+    });
+    setAiSelectedLessons(updated);
+  };
+
+  const toggleModuleAiLessons = (moduleId, select) => {
+    const targetMod = modules.find(m => m.id === moduleId);
+    if (!targetMod) return;
+    const updated = { ...aiSelectedLessons };
+    (targetMod.lessons || []).forEach(l => {
+      updated[l.id] = select;
+    });
+    setAiSelectedLessons(updated);
+  };
+
+  const handleGenerateLessonTest = async (e) => {
+    e.preventDefault();
+    if (!aiTestTitle.trim()) {
+      toast.error('Please enter a test title');
+      return;
+    }
+
+    const selectedLessonsData = [];
+    modules.forEach(mod => {
+      (mod.lessons || []).forEach(les => {
+        if (aiSelectedLessons[les.id]) {
+          selectedLessonsData.push({
+            id: les.id,
+            title: les.title,
+            moduleTitle: mod.title,
+            content: les.content || les.text || ''
+          });
+        }
+      });
+    });
+
+    if (selectedLessonsData.length === 0) {
+      toast.error('Please select at least one lesson to generate test questions from');
+      return;
+    }
+
+    setAiGenLoading(true);
+    const toastId = toast.loading(`Sanju AI is generating ${aiQuestionCount} questions from ${selectedLessonsData.length} lessons...`);
+
+    try {
+      const aiRes = await api.post('/admin/generate-questions', {
+        topic: aiTestTitle,
+        lessons: selectedLessonsData,
+        courseName: course?.name || 'Computer Course',
+        count: aiQuestionCount
+      });
+
+      if (!aiRes.data.success || !Array.isArray(aiRes.data.questions) || aiRes.data.questions.length === 0) {
+        throw new Error('No questions returned from AI generator');
+      }
+
+      const generatedQs = aiRes.data.questions;
+      toast.loading(`Creating test and saving ${generatedQs.length} questions...`, { id: toastId });
+
+      const testData = {
+        title: aiTestTitle.trim(),
+        course: course?.name || '',
+        courses: [course?.name || ''].filter(Boolean),
+        courseIds: [courseId].filter(Boolean),
+        type: 'Practice',
+        duration: String(aiDuration),
+        totalMarks: Number(aiTotalMarks),
+        questions: generatedQs.length,
+        difficulty: aiDifficulty,
+        description: `AI generated test based on ${selectedLessonsData.length} course lessons.`,
+        isPublic: aiIsPublic,
+        status: 'published'
+      };
+
+      const testRes = await api.post('/admin/tests', testData);
+      if (!testRes.data.success) {
+        throw new Error(testRes.data.message || 'Failed to create test document');
+      }
+
+      const createdTestId = testRes.data.testId || testRes.data.test?.id;
+
+      let savedCount = 0;
+      for (const q of generatedQs) {
+        await api.post(`/admin/tests/${createdTestId}/questions`, q);
+        savedCount++;
+      }
+
+      toast.success(`🎉 Test created successfully with ${savedCount} questions!`, { id: toastId });
+      setCreatedTestResult({
+        testId: createdTestId,
+        title: aiTestTitle,
+        questionCount: savedCount
+      });
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to create AI test: ' + (err.response?.data?.message || err.message), { id: toastId });
+    } finally {
+      setAiGenLoading(false);
+    }
+  };
 
   // Jodit Editor Configuration with Cloudinary Upload
   const config = useMemo(() => ({
@@ -507,11 +650,44 @@ export default function AdminCourseContent() {
   const handleAddModule = (e) => {
     e.preventDefault();
     if (!newTopicTitle.trim()) return;
-    const newModule = { id: Date.now().toString(), title: newTopicTitle, lessons: [] };
-    setModules([...modules, newModule]);
+    if (editingTopicId) {
+      setModules(modules.map(m => m.id === editingTopicId ? { ...m, title: newTopicTitle.trim() } : m));
+      toast.success('Topic updated successfully');
+    } else {
+      const newModule = { id: Date.now().toString(), title: newTopicTitle.trim(), lessons: [] };
+      setModules([...modules, newModule]);
+      toast.success('Topic added successfully');
+    }
+    setEditingTopicId(null);
     setNewTopicTitle('');
     setIsTopicModalOpen(false);
-    toast.success('Topic added');
+  };
+
+  const handleOpenEditTopic = (module, e) => {
+    if (e) e.stopPropagation();
+    setEditingTopicId(module.id);
+    setNewTopicTitle(module.title);
+    setIsTopicModalOpen(true);
+  };
+
+  const handleDeleteTopic = (moduleId, topicTitle, e) => {
+    if (e) e.stopPropagation();
+    if (window.confirm(`Are you sure you want to delete topic "${topicTitle}" and all its lessons?`)) {
+      setModules(modules.filter(m => m.id !== moduleId));
+      toast.success('Topic deleted');
+    }
+  };
+
+  const handleMoveTopic = (mIndex, direction, e) => {
+    if (e) e.stopPropagation();
+    const targetIndex = direction === 'up' ? mIndex - 1 : mIndex + 1;
+    if (targetIndex < 0 || targetIndex >= modules.length) return;
+    const updated = [...modules];
+    const temp = updated[mIndex];
+    updated[mIndex] = updated[targetIndex];
+    updated[targetIndex] = temp;
+    setModules(updated);
+    toast.success('Topic order updated');
   };
 
   const handleOpenLessonModal = (moduleId, lesson = null) => {
@@ -704,6 +880,13 @@ export default function AdminCourseContent() {
           </div>
         </div>
         <div className="flex gap-2">
+          <button 
+            type="button"
+            onClick={() => openAiTestGenerator()} 
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-[8px] text-[12px] font-bold transition-all shadow-md shadow-indigo-500/15 cursor-pointer active:scale-95"
+          >
+            <Sparkles className="w-3.5 h-3.5" /> Sanju AI Test Generator
+          </button>
           <button onClick={() => setIsTopicModalOpen(true)} className="flex items-center gap-1 px-3 py-1.5 bg-white border border-[#E5E7EB] text-[#374151] rounded-[8px] text-[12px] font-bold hover:bg-[#F8FAFC] transition-all">
             <Plus className="w-3.5 h-3.5" /> Add Topic
           </button>
@@ -726,9 +909,55 @@ export default function AdminCourseContent() {
                   <p className="text-[11px] text-[#6B7280] font-semibold leading-tight mt-0.5">{module.lessons.length} Lessons</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <button className="p-1.5 text-[#94A3B8] hover:text-[#4F46E5] hover:bg-white rounded-lg transition-all"><Edit2 className="w-3.5 h-3.5" /></button>
-                <button className="p-1.5 text-[#94A3B8] hover:text-[#DC2626] hover:bg-white rounded-lg transition-all"><Trash2 className="w-3.5 h-3.5" /></button>
+              <div className="flex items-center gap-1.5">
+                <button 
+                  type="button" 
+                  title="Create AI Test for this Topic" 
+                  onClick={(e) => { e.stopPropagation(); openAiTestGenerator(module.id); }} 
+                  className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/60 rounded-lg text-[10.5px] font-bold flex items-center gap-1 transition-all mr-1"
+                >
+                  <Sparkles className="w-3 h-3 text-indigo-600" /> AI Test
+                </button>
+                {/* Move Up */}
+                {mIndex > 0 && (
+                  <button 
+                    type="button"
+                    onClick={(e) => handleMoveTopic(mIndex, 'up', e)}
+                    className="p-1.5 text-[#6B7280] hover:text-[#4F46E5] hover:bg-white rounded-lg transition-all border border-transparent hover:border-[#E5E7EB]"
+                    title="Move Topic Up"
+                  >
+                    <ChevronUp className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                {/* Move Down */}
+                {mIndex < modules.length - 1 && (
+                  <button 
+                    type="button"
+                    onClick={(e) => handleMoveTopic(mIndex, 'down', e)}
+                    className="p-1.5 text-[#6B7280] hover:text-[#4F46E5] hover:bg-white rounded-lg transition-all border border-transparent hover:border-[#E5E7EB]"
+                    title="Move Topic Down"
+                  >
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                {/* Edit Topic */}
+                <button 
+                  type="button"
+                  onClick={(e) => handleOpenEditTopic(module, e)}
+                  className="p-1.5 text-[#94A3B8] hover:text-[#4F46E5] hover:bg-white rounded-lg transition-all"
+                  title="Edit Topic Name"
+                >
+                  <Edit2 className="w-3.5 h-3.5" />
+                </button>
+                {/* Delete Topic */}
+                <button 
+                  type="button"
+                  onClick={(e) => handleDeleteTopic(module.id, module.title, e)}
+                  className="p-1.5 text-[#94A3B8] hover:text-[#DC2626] hover:bg-white rounded-lg transition-all"
+                  title="Delete Topic"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
                 <div className="w-px h-5 bg-[#E5E7EB] mx-0.5"></div>
                 {expandedModules[module.id] ? <ChevronUp className="w-4 h-4 text-[#6B7280]" /> : <ChevronDown className="w-4 h-4 text-[#6B7280]" />}
               </div>
@@ -1032,13 +1261,13 @@ export default function AdminCourseContent() {
         </div>
       )}
 
-      {/* Add Topic Modal */}
+      {/* Add / Edit Topic Modal */}
       {isTopicModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#111827]/40 backdrop-blur-sm">
           <div className="bg-white rounded-[20px] w-full max-w-md shadow-2xl border border-[#E5E7EB] animate-in zoom-in-95 duration-200 lg:ml-32">
             <div className="p-5 border-b border-[#F1F5F9] flex justify-between items-center">
-              <h3 className="text-[17px] font-bold text-[#111827]">Add New Topic</h3>
-              <button onClick={() => setIsTopicModalOpen(false)} className="text-[#94A3B8] hover:text-[#111827]"><X className="w-5 h-5" /></button>
+              <h3 className="text-[17px] font-bold text-[#111827]">{editingTopicId ? 'Edit Topic Title' : 'Add New Topic'}</h3>
+              <button onClick={() => { setIsTopicModalOpen(false); setEditingTopicId(null); setNewTopicTitle(''); }} className="text-[#94A3B8] hover:text-[#111827]"><X className="w-5 h-5" /></button>
             </div>
             <form onSubmit={handleAddModule} className="p-5 space-y-4">
               <div className="space-y-1.5">
@@ -1046,8 +1275,10 @@ export default function AdminCourseContent() {
                 <input autoFocus type="text" value={newTopicTitle} onChange={(e) => setNewTopicTitle(e.target.value)} placeholder="e.g. Master React Hooks" className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#E5E7EB] rounded-[10px] text-[14px] outline-none focus:ring-4 focus:ring-primary-600/5 transition-all" />
               </div>
               <div className="flex gap-3 pt-1">
-                <button type="button" onClick={() => setIsTopicModalOpen(false)} className="flex-1 py-3 text-[13px] font-bold text-[#6B7280] bg-[#F8FAFC] rounded-[10px] hover:bg-[#F1F5F9]">Cancel</button>
-                <button type="submit" className="flex-1 py-3 text-[13px] font-bold text-white bg-[#111827] rounded-[10px] hover:bg-black transition-all shadow-xl shadow-black/10">Create Topic</button>
+                <button type="button" onClick={() => { setIsTopicModalOpen(false); setEditingTopicId(null); setNewTopicTitle(''); }} className="flex-1 py-3 text-[13px] font-bold text-[#6B7280] bg-[#F8FAFC] rounded-[10px] hover:bg-[#F1F5F9]">Cancel</button>
+                <button type="submit" className="flex-1 py-3 text-[13px] font-bold text-white bg-[#111827] rounded-[10px] hover:bg-black transition-all shadow-xl shadow-black/10">
+                  {editingTopicId ? 'Save Topic' : 'Create Topic'}
+                </button>
               </div>
             </form>
           </div>
@@ -1123,6 +1354,238 @@ export default function AdminCourseContent() {
           <div className="p-4 border-t border-[#F1F5F9] bg-[#F8FAFC] flex justify-end">
             <button onClick={() => setIsPreviewModalOpen(false)} className="px-8 py-2.5 bg-[#111827] text-white rounded-[12px] text-xs font-bold hover:bg-black transition-all">Close Preview</button>
           </div>
+        </div>
+      </div>
+    )}
+
+    {/* Sanju AI Lesson-Based Test Generator Modal */}
+    {isAiLessonModalOpen && (
+      <div className="fixed inset-0 z-[115] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh] lg:ml-28">
+          
+          {/* Modal Header */}
+          <div className="px-6 py-4 border-b border-indigo-100/60 bg-gradient-to-r from-indigo-50/80 via-purple-50/50 to-white flex justify-between items-center shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
+                <Sparkles className="w-5 h-5 animate-pulse" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900 tracking-tight leading-snug flex items-center gap-2">
+                  Sanju AI - Lesson Test Generator
+                </h3>
+                <p className="text-[11px] text-slate-500 font-bold tracking-wide">Generate MCQs directly from your added lessons</p>
+              </div>
+            </div>
+            <button 
+              type="button" 
+              onClick={() => setIsAiLessonModalOpen(false)}
+              className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-all"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Modal Body */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-5 min-h-0 bg-white">
+            {createdTestResult ? (
+              /* Success View */
+              <div className="p-8 text-center space-y-4">
+                <div className="w-16 h-16 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-600 flex items-center justify-center mx-auto shadow-sm animate-in zoom-in duration-300">
+                  <CheckCircle className="w-8 h-8" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-slate-900 tracking-tight">Test Created & Published!</h3>
+                  <p className="text-xs text-slate-500 mt-1.5 max-w-md mx-auto leading-relaxed">
+                    Sanju AI generated <strong>{createdTestResult.questionCount} questions</strong> based on your selected lessons and published <strong>"{createdTestResult.title}"</strong>.
+                  </p>
+                </div>
+                <div className="pt-4 flex justify-center gap-3">
+                  <button
+                    onClick={() => navigate(`/admin/tests/${createdTestResult.testId}/edit`)}
+                    className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-600/15 cursor-pointer"
+                  >
+                    View / Edit Questions
+                  </button>
+                  <button
+                    onClick={() => setIsAiLessonModalOpen(false)}
+                    className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* Form View */
+              <form onSubmit={handleGenerateLessonTest} className="space-y-5">
+                {/* Test Title */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Assessment Test Title</label>
+                  <input 
+                    type="text" 
+                    required
+                    value={aiTestTitle}
+                    onChange={(e) => setAiTestTitle(e.target.value)}
+                    placeholder="e.g. Introduction of Computer - Chapter Test"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:bg-white rounded-xl text-xs font-bold text-slate-800 outline-none transition-all"
+                  />
+                </div>
+
+                {/* Lessons Selector */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                      <BookOpen className="w-3.5 h-3.5 text-indigo-600" />
+                      Select Lessons to Include ({Object.values(aiSelectedLessons).filter(Boolean).length} selected)
+                    </label>
+                    <div className="flex gap-2">
+                      <button 
+                        type="button" 
+                        onClick={() => toggleAllAiLessons(true)} 
+                        className="text-[10px] font-bold text-indigo-600 hover:underline cursor-pointer"
+                      >
+                        Select All
+                      </button>
+                      <span className="text-slate-300">|</span>
+                      <button 
+                        type="button" 
+                        onClick={() => toggleAllAiLessons(false)} 
+                        className="text-[10px] font-bold text-slate-500 hover:underline cursor-pointer"
+                      >
+                        Deselect All
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="border border-slate-200 rounded-2xl max-h-56 overflow-y-auto divide-y divide-slate-100 bg-slate-50/50 p-2">
+                    {modules.length === 0 ? (
+                      <div className="p-4 text-center text-xs text-slate-400">No lessons added to this course yet.</div>
+                    ) : (
+                      modules.map(mod => {
+                        const allModLessonsSelected = (mod.lessons || []).length > 0 && (mod.lessons || []).every(l => aiSelectedLessons[l.id]);
+                        return (
+                          <div key={mod.id} className="p-2 space-y-1.5">
+                            {/* Module Header Checkbox */}
+                            <div className="flex items-center justify-between bg-white px-3 py-1.5 rounded-lg border border-slate-100 shadow-2xs">
+                              <label className="flex items-center gap-2 cursor-pointer font-bold text-xs text-slate-800 select-none">
+                                <input 
+                                  type="checkbox"
+                                  checked={allModLessonsSelected}
+                                  onChange={(e) => toggleModuleAiLessons(mod.id, e.target.checked)}
+                                  className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-3.5 h-3.5 cursor-pointer"
+                                />
+                                <span>{mod.title}</span>
+                              </label>
+                              <span className="text-[9.5px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{mod.lessons.length} Lessons</span>
+                            </div>
+
+                            {/* Lessons list */}
+                            <div className="pl-6 space-y-1">
+                              {(mod.lessons || []).map(les => (
+                                <label key={les.id} className="flex items-center gap-2 cursor-pointer text-[11px] font-medium text-slate-600 hover:text-slate-900 select-none py-0.5">
+                                  <input 
+                                    type="checkbox"
+                                    checked={!!aiSelectedLessons[les.id]}
+                                    onChange={(e) => setAiSelectedLessons(prev => ({ ...prev, [les.id]: e.target.checked }))}
+                                    className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-3 h-3 cursor-pointer"
+                                  />
+                                  <span className="truncate">{les.title}</span>
+                                  <span className="text-[8.5px] font-bold uppercase tracking-wider text-slate-400 bg-slate-200/60 px-1.5 py-0.2 rounded ml-auto">{les.type}</span>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+
+                {/* Options Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">No. of MCQs</label>
+                    <select 
+                      value={aiQuestionCount}
+                      onChange={(e) => setAiQuestionCount(Number(e.target.value))}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none cursor-pointer"
+                    >
+                      <option value={5}>5 Questions</option>
+                      <option value={10}>10 Questions</option>
+                      <option value={15}>15 Questions</option>
+                      <option value={20}>20 Questions</option>
+                      <option value={25}>25 Questions</option>
+                      <option value={50}>50 Questions</option>
+                      <option value={100}>100 Questions</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Difficulty</label>
+                    <select 
+                      value={aiDifficulty}
+                      onChange={(e) => setAiDifficulty(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none cursor-pointer"
+                    >
+                      <option value="Easy">Easy</option>
+                      <option value="Medium">Medium</option>
+                      <option value="Hard">Hard</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Duration (Mins)</label>
+                    <input 
+                      type="number" 
+                      value={aiDuration}
+                      onChange={(e) => setAiDuration(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Total Marks</label>
+                    <input 
+                      type="number" 
+                      value={aiTotalMarks}
+                      onChange={(e) => setAiTotalMarks(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Public Practice Test Checkbox */}
+                <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 pt-1">
+                  <input 
+                    type="checkbox"
+                    checked={aiIsPublic}
+                    onChange={(e) => setAiIsPublic(e.target.checked)}
+                    className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 cursor-pointer"
+                  />
+                  <span>Make this test available on Public Practice Tests page (No login needed)</span>
+                </label>
+
+                {/* Submit Button */}
+                <div className="pt-2 flex justify-end gap-3">
+                  <button 
+                    type="button" 
+                    onClick={() => setIsAiLessonModalOpen(false)}
+                    className="px-4 py-2.5 text-xs font-bold text-slate-600 hover:text-slate-800 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit"
+                    disabled={aiGenLoading}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-600/20 disabled:opacity-50 cursor-pointer active:scale-95"
+                  >
+                    {aiGenLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                    {aiGenLoading ? 'Generating & Publishing Test...' : 'Generate & Create Test'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+
         </div>
       </div>
     )}

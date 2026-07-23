@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Clock, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, Loader2, Sun, Moon, Maximize, Minimize, Download, Sparkles, Award, Presentation } from 'lucide-react';
+import { Clock, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, Loader2, Sun, Moon, Maximize, Minimize, Download, Sparkles, Award, Presentation, Globe, Wifi, WifiOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../lib/axios';
 import toast from 'react-hot-toast';
@@ -26,8 +26,152 @@ export default function TakeTest() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef(null);
 
+  // Offline & Resilience States
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+
+  // Language & Translation States
+  const [selectedLanguage, setSelectedLanguage] = useState('Hindi');
+  const [translationsCache, setTranslationsCache] = useState({});
+  const [isTranslating, setIsTranslating] = useState(false);
+
   // Track study time while attempting the test — stops when finished
   useStudyTracker('test', testId, test?.title || '', !isFinished && !isLoading);
+
+  // Network Online / Offline Listener
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOffline(false);
+      toast.success("🟢 Internet Connection Restored!", { id: 'net-status', duration: 2500 });
+    };
+    const handleOffline = () => {
+      setIsOffline(true);
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      toast.dismiss();
+    };
+  }, []);
+
+  // Auto-save active test progress to localStorage continuously
+  useEffect(() => {
+    if (!testId || isLoading || isFinished || !test) return;
+    const storageKey = `student_test_progress_${testId}`;
+    try {
+      localStorage.setItem(storageKey, JSON.stringify({
+        testId,
+        answers,
+        currentQuestionIndex,
+        timeLeft,
+        questions,
+        lastSavedAt: Date.now()
+      }));
+    } catch (e) {
+      console.error("Local storage save error:", e);
+    }
+  }, [answers, currentQuestionIndex, timeLeft, testId, isLoading, isFinished, test, questions]);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const prefetchUpcomingTranslations = async () => {
+      if (!questions || questions.length === 0 || !selectedLanguage) return;
+
+      // 1. Translate current question immediately if needed
+      const currentQ = questions[currentQuestionIndex];
+      if (currentQ) {
+        const isCurrentHindi = /[\u0900-\u097F]/.test(currentQ.question || '');
+        const currentNeedsTrans = (selectedLanguage === 'Hindi' && !isCurrentHindi && (!currentQ.questionHindi || !currentQ.optionsHindi)) ||
+                                  (selectedLanguage === 'English' && isCurrentHindi && (!currentQ.questionEnglish || !currentQ.optionsEnglish));
+        const currentCacheKey = `${currentQ.id || currentQuestionIndex}_${selectedLanguage}`;
+
+        if (currentNeedsTrans && !translationsCache[currentCacheKey]) {
+          setIsTranslating(true);
+          try {
+            const res = await api.post('/public/translate', {
+              question: currentQ.question,
+              options: currentQ.options,
+              targetLang: selectedLanguage
+            });
+            if (!isCancelled && res.data.success && res.data.translation) {
+              setTranslationsCache(prev => ({ ...prev, [currentCacheKey]: res.data.translation }));
+            }
+          } catch (err) {
+            console.error('Translation error:', err);
+          } finally {
+            if (!isCancelled) setIsTranslating(false);
+          }
+        }
+      }
+
+      // 2. Pre-fetch remaining untranslated questions in background chunks
+      const untranslatedList = [];
+      questions.forEach((q, idx) => {
+        const isHindi = /[\u0900-\u097F]/.test(q.question || '');
+        const needsTrans = (selectedLanguage === 'Hindi' && !isHindi && (!q.questionHindi || !q.optionsHindi)) ||
+                           (selectedLanguage === 'English' && isHindi && (!q.questionEnglish || !q.optionsEnglish));
+        const cKey = `${q.id || idx}_${selectedLanguage}`;
+        if (needsTrans && !translationsCache[cKey]) {
+          untranslatedList.push({ id: q.id || idx, question: q.question, options: q.options, originalIndex: idx });
+        }
+      });
+
+      if (untranslatedList.length === 0 || isCancelled) return;
+
+      for (let i = 0; i < untranslatedList.length; i += 8) {
+        if (isCancelled) break;
+        const chunk = untranslatedList.slice(i, i + 8);
+        try {
+          const res = await api.post('/public/translate-batch', {
+            questions: chunk,
+            targetLang: selectedLanguage
+          });
+          if (!isCancelled && res.data.success && Array.isArray(res.data.translations)) {
+            const newCache = {};
+            res.data.translations.forEach((t, tIdx) => {
+              const originalItem = chunk[tIdx] || chunk.find(c => c.id === t.id);
+              if (originalItem) {
+                const cKey = `${originalItem.id}_${selectedLanguage}`;
+                newCache[cKey] = { question: t.question, options: t.options };
+              }
+            });
+            setTranslationsCache(prev => ({ ...prev, ...newCache }));
+          }
+        } catch (batchErr) {
+          console.error('Batch pre-translation error:', batchErr);
+        }
+      }
+    };
+
+    prefetchUpcomingTranslations();
+
+    return () => { isCancelled = true; };
+  }, [currentQuestionIndex, selectedLanguage, questions]);
+
+  const getDisplayedQuestionDetails = (q) => {
+    if (!q) return { question: '', options: {} };
+
+    if (selectedLanguage === 'Hindi') {
+      if (q.questionHindi && q.optionsHindi) return { question: q.questionHindi, options: q.optionsHindi };
+      if (/[\u0900-\u097F]/.test(q.question || '')) return { question: q.question, options: q.options };
+    }
+
+    if (selectedLanguage === 'English') {
+      if (q.questionEnglish && q.optionsEnglish) return { question: q.questionEnglish, options: q.optionsEnglish };
+      if (!/[\u0900-\u097F]/.test(q.question || '')) return { question: q.question, options: q.options };
+    }
+
+    const cacheKey = `${q.id || currentQuestionIndex}_${selectedLanguage}`;
+    if (translationsCache[cacheKey]) {
+      return translationsCache[cacheKey];
+    }
+
+    return { question: q.question, options: q.options };
+  };
 
   // Robust, cross-browser Fullscreen toggle logic (supports iOS/Safari, Firefox, and IE/Edge)
   const toggleFullscreen = () => {
@@ -161,16 +305,30 @@ export default function TakeTest() {
         if (response.data.success) {
           setTest(response.data.test);
           
-          const shuffledQuestions = [...response.data.questions];
-          for (let i = shuffledQuestions.length - 1; i > 0; i--) {
-              const j = Math.floor(Math.random() * (i + 1));
-              [shuffledQuestions[i], shuffledQuestions[j]] = [shuffledQuestions[j], shuffledQuestions[i]];
+          // Check if there is saved progress in localStorage from a previous session / connection drop
+          const savedProgressStr = localStorage.getItem(`student_test_progress_${testId}`);
+          let savedProgress = null;
+          try {
+            if (savedProgressStr) savedProgress = JSON.parse(savedProgressStr);
+          } catch(e) {}
+
+          if (savedProgress && savedProgress.answers && Object.keys(savedProgress.answers).length > 0 && savedProgress.questions && savedProgress.questions.length > 0) {
+            setQuestions(savedProgress.questions);
+            setAnswers(savedProgress.answers);
+            if (savedProgress.currentQuestionIndex !== undefined) setCurrentQuestionIndex(savedProgress.currentQuestionIndex);
+            toast.dismiss();
+          } else {
+            const shuffledQuestions = [...response.data.questions];
+            for (let i = shuffledQuestions.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffledQuestions[i], shuffledQuestions[j]] = [shuffledQuestions[j], shuffledQuestions[i]];
+            }
+            setQuestions(shuffledQuestions);
+            
+            const durationStr = response.data.test.duration;
+            const minutes = parseInt(durationStr.replace(/[^0-9]/g, '')) || 30;
+            setTimeLeft(minutes * 60);
           }
-          setQuestions(shuffledQuestions);
-          
-          const durationStr = response.data.test.duration;
-          const minutes = parseInt(durationStr.replace(/[^0-9]/g, '')) || 30;
-          setTimeLeft(minutes * 60);
         }
       }
     } catch (error) {
@@ -196,10 +354,15 @@ export default function TakeTest() {
   };
 
   const submitTest = async () => {
+    if (!navigator.onLine) {
+      toast.error("⚠️ You are offline! Connect to internet to submit your test. All your answers remain saved.", { duration: 6000 });
+      return;
+    }
     setIsSubmitting(true);
     try {
       const response = await api.post(`/student/tests/${testId}/submit`, { answers });
       if (response.data.success) {
+        localStorage.removeItem(`student_test_progress_${testId}`);
         setIsFinished(true);
         setResult(response.data.result);
         toast.success('Test submitted successfully!');
@@ -463,12 +626,21 @@ export default function TakeTest() {
   }
 
   const currentQuestion = questions[currentQuestionIndex];
+  const displayedQuestion = getDisplayedQuestionDetails(currentQuestion);
 
   return (
     <div 
       ref={containerRef}
       className={`min-h-screen transition-colors duration-500 flex flex-col font-sans select-none ${isDarkMode ? 'bg-slate-950 text-white' : 'bg-[#F8FAFC]'}`}
     >
+      {/* Offline Warning Banner */}
+      {isOffline && (
+        <div className="bg-amber-500 text-white text-[11px] font-extrabold py-2 px-4 text-center sticky top-0 z-50 flex items-center justify-center gap-2 shadow-md animate-pulse">
+          <WifiOff className="w-4 h-4 shrink-0" />
+          <span>You are currently Offline. Don't worry! All your answers are saved locally. Please reconnect to submit your test.</span>
+        </div>
+      )}
+
       {/* Immersive distraction-free header bar */}
       <header className={`border-b sticky top-0 z-30 transition-colors duration-500 backdrop-blur-2xl shadow-sm ${
         isDarkMode ? 'bg-slate-900/70 border-white/10' : 'bg-white/70 border-white/60'
@@ -482,8 +654,36 @@ export default function TakeTest() {
                 <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest hidden sm:inline">Environment Active</span>
               </div>
             </div>
+
+            {/* Language Switcher */}
+            <div className="inline-flex items-center bg-slate-100 dark:bg-white/10 p-1 rounded-full border border-slate-200/60 dark:border-white/10 shadow-inner shrink-0 ml-1">
+              <button 
+                type="button"
+                onClick={() => setSelectedLanguage('Hindi')}
+                className={`px-3 py-1 rounded-full text-[11px] font-bold transition-all duration-300 cursor-pointer whitespace-nowrap flex items-center gap-1.5 leading-none ${
+                  selectedLanguage === 'Hindi'
+                    ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-500/25 scale-[1.02]'
+                    : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                }`}
+              >
+                <Globe className="w-3 h-3 opacity-80 shrink-0" />
+                <span>हिंदी</span>
+              </button>
+              <button 
+                type="button"
+                onClick={() => setSelectedLanguage('English')}
+                className={`px-3 py-1 rounded-full text-[11px] font-bold transition-all duration-300 cursor-pointer whitespace-nowrap flex items-center gap-1.5 leading-none ${
+                  selectedLanguage === 'English'
+                    ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-500/25 scale-[1.02]'
+                    : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                }`}
+              >
+                <Globe className="w-3 h-3 opacity-80 shrink-0" />
+                <span>ENGLISH</span>
+              </button>
+            </div>
             
-            <div className="flex items-center gap-0.5 bg-slate-50 dark:bg-white/5 p-0.5 rounded-lg border border-slate-150/40 dark:border-white/5 shrink-0 ml-1.5">
+            <div className="flex items-center gap-0.5 bg-slate-50 dark:bg-white/5 p-0.5 rounded-lg border border-slate-150/40 dark:border-white/5 shrink-0 ml-1">
                <button 
                 onClick={() => setIsDarkMode(!isDarkMode)}
                 className="p-1.5 rounded-md transition-all text-slate-400 hover:bg-slate-100 hover:text-slate-600 cursor-pointer flex items-center justify-center"
@@ -583,7 +783,7 @@ export default function TakeTest() {
         {/* Right Side: Questions Viewer */}
         <div className="flex-1">
           {questions.length === 0 ? (
-            <div className={`rounded-3xl border p-16 text-center flex flex-col items-center justify-center ${isDarkMode ? 'glass-dark bg-slate-900/50 backdrop-blur-xl border-white/10' : 'bg-white/70 backdrop-blur-2xl border-white/60 shadow-[0_8px_30px_rgba(0,0,0,0.03)]'}`}>
+            <div className={`rounded-3xl border p-16 text-center flex flex-col items-center justify-center ${isDarkMode ? 'glass-dark bg-[#0F0C20]/50 backdrop-blur-xl border-white/10' : 'bg-white/70 backdrop-blur-2xl border-white/60 shadow-[0_8px_30px_rgba(0,0,0,0.03)]'}`}>
               <AlertCircle className="w-12 h-12 mb-4 text-slate-350" />
               <p className="font-black text-slate-700 uppercase tracking-wide text-xs">No questions loaded for this assessment.</p>
             </div>
@@ -604,14 +804,21 @@ export default function TakeTest() {
 
                 {/* Question Screen */}
                 <div className="p-6 sm:p-8">
-                  <h2 className={`text-lg sm:text-2xl font-black leading-snug mb-8 uppercase ${isDarkMode ? 'text-white' : 'text-slate-850'}`}>
-                    {currentQuestion.question}
-                  </h2>
+                  <div className="flex items-start justify-between gap-3 mb-8">
+                    <h2 className={`text-lg sm:text-2xl font-black leading-snug uppercase ${isDarkMode ? 'text-white' : 'text-slate-850'}`}>
+                      {displayedQuestion.question || currentQuestion.question}
+                    </h2>
+                    {isTranslating && (
+                      <span className="text-[10px] font-bold text-indigo-500 animate-pulse flex items-center gap-1 shrink-0 bg-indigo-50 dark:bg-indigo-950/60 px-2.5 py-1 rounded-full border border-indigo-200/50">
+                        <Sparkles className="w-3 h-3 animate-spin" /> Translating...
+                      </span>
+                    )}
+                  </div>
 
                   {/* Choice Tiles */}
                   <div className="grid grid-cols-1 gap-3.5">
                     {['A', 'B', 'C', 'D'].map((optKey) => {
-                      const optionText = currentQuestion.options[optKey];
+                      const optionText = (displayedQuestion.options && displayedQuestion.options[optKey]) || currentQuestion.options[optKey];
                       if (!optionText) return null;
                       const isSelected = answers[currentQuestion.id] === optKey;
 

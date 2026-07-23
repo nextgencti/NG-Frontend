@@ -44,39 +44,40 @@ export default function PublicLeads() {
   };
 
   const handleManualReset = async () => {
-    if (!selectedTestId) return toast.error('Please select a test first');
+    if (!selectedTestId) return toast.error('Please select a test or "All Public Tests" first');
     
+    const isAll = selectedTestId === 'all';
     const selectedTest = tests.find(t => t.id === selectedTestId);
-    const testTitle = selectedTest ? selectedTest.title : 'this test';
+    const targetName = isAll ? 'ALL PUBLIC TESTS (सभी टेस्ट्स का लीडरबोर्ड)' : `"${selectedTest ? selectedTest.title : 'this test'}"`;
 
-    if (!window.confirm(`Are you sure you want to PERMANENTLY clear the leaderboard for "${testTitle}"?`)) return;
+    if (!window.confirm(`⚠️ WARNING: Are you sure you want to PERMANENTLY clear the leaderboard for ${targetName}? This action cannot be undone.`)) return;
 
     setIsResetting(true);
     try {
       const res = await api.post(`/superadmin/tests/${selectedTestId}/reset-leaderboard`);
       if (res.data.success) {
-        toast.success(res.data.message || `Leaderboard for "${testTitle}" reset successfully`);
+        toast.success(res.data.message || `Leaderboard reset successfully!`);
         fetchLeads();
       }
     } catch (err) {
-      toast.error('Failed to reset leaderboard');
+      toast.error(err.response?.data?.message || 'Failed to reset leaderboard');
     } finally {
       setIsResetting(false);
     }
   };
 
   const handleUpdateSettings = async () => {
-    if (!selectedTestId) return toast.error('Please select a test first');
+    if (!selectedTestId) return toast.error('Please select a test or "All Public Tests" first');
     
     try {
       const res = await api.patch(`/superadmin/tests/${selectedTestId}/leaderboard-settings`, {
         autoResetDuration: resetDuration
       });
       if (res.data.success) {
-        toast.success('Auto-reset settings updated');
+        toast.success(res.data.message || 'Auto-reset settings updated');
       }
     } catch (err) {
-      toast.error('Failed to update settings');
+      toast.error(err.response?.data?.message || 'Failed to update settings');
     }
   };
 
@@ -100,7 +101,7 @@ export default function PublicLeads() {
       lead.testTitle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.participantContact?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    if (selectedTestId) {
+    if (selectedTestId && selectedTestId !== 'all') {
       return matchesSearch && lead.testId === selectedTestId;
     }
     return matchesSearch;
@@ -143,6 +144,7 @@ export default function PublicLeads() {
               className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-primary-500/20"
             >
               <option value="">-- Choose a Test --</option>
+              <option value="all" className="font-extrabold text-primary-600 bg-primary-50">⚡ ALL PUBLIC TESTS (सभी टेस्ट्स)</option>
               {tests.map(t => (
                 <option key={t.id} value={t.id}>{t.title}</option>
               ))}
@@ -176,7 +178,7 @@ export default function PublicLeads() {
             className="px-6 py-2.5 bg-rose-600 text-white rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-rose-700 transition-all shadow-lg shadow-rose-600/20 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {isResetting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-            Reset Leaderboard Now
+            {selectedTestId === 'all' ? 'Reset ALL Leaderboards' : 'Reset Leaderboard Now'}
           </button>
         </div>
       </div>
