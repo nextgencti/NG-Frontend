@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { initFirebase, signInWithPopup, signOut, signInWithEmailAndPassword, sendPasswordResetEmail } from '../lib/firebase';
+import { auth, googleProvider, initFirebase, signInWithPopup, signOut, signInWithEmailAndPassword, sendPasswordResetEmail } from '../lib/firebase';
 import toast from 'react-hot-toast';
 import api from '../lib/axios';
 
@@ -45,7 +45,7 @@ export const AuthProvider = ({ children }) => {
             }
           })
           .catch(err => {
-            console.warn('[AUTH] Profile background sync failed:', err.message);
+            console.warn('[AUTH] Background profile sync skipped:', err.message);
           });
       }
       if (saVerified === 'true') {
@@ -62,8 +62,8 @@ export const AuthProvider = ({ children }) => {
 
     // ── PHASE 2: Firebase init in background (doesn't block UI) ──
     firebaseInitPromise.current = initFirebase()
-      .then(({ auth, googleProvider: provider }) => {
-        setAuthInstance(auth);
+      .then(({ auth: fbAuth, googleProvider: provider }) => {
+        setAuthInstance(fbAuth);
         setProviderInstance(provider);
         console.log('[AUTH] Firebase ready in background');
       })
@@ -72,24 +72,17 @@ export const AuthProvider = ({ children }) => {
       });
   }, []);
 
-  // Login with Google — waits for Firebase only when user actually clicks login
+  // Login with Google — uses activeAuth & activeProvider with fallback to imported instances
   const loginWithGoogle = async () => {
     try {
-      // If Firebase isn't ready yet, wait for it now (only blocks login, not page)
-      if (!authInstance || !providerInstance) {
-        console.log('[AUTH] Waiting for Firebase to initialize...');
-        try {
-          const { auth, googleProvider: provider } = await initFirebase();
-          setAuthInstance(auth);
-          setProviderInstance(provider);
-        } catch (fbError) {
-          console.error('[AUTH] Firebase init failed during login:', fbError);
-          toast.error('Connection issue. Please try again.');
-          throw fbError;
-        }
+      const activeAuth = authInstance || auth;
+      const activeProvider = providerInstance || googleProvider;
+
+      if (!activeAuth || !activeProvider) {
+        throw new Error('Firebase authentication service unavailable');
       }
 
-      const result = await signInWithPopup(authInstance, providerInstance);
+      const result = await signInWithPopup(activeAuth, activeProvider);
       const idToken = await result.user.getIdToken();
       
       const response = await api.post('/auth/google-login', { idToken });
@@ -110,7 +103,17 @@ export const AuthProvider = ({ children }) => {
       return { user, isNew: isNewUser || !user.profileComplete };
     } catch (error) {
       console.error("Google login error:", error);
-      toast.error('Failed to login with Google.');
+      let errorMsg = 'Failed to login with Google.';
+      if (error.code === 'auth/popup-closed-by-user') {
+        errorMsg = 'Google sign-in popup was closed.';
+      } else if (error.code === 'auth/cancelled-popup-request') {
+        errorMsg = 'Sign-in request cancelled.';
+      } else if (error.code === 'auth/popup-blocked') {
+        errorMsg = 'Sign-in popup blocked by browser. Please allow popups.';
+      } else if (error.response?.data?.message) {
+        errorMsg = error.response.data.message;
+      }
+      toast.error(errorMsg);
       throw error;
     }
   };
@@ -118,20 +121,12 @@ export const AuthProvider = ({ children }) => {
   // Login with Email and Password
   const loginWithEmailAndPassword = async (email, password) => {
     try {
-      // If Firebase isn't ready yet, wait for it now
-      if (!authInstance) {
-        console.log('[AUTH] Waiting for Firebase to initialize...');
-        try {
-          const { auth } = await initFirebase();
-          setAuthInstance(auth);
-        } catch (fbError) {
-          console.error('[AUTH] Firebase init failed during login:', fbError);
-          toast.error('Connection issue. Please try again.');
-          throw fbError;
-        }
+      const activeAuth = authInstance || auth;
+      if (!activeAuth) {
+        throw new Error('Firebase authentication service unavailable');
       }
 
-      const result = await signInWithEmailAndPassword(authInstance, email, password);
+      const result = await signInWithEmailAndPassword(activeAuth, email, password);
       const idToken = await result.user.getIdToken();
       
       const response = await api.post('/auth/firebase-login', { idToken });
@@ -151,6 +146,13 @@ export const AuthProvider = ({ children }) => {
       return { user, isNew: isNewUser || !user.profileComplete };
     } catch (error) {
       console.error("Email/Password login error:", error);
+      let errorMsg = 'Failed to login.';
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        errorMsg = 'Invalid email or password.';
+      } else if (error.response?.data?.message) {
+        errorMsg = error.response.data.message;
+      }
+      toast.error(errorMsg);
       throw error;
     }
   };
@@ -158,18 +160,11 @@ export const AuthProvider = ({ children }) => {
   // Send Password Reset Email
   const sendPasswordReset = async (email) => {
     try {
-      if (!authInstance) {
-        console.log('[AUTH] Waiting for Firebase to initialize...');
-        try {
-          const { auth } = await initFirebase();
-          setAuthInstance(auth);
-        } catch (fbError) {
-          console.error('[AUTH] Firebase init failed during login:', fbError);
-          toast.error('Connection issue. Please try again.');
-          throw fbError;
-        }
+      const activeAuth = authInstance || auth;
+      if (!activeAuth) {
+        throw new Error('Firebase authentication service unavailable');
       }
-      await sendPasswordResetEmail(authInstance, email);
+      await sendPasswordResetEmail(activeAuth, email);
     } catch (error) {
       console.error("Password reset error:", error);
       throw error;
