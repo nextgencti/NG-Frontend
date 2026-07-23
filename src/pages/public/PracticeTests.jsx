@@ -12,29 +12,33 @@ export default function PracticeTests() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDifficulty, setSelectedDifficulty] = useState('All');
-  const [publicTests, setPublicTests] = useState(() => {
-    try {
-      const saved = localStorage.getItem('ng_public_tests');
-      return saved ? JSON.parse(saved) : [];
-    } catch { return []; }
-  });
+  const [publicTests, setPublicTests] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [sortBy, setSortBy] = useState('newest');
 
   useEffect(() => {
+    try {
+      const cached = localStorage.getItem('ng_home_bundle_cache');
+      if (cached) {
+        const data = JSON.parse(cached);
+        if (data.tests && data.tests.length > 0) {
+          setPublicTests(data.tests);
+        }
+      }
+    } catch (e) {}
     fetchPublicTests();
   }, []);
 
   const fetchPublicTests = async () => {
-    if (publicTests.length === 0) setIsLoading(true);
+    setIsLoading(true);
     try {
       const res = await axios.get(`${API_BASE}/public/tests`);
       if (res.data.success) {
         setPublicTests(res.data.tests || []);
-        localStorage.setItem('ng_public_tests', JSON.stringify(res.data.tests || []));
       }
     } catch (err) {
       console.error("Failed to fetch public tests", err);
+      setPublicTests([]);
     } finally {
       setIsLoading(false);
     }

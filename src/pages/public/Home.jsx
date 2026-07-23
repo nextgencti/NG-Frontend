@@ -19,31 +19,16 @@ export default function Home() {
   const navigate = useNavigate();
   const { currentUser, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [publicTests, setPublicTests] = useState(() => {
-    try {
-      const saved = localStorage.getItem('ng_public_tests');
-      return saved ? JSON.parse(saved) : [];
-    } catch { return []; }
-  });
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [publicTests, setPublicTests] = useState([]);
+  const [leaderboard, setLeaderboard] = useState([]);
   const [stats, setStats] = useState({ studentsCount: 5000, coursesCount: 120, successRate: 95, certificatesCount: 10000 });
   const [showStats, setShowStats] = useState(true);
-  const [courses, setCourses] = useState(() => {
-    try {
-      const saved = localStorage.getItem('ng_public_courses');
-      return saved ? JSON.parse(saved) : [];
-    } catch { return []; }
-  });
+  const [courses, setCourses] = useState([]);
   const [activeSection, setActiveSection] = useState('Home');
   const [activeTab, setActiveTab] = useState(0);
   const [prevTab, setPrevTab] = useState(0);
-  const [customServices, setCustomServices] = useState(() => {
-    try {
-      const saved = localStorage.getItem('ng_public_gov_services');
-      return saved ? JSON.parse(saved) : [];
-    } catch { return []; }
-  });
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [leaderboard, setLeaderboard] = useState([]);
+  const [customServices, setCustomServices] = useState([]);
 
   const govServicesList = [
     { name: "SSC Job Alerts", tagline: "SSC CGL, CHSL, MTS recruitment", icon: Briefcase, link: "https://ssc.gov.in" },
@@ -133,11 +118,24 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    fetchPublicTests();
-    fetchLeaderboard();
-    fetchStats();
-    fetchCourses();
-    fetchCustomServices();
+    // 1. Instant UI Hydration from LocalStorage Cache
+    try {
+      const cached = localStorage.getItem('ng_home_bundle_cache');
+      if (cached) {
+        const data = JSON.parse(cached);
+        if (data.tests) setPublicTests(data.tests);
+        if (data.leaderboard) setLeaderboard(data.leaderboard);
+        if (data.stats) setStats(data.stats);
+        if (data.courses) setCourses(data.courses);
+        if (data.services) setCustomServices(data.services);
+        if (data.showStats !== undefined) setShowStats(data.showStats);
+      }
+    } catch (e) {
+      console.warn('Cache load error', e);
+    }
+
+    // 2. High-Performance Bundle Fetch (Single API Call)
+    fetchHomeBundle();
   }, []);
 
   // Auto-swipe features tabs every 6 seconds, resetting if the user manually clicks a tab
@@ -165,6 +163,36 @@ export default function Home() {
     return () => window.removeEventListener('hashchange', handleHashScroll);
   }, []);
 
+  const fetchHomeBundle = async () => {
+    try {
+      const res = await axios.get(`${API_BASE}/public/home-data`);
+      if (res.data.success) {
+        if (res.data.tests) setPublicTests(res.data.tests || []);
+        if (res.data.leaderboard) setLeaderboard(res.data.leaderboard || []);
+        if (res.data.stats) setStats(res.data.stats);
+        if (res.data.courses) setCourses(res.data.courses || []);
+        if (res.data.services) setCustomServices(res.data.services || []);
+        if (res.data.showStats !== undefined) setShowStats(res.data.showStats);
+
+        localStorage.setItem('ng_home_bundle_cache', JSON.stringify({
+          tests: res.data.tests || [],
+          leaderboard: res.data.leaderboard || [],
+          stats: res.data.stats,
+          courses: res.data.courses || [],
+          services: res.data.services || [],
+          showStats: res.data.showStats
+        }));
+      }
+    } catch (err) {
+      // Graceful fallback to individual endpoints
+      fetchPublicTests();
+      fetchLeaderboard();
+      fetchStats();
+      fetchCourses();
+      fetchCustomServices();
+    }
+  };
+
   const fetchStats = async () => {
     try {
       const res = await axios.get(`${API_BASE}/public/stats`);
@@ -186,9 +214,10 @@ export default function Home() {
       const res = await axios.get(`${API_BASE}/public/courses`);
       if (res.data.success) {
         setCourses(res.data.courses || []);
-        localStorage.setItem('ng_public_courses', JSON.stringify(res.data.courses || []));
       }
-    } catch (err) {}
+    } catch (err) {
+      setCourses([]);
+    }
   };
 
   const fetchCustomServices = async () => {
@@ -196,19 +225,19 @@ export default function Home() {
       const res = await axios.get(`${API_BASE}/public/gov-services`);
       if (res.data.success) {
         setCustomServices(res.data.services || []);
-        localStorage.setItem('ng_public_gov_services', JSON.stringify(res.data.services || []));
       }
-    } catch (err) {}
+    } catch (err) {
+      setCustomServices([]);
+    }
   };
 
   const fetchPublicTests = async () => {
     try {
       const res = await axios.get(`${API_BASE}/public/tests`);
-      if (res.data.success) {
-        setPublicTests(res.data.tests || []);
-        localStorage.setItem('ng_public_tests', JSON.stringify(res.data.tests || []));
-      }
-    } catch (err) {}
+      if (res.data.success) setPublicTests(res.data.tests || []);
+    } catch (err) { 
+      setPublicTests([]);
+    }
   };
 
   const fetchLeaderboard = async () => {

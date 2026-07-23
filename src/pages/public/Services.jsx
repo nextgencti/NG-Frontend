@@ -12,14 +12,18 @@ export default function Services() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [customServices, setCustomServices] = useState(() => {
-    try {
-      const saved = localStorage.getItem('ng_public_gov_services');
-      return saved ? JSON.parse(saved) : [];
-    } catch { return []; }
-  });
+  const [customServices, setCustomServices] = useState([]);
 
   useEffect(() => {
+    try {
+      const cached = localStorage.getItem('ng_home_bundle_cache');
+      if (cached) {
+        const data = JSON.parse(cached);
+        if (data.services && data.services.length > 0) {
+          setCustomServices(data.services);
+        }
+      }
+    } catch (e) {}
     fetchCustomServices();
   }, []);
 
@@ -28,7 +32,6 @@ export default function Services() {
       const res = await axios.get(`${API_BASE}/public/gov-services`);
       if (res.data.success) {
         setCustomServices(res.data.services || []);
-        localStorage.setItem('ng_public_gov_services', JSON.stringify(res.data.services || []));
       }
     } catch (err) {
       console.error("Failed to fetch public services", err);
