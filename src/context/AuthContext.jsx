@@ -102,12 +102,14 @@ export const AuthProvider = ({ children }) => {
       
       return { user, isNew: isNewUser || !user.profileComplete };
     } catch (error) {
+      if (error.code === 'auth/cancelled-popup-request') {
+        console.log('[AUTH] Google popup request superseded or cancelled');
+        throw error;
+      }
       console.error("Google login error:", error);
       let errorMsg = 'Failed to login with Google.';
       if (error.code === 'auth/popup-closed-by-user') {
         errorMsg = 'Google sign-in popup was closed.';
-      } else if (error.code === 'auth/cancelled-popup-request') {
-        errorMsg = 'Sign-in request cancelled.';
       } else if (error.code === 'auth/popup-blocked') {
         errorMsg = 'Sign-in popup blocked by browser. Please allow popups.';
       } else if (error.response?.data?.message) {
