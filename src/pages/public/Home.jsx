@@ -19,16 +19,31 @@ export default function Home() {
   const navigate = useNavigate();
   const { currentUser, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [publicTests, setPublicTests] = useState([]);
-  const [leaderboard, setLeaderboard] = useState([]);
+  const [publicTests, setPublicTests] = useState(() => {
+    try {
+      const saved = localStorage.getItem('ng_public_tests');
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
   const [stats, setStats] = useState({ studentsCount: 5000, coursesCount: 120, successRate: 95, certificatesCount: 10000 });
   const [showStats, setShowStats] = useState(true);
-  const [courses, setCourses] = useState([]);
+  const [courses, setCourses] = useState(() => {
+    try {
+      const saved = localStorage.getItem('ng_public_courses');
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
   const [activeSection, setActiveSection] = useState('Home');
   const [activeTab, setActiveTab] = useState(0);
   const [prevTab, setPrevTab] = useState(0);
-  const [customServices, setCustomServices] = useState([]);
+  const [customServices, setCustomServices] = useState(() => {
+    try {
+      const saved = localStorage.getItem('ng_public_gov_services');
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [leaderboard, setLeaderboard] = useState([]);
 
   const govServicesList = [
     { name: "SSC Job Alerts", tagline: "SSC CGL, CHSL, MTS recruitment", icon: Briefcase, link: "https://ssc.gov.in" },
@@ -171,10 +186,9 @@ export default function Home() {
       const res = await axios.get(`${API_BASE}/public/courses`);
       if (res.data.success) {
         setCourses(res.data.courses || []);
+        localStorage.setItem('ng_public_courses', JSON.stringify(res.data.courses || []));
       }
-    } catch (err) {
-      setCourses([]);
-    }
+    } catch (err) {}
   };
 
   const fetchCustomServices = async () => {
@@ -182,19 +196,19 @@ export default function Home() {
       const res = await axios.get(`${API_BASE}/public/gov-services`);
       if (res.data.success) {
         setCustomServices(res.data.services || []);
+        localStorage.setItem('ng_public_gov_services', JSON.stringify(res.data.services || []));
       }
-    } catch (err) {
-      setCustomServices([]);
-    }
+    } catch (err) {}
   };
 
   const fetchPublicTests = async () => {
     try {
       const res = await axios.get(`${API_BASE}/public/tests`);
-      if (res.data.success) setPublicTests(res.data.tests || []);
-    } catch (err) { 
-      setPublicTests([]);
-    }
+      if (res.data.success) {
+        setPublicTests(res.data.tests || []);
+        localStorage.setItem('ng_public_tests', JSON.stringify(res.data.tests || []));
+      }
+    } catch (err) {}
   };
 
   const fetchLeaderboard = async () => {
