@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Clock, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, Loader2, User, Phone, Mail, ArrowRight, Trophy, Medal, Award, Sun, Moon, Maximize, Minimize, Sparkles, Globe, Wifi, WifiOff } from 'lucide-react';
+import { Clock, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, Loader2, User, Phone, Mail, ArrowRight, Trophy, Medal, Award, Sun, Moon, Maximize, Minimize, Sparkles, Globe, Wifi, WifiOff, RotateCcw, Home, BookOpen, Printer } from 'lucide-react';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -65,30 +65,47 @@ export default function PublicTestRunner() {
         currentQuestionIndex,
         timeLeft,
         questions,
+        selectedLanguage,
         stage: 'test',
         lastSavedAt: Date.now()
       }));
     } catch (e) {
       console.error("Public local storage save error:", e);
     }
-  }, [answers, currentQuestionIndex, timeLeft, testId, stage, participant, questions]);
+  }, [answers, currentQuestionIndex, timeLeft, testId, stage, participant, questions, selectedLanguage]);
 
-  // Restore active test progress on mount if exists
+  // Restore active test progress on mount if exists and not expired
   useEffect(() => {
     toast.dismiss();
-    const savedProgressStr = localStorage.getItem(`public_test_progress_${testId}`);
+    const storageKey = `public_test_progress_${testId}`;
+    const savedProgressStr = localStorage.getItem(storageKey);
     if (savedProgressStr) {
       try {
         const saved = JSON.parse(savedProgressStr);
         if (saved && saved.stage === 'test' && saved.answers && saved.questions) {
-          setParticipant(saved.participant || { name: '', contact: '' });
-          setQuestions(saved.questions);
-          setAnswers(saved.answers);
-          if (saved.currentQuestionIndex !== undefined) setCurrentQuestionIndex(saved.currentQuestionIndex);
-          if (saved.timeLeft && saved.timeLeft > 0) setTimeLeft(saved.timeLeft);
-          setStage('test');
+          const elapsedSeconds = saved.lastSavedAt ? Math.floor((Date.now() - saved.lastSavedAt) / 1000) : 0;
+          const remainingTime = (saved.timeLeft !== undefined ? saved.timeLeft : 1800) - elapsedSeconds;
+
+          // If test time has expired, discard old session so user starts fresh
+          if (remainingTime <= 0) {
+            localStorage.removeItem(storageKey);
+            setAnswers({});
+            setStage('register');
+          } else {
+            setParticipant(saved.participant || { name: '', contact: '' });
+            setQuestions(saved.questions);
+            setAnswers(saved.answers || {});
+            if (saved.selectedLanguage) setSelectedLanguage(saved.selectedLanguage);
+            if (saved.currentQuestionIndex !== undefined) setCurrentQuestionIndex(saved.currentQuestionIndex);
+            setTimeLeft(remainingTime);
+            setStage('test');
+          }
+        } else {
+          localStorage.removeItem(storageKey);
         }
-      } catch(e) {}
+      } catch(e) {
+        localStorage.removeItem(storageKey);
+      }
     }
   }, [testId]);
 
@@ -190,6 +207,14 @@ export default function PublicTestRunner() {
     return { question: q.question, options: q.options };
   };
 
+  const getItemDisplayedDetails = (item, index) => {
+    const originalQ = questions.find(q => q.id === item.questionId) || questions[index];
+    if (originalQ) {
+      return getDisplayedQuestionDetails(originalQ);
+    }
+    return { question: item.question, options: item.options || {} };
+  };
+
   // Toggle Fullscreen
   const toggleFullScreen = () => {
     try {
@@ -229,6 +254,10 @@ export default function PublicTestRunner() {
       if (res.data.success) {
         setTest(res.data.test);
         setQuestions(res.data.questions);
+        // Explicitly clear answers and reset index for a clean test run
+        setAnswers({});
+        setCurrentQuestionIndex(0);
+        setResult(null);
         const minutes = parseInt(res.data.test.duration?.replace(/[^0-9]/g, '')) || 30;
         setTimeLeft(minutes * 60);
         setStage('test');
@@ -241,23 +270,40 @@ export default function PublicTestRunner() {
     }
   };
 
+  const handleContactChange = (e) => {
+    setParticipant(prev => ({ ...prev, contact: e.target.value }));
+  };
+
   const handleRegister = (e) => {
     e.preventDefault();
     const name = participant.name.trim();
     const contact = participant.contact.trim();
 
-    if (!name) return toast.error('Please enter your full name');
-    if (!contact) return toast.error('Please enter your Mobile or Email');
+    if (!name) {
+      return toast.error('Please enter your name');
+    }
+    if (name.length < 2) {
+      return toast.error('Name must be at least 2 characters long');
+    }
+    if (!contact) {
+      return toast.error('Please enter your email or phone number');
+    }
 
-    // Validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const mobileRegex = /^[0-9]{10}$/;
+    const isEmailAttempt = contact.includes('@') || /[a-zA-Z]/.test(contact);
 
-    const isEmail = emailRegex.test(contact);
-    const isMobile = mobileRegex.test(contact);
-
-    if (!isEmail && !isMobile) {
-      return toast.error('Please enter a valid 10-digit Mobile Number or Email Address');
+    if (isEmailAttempt) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(contact)) {
+        return toast.error('Please enter a valid email address');
+      }
+    } else {
+      const digits = contact.replace(/\D/g, '');
+      if (digits.length !== 10) {
+        return toast.error('Mobile number must be exactly 10 digits');
+      }
+      if (!/^[6-9]/.test(digits)) {
+        return toast.error('Mobile number must start with 6, 7, 8, or 9');
+      }
     }
 
     fetchTest();
@@ -273,6 +319,71 @@ export default function PublicTestRunner() {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
+  const handleRetakeTest = () => {
+    try {
+      localStorage.removeItem(`public_test_progress_${testId}`);
+    } catch (e) {}
+    setAnswers({});
+    setCurrentQuestionIndex(0);
+    setResult(null);
+    setParticipant({ name: '', contact: '' });
+    setTimeLeft(null);
+    setStage('register');
+  };
+
+  const handleResetTestPrompt = () => {
+    toast((t) => (
+      <div className="flex flex-col gap-3 min-w-[280px]">
+        <div className="flex items-center gap-3">
+          <div className={`w-10 h-10 rounded-full ${isDarkMode ? 'bg-amber-500/10' : 'bg-amber-50'} flex items-center justify-center flex-shrink-0`}>
+            <RotateCcw className="w-5 h-5 text-amber-500" />
+          </div>
+          <div>
+            <p className={`text-sm font-black ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Restart Test?</p>
+            <p className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">
+              All answers will be cleared
+            </p>
+          </div>
+        </div>
+        
+        <p className={`text-xs leading-relaxed ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+          Are you sure you want to restart this test from the beginning? All your currently chosen answers will be reset.
+        </p>
+
+        <div className="flex justify-end gap-2 mt-2">
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${
+              isDarkMode ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => {
+              toast.dismiss(t.id);
+              handleRetakeTest();
+            }}
+            className="px-6 py-2 text-[10px] font-black bg-amber-600 hover:bg-amber-700 text-white rounded-xl shadow-lg shadow-amber-600/20 active:scale-95 transition-all uppercase tracking-widest cursor-pointer"
+          >
+            Confirm & Restart
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: 8000,
+      position: 'top-center',
+      style: {
+        borderRadius: '1.5rem',
+        padding: '1.25rem',
+        border: isDarkMode ? '1px solid #1e293b' : '1px solid #f1f5f9',
+        background: isDarkMode ? '#1e293b' : '#ffffff',
+        color: isDarkMode ? '#f1f5f9' : '#0f172a',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+      }
+    });
+  };
+
   const submitTest = async () => {
     const toastId = toast.loading('Submitting your test...');
     setIsSubmitting(true);
@@ -283,6 +394,15 @@ export default function PublicTestRunner() {
       });
       if (res.data.success) {
         toast.success('Test submitted successfully!', { id: toastId });
+        
+        // Remove active saved progress so any re-visit starts completely fresh
+        try {
+          localStorage.removeItem(`public_test_progress_${testId}`);
+        } catch (e) {
+          console.error("Failed to remove public test progress:", e);
+        }
+
+        setAnswers({});
         setResult(res.data.result);
         setStage('result');
         fetchLeaderboard();
@@ -382,8 +502,18 @@ export default function PublicTestRunner() {
 
   // ─── REGISTRATION STAGE ────────────────────────────────────────────────────────
   if (stage === 'register') {
+    const contactVal = participant.contact.trim();
+    const isEmailAttempt = contactVal.includes('@') || /[a-zA-Z]/.test(contactVal);
+    const digitsOnly = contactVal.replace(/\D/g, '');
+
+    const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactVal);
+    const isValidMobile = !isEmailAttempt && digitsOnly.length === 10 && /^[6-9]/.test(digitsOnly);
+    const isInvalidMobileStart = !isEmailAttempt && digitsOnly.length > 0 && !/^[6-9]/.test(digitsOnly);
+    const isValidContact = isValidEmail || isValidMobile;
+
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 relative">
+        <Toaster position="top-right" />
         <button
           onClick={() => navigate('/')}
           className="absolute top-8 left-8 flex items-center gap-2 text-slate-400 hover:text-primary-600 transition-all font-black text-[10px] uppercase tracking-widest group"
@@ -407,30 +537,72 @@ export default function PublicTestRunner() {
             <div className="space-y-1.5">
               <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Your Full Name</label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
                   type="text"
                   required
                   value={participant.name}
                   onChange={(e) => setParticipant({ ...participant, name: e.target.value })}
                   className="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all"
-                  placeholder="e.g. Rahul Kumar"
+                  placeholder="Enter Your Name"
                 />
               </div>
             </div>
+
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Mobile / Email</label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <div className="flex items-center justify-between ml-1">
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Email or Phone</label>
+                {!isEmailAttempt && digitsOnly.length > 0 && (
+                  <span className={`text-[10px] font-bold ${
+                    isValidMobile 
+                      ? 'text-emerald-600' 
+                      : isInvalidMobileStart 
+                        ? 'text-rose-500' 
+                        : 'text-slate-400'
+                  }`}>
+                    {digitsOnly.length}/10 Digits
+                  </span>
+                )}
+              </div>
+              <div className="relative flex items-center">
+                <div className="absolute left-3.5 flex items-center pointer-events-none text-slate-400">
+                  {isEmailAttempt ? (
+                    <Mail className="w-4 h-4 text-slate-400" />
+                  ) : (
+                    <Phone className="w-4 h-4 text-slate-400" />
+                  )}
+                </div>
                 <input
                   type="text"
                   required
                   value={participant.contact}
-                  onChange={(e) => setParticipant({ ...participant, contact: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all"
-                  placeholder="e.g. 9876543210 or name@gmail.com"
+                  onChange={handleContactChange}
+                  className={`w-full pl-10 pr-10 py-2.5 text-sm bg-slate-50 border rounded-xl outline-none transition-all font-medium ${
+                    isInvalidMobileStart
+                      ? 'border-rose-300 focus:ring-2 focus:ring-rose-400 bg-rose-50/20 text-rose-900'
+                      : isValidContact
+                        ? 'border-emerald-300 focus:ring-2 focus:ring-emerald-400 bg-emerald-50/20 text-emerald-950'
+                        : 'border-slate-200 focus:ring-2 focus:ring-primary-500 text-slate-800'
+                  }`}
+                  placeholder="Enter Email or Phone"
                 />
+                {isValidContact && (
+                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-emerald-500">
+                    <CheckCircle2 className="w-4 h-4" />
+                  </div>
+                )}
               </div>
+              {isInvalidMobileStart && (
+                <p className="text-[11px] text-rose-500 font-medium ml-1 flex items-center gap-1">
+                  <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                  Mobile number must start with 6, 7, 8, or 9
+                </p>
+              )}
+              {!isEmailAttempt && !isInvalidMobileStart && digitsOnly.length > 0 && digitsOnly.length < 10 && (
+                <p className="text-[11px] text-amber-600 font-medium ml-1">
+                  Enter {10 - digitsOnly.length} more digit{10 - digitsOnly.length > 1 ? 's' : ''} for valid mobile
+                </p>
+              )}
             </div>
 
             <button
@@ -525,6 +697,13 @@ export default function PublicTestRunner() {
               {/* Toggles */}
               <div className="flex items-center gap-1 border-r border-slate-200 dark:border-slate-800 pr-2 sm:pr-4">
                 <button
+                  onClick={handleResetTestPrompt}
+                  className={`p-2 rounded-lg transition-all ${theme.btnGhost}`}
+                  title="Reset / Start Over"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </button>
+                <button
                   onClick={() => setIsDarkMode(!isDarkMode)}
                   className={`p-2 rounded-lg transition-all ${theme.btnGhost}`}
                   title="Toggle Theme"
@@ -606,6 +785,15 @@ export default function PublicTestRunner() {
                 <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-wider text-slate-400">
                   <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'}`}></div>
                   <span>Unattempted</span>
+                </div>
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <button
+                    onClick={handleResetTestPrompt}
+                    className="w-full py-1.5 text-[9px] font-bold text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/20 rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    <span>Reset / Start Over</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -768,18 +956,172 @@ export default function PublicTestRunner() {
       <div className={`min-h-screen transition-colors duration-300 ${theme.bg} py-8 px-4`}>
         <Toaster position="top-right" />
         <div className="max-w-3xl mx-auto space-y-6">
-          {/* Theme Toggle in Result Page too */}
-          <div className="flex justify-end mb-2">
-             <button
+          {/* Top Navigation & Action Header (Red Circles 1 & 2) */}
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-2 no-print">
+            {/* Left: Navigation Buttons (Red Circle 1) */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  try { localStorage.removeItem(`public_test_progress_${testId}`); } catch(e) {}
+                  navigate('/');
+                }}
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border shadow-sm cursor-pointer ${
+                  isDarkMode 
+                    ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800 hover:text-white' 
+                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-950'
+                }`}
+                title="Go to Home Page"
+              >
+                <Home className="w-3.5 h-3.5 text-primary-600" />
+                <span>Home</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  try { localStorage.removeItem(`public_test_progress_${testId}`); } catch(e) {}
+                  navigate('/practice-tests');
+                }}
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border shadow-sm cursor-pointer ${
+                  isDarkMode 
+                    ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800 hover:text-white' 
+                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-950'
+                }`}
+                title="View All Practice Tests"
+              >
+                <BookOpen className="w-3.5 h-3.5 text-indigo-600" />
+                <span>All Tests</span>
+              </button>
+            </div>
+
+            {/* Right: Language, Print & Theme Controls (Red Circle 2) */}
+            <div className="flex items-center gap-2">
+              {/* Language Switcher */}
+              <div className="inline-flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-full border border-slate-200/80 dark:border-slate-700 shadow-inner">
+                <button
+                  type="button"
+                  onClick={() => setSelectedLanguage('Hindi')}
+                  className={`px-3 py-1 rounded-full text-xs font-bold transition-all duration-300 cursor-pointer whitespace-nowrap flex items-center gap-1 leading-none ${
+                    selectedLanguage === 'Hindi'
+                      ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-500/25'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  <Globe className="w-3 h-3 opacity-80 shrink-0" />
+                  <span>हिंदी</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedLanguage('English')}
+                  className={`px-3 py-1 rounded-full text-xs font-bold transition-all duration-300 cursor-pointer whitespace-nowrap flex items-center gap-1 leading-none ${
+                    selectedLanguage === 'English'
+                      ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-500/25'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  <Globe className="w-3 h-3 opacity-80 shrink-0" />
+                  <span>English</span>
+                </button>
+              </div>
+
+              {/* Print Report Button */}
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer"
+                title="Print Report"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print Report</span>
+              </button>
+
+              {/* Theme Toggle */}
+              <button
+                type="button"
                 onClick={() => setIsDarkMode(!isDarkMode)}
-                className={`p-2 rounded-lg transition-all ${isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-200'}`}
+                className={`p-2 rounded-xl transition-all border ${
+                  isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100'
+                }`}
+                title="Toggle Theme"
               >
                 {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </button>
+            </div>
           </div>
 
-          {/* Score Card */}
-          <div className={`${theme.card} rounded-[2.5rem] p-8 text-center space-y-6`}>
+          {/* Printable Official Header (Visible only during printing) */}
+          <div className="hidden print:block mb-6 pb-4 border-b-2 border-slate-800">
+            <div className="flex justify-between items-start">
+              <div>
+                <h1 className="text-xl font-black text-slate-900 uppercase tracking-tight">NextGen Computer Training Institute</h1>
+                <p className="text-xs text-slate-600 font-semibold mt-0.5">Muskara, Hamirpur (U.P.) • ISO Certified Center</p>
+                <h2 className="text-base font-bold text-indigo-700 mt-2">{test?.title || 'Public Practice Test'} • Assessment Report</h2>
+              </div>
+              <div className="text-right">
+                <span className="inline-block px-2.5 py-1 bg-slate-100 border border-slate-300 rounded text-[10px] font-bold uppercase text-slate-700">
+                  Language: {selectedLanguage === 'Hindi' ? 'हिंदी (Hindi)' : 'English'}
+                </span>
+                <p className="text-[10px] text-slate-500 mt-1 font-medium">Date: {new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-4 gap-2 mt-4 p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs">
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase block">Candidate Name</span>
+                <span className="font-bold text-slate-800">{participant.name}</span>
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase block">Contact / Mobile</span>
+                <span className="font-bold text-slate-800">{participant.contact}</span>
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase block">Score Obtained</span>
+                <span className="font-bold text-indigo-600">{result.score} / {result.totalMarks} ({result.percentage.toFixed(1)}%)</span>
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase block">Final Grade</span>
+                <span className={`font-bold ${result.percentage >= 50 ? 'text-emerald-600' : 'text-rose-600'}`}>{result.grade}</span>
+              </div>
+            </div>
+          </div>
+
+          <style dangerouslySetInnerHTML={{__html: `
+            @media print {
+              body, html {
+                background: #ffffff !important;
+                color: #000000 !important;
+                font-size: 11pt !important;
+              }
+              .no-print, button, .action-buttons {
+                display: none !important;
+              }
+              .print\\:block {
+                display: block !important;
+              }
+              .max-w-3xl {
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                box-shadow: none !important;
+                border: none !important;
+              }
+              .print-card {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+                margin-bottom: 12px !important;
+                border: 1px solid #cbd5e1 !important;
+                background: #ffffff !important;
+                padding: 14px !important;
+                border-radius: 12px !important;
+              }
+              * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+            }
+          `}} />
+
+          {/* Score Card (Web only, official header prints for paper report) */}
+          <div className={`${theme.card} rounded-[2.5rem] p-8 text-center space-y-6 no-print`}>
             <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle2 className="w-10 h-10 text-emerald-500" />
             </div>
@@ -811,7 +1153,7 @@ export default function PublicTestRunner() {
 
           {/* Leaderboard */}
           {leaderboard.length > 0 && (
-            <div className={`${theme.card} rounded-[2.5rem] p-8`}>
+            <div className={`${theme.card} rounded-[2.5rem] p-8 no-print`}>
               <h3 className={`text-lg font-black mb-6 flex items-center gap-3 ${theme.textMain}`}>
                 <Trophy className="w-6 h-6 text-amber-500" />
                 Public Leaderboard
@@ -847,63 +1189,84 @@ export default function PublicTestRunner() {
 
           {/* Detailed Report */}
           <div className={`${theme.card} rounded-[2.5rem] p-8 space-y-6`}>
-            <h3 className={`text-lg font-black ${theme.textMain}`}>Detailed Analysis</h3>
-            {result.detailedReport?.map((item, index) => (
-              <div key={item.questionId} className={`p-6 rounded-2xl border-2 transition-all ${
-                item.isCorrect 
-                  ? 'border-emerald-500/20 bg-emerald-500/5' 
-                  : 'border-rose-500/20 bg-rose-500/5'
-              }`}>
-                <div className="flex items-start gap-4 mb-6">
-                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 text-xs font-black shadow-sm ${
-                    item.isCorrect ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'
-                  }`}>
-                    {index + 1}
+            <div className="flex items-center justify-between mb-2">
+              <h3 className={`text-lg font-black ${theme.textMain}`}>Detailed Analysis</h3>
+              <span className="text-xs font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-950/40 px-3 py-1 rounded-lg border border-indigo-100 dark:border-indigo-800/40">
+                Language: {selectedLanguage === 'Hindi' ? 'हिंदी (Hindi)' : 'English'}
+              </span>
+            </div>
+            {result.detailedReport?.map((item, index) => {
+              const displayedDetails = getItemDisplayedDetails(item, index);
+              return (
+                <div key={item.questionId || index} className={`p-6 rounded-2xl border-2 transition-all print-card ${
+                  item.isCorrect 
+                    ? 'border-emerald-500/20 bg-emerald-500/5' 
+                    : 'border-rose-500/20 bg-rose-500/5'
+                }`}>
+                  <div className="flex items-start gap-4 mb-6">
+                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 text-xs font-black shadow-sm ${
+                      item.isCorrect ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'
+                    }`}>
+                      {index + 1}
+                    </div>
+                    <h4 className={`text-base font-bold leading-relaxed ${theme.textMain}`}>{displayedDetails.question || item.question}</h4>
                   </div>
-                  <h4 className={`text-base font-bold leading-relaxed ${theme.textMain}`}>{item.question}</h4>
-                </div>
-                <div className="space-y-3 pl-12">
-                  {['A', 'B', 'C', 'D'].map(opt => {
-                    if (!item.options[opt]) return null;
-                    const isSelected = item.studentAnswer === opt;
-                    const isCorrectOption = item.correctAnswer === opt;
-                    
-                    let bgClass = isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-100';
-                    let textClass = theme.textMain;
-                    let icon = null;
-                    
-                    if (isCorrectOption) {
-                      bgClass = 'bg-emerald-500/10 border-emerald-500/50';
-                      textClass = 'text-emerald-600 font-black';
-                      icon = <CheckCircle2 className="w-4 h-4 text-emerald-500" />;
-                    } else if (isSelected && !isCorrectOption) {
-                      bgClass = 'bg-rose-500/10 border-rose-500/50';
-                      textClass = 'text-rose-600 font-black';
-                      icon = <AlertCircle className="w-4 h-4 text-rose-500" />;
-                    }
-                    
-                    return (
-                      <div key={opt} className={`flex items-center justify-between p-4 rounded-xl border transition-all ${bgClass}`}>
-                        <div className="flex items-center gap-3">
-                          <span className={`w-6 h-6 rounded-lg text-[10px] font-black flex items-center justify-center ${
-                            isCorrectOption ? 'bg-emerald-500 text-white' : isSelected ? 'bg-rose-500 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
-                          }`}>{opt}</span>
-                          <span className={`text-sm ${textClass}`}>{item.options[opt]}</span>
+                  <div className="space-y-3 pl-12">
+                    {['A', 'B', 'C', 'D'].map(opt => {
+                      const optText = displayedDetails.options?.[opt] || item.options?.[opt];
+                      if (!optText) return null;
+                      const isSelected = item.studentAnswer === opt;
+                      const isCorrectOption = item.correctAnswer === opt;
+                      
+                      let bgClass = isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-100';
+                      let textClass = theme.textMain;
+                      let icon = null;
+                      
+                      if (isCorrectOption) {
+                        bgClass = 'bg-emerald-500/10 border-emerald-500/50';
+                        textClass = 'text-emerald-600 font-black';
+                        icon = <CheckCircle2 className="w-4 h-4 text-emerald-500" />;
+                      } else if (isSelected && !isCorrectOption) {
+                        bgClass = 'bg-rose-500/10 border-rose-500/50';
+                        textClass = 'text-rose-600 font-black';
+                        icon = <AlertCircle className="w-4 h-4 text-rose-500" />;
+                      }
+                      
+                      return (
+                        <div key={opt} className={`flex items-center justify-between p-4 rounded-xl border transition-all ${bgClass}`}>
+                          <div className="flex items-center gap-3">
+                            <span className={`w-6 h-6 rounded-lg text-[10px] font-black flex items-center justify-center ${
+                              isCorrectOption ? 'bg-emerald-500 text-white' : isSelected ? 'bg-rose-500 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
+                            }`}>{opt}</span>
+                            <span className={`text-sm ${textClass}`}>{optText}</span>
+                          </div>
+                          {icon}
                         </div>
-                        {icon}
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
-          {/* Back Button */}
-          <div className="text-center">
+          {/* Action Buttons */}
+          <div className="flex flex-wrap items-center justify-center gap-4 pt-4 no-print">
             <button
-              onClick={() => navigate('/')}
-              className="px-8 py-3 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition-all shadow-lg"
+              onClick={handleRetakeTest}
+              className="px-8 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-bold transition-all shadow-lg hover:shadow-primary-600/30 flex items-center gap-2 cursor-pointer"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Retake Test
+            </button>
+            <button
+              onClick={() => {
+                try {
+                  localStorage.removeItem(`public_test_progress_${testId}`);
+                } catch(e) {}
+                navigate('/');
+              }}
+              className="px-8 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-bold transition-all shadow-lg cursor-pointer"
             >
               Back to Home
             </button>
