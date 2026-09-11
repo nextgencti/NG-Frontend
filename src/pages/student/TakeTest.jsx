@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Clock, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, Loader2, Sun, Moon, Maximize, Minimize, Download, Sparkles, Award, Presentation, Globe, Wifi, WifiOff } from 'lucide-react';
+import { Clock, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, AlertTriangle, Loader2, Sun, Moon, Maximize, Minimize, Download, Sparkles, Award, Presentation, Globe, Wifi, WifiOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../lib/axios';
 import toast from 'react-hot-toast';
@@ -25,6 +25,10 @@ export default function TakeTest() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef(null);
+
+  // Exit Confirmation & Navigation Trap States
+  const [isExitModalOpen, setIsExitModalOpen] = useState(false);
+  const isConfirmedExitRef = useRef(false);
 
   // Offline & Resilience States
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
@@ -56,6 +60,40 @@ export default function TakeTest() {
       toast.dismiss();
     };
   }, []);
+
+  // Back-button navigation trap & Beforeunload protection during active test
+  useEffect(() => {
+    if (isLoading || isFinished || !test) return;
+
+    // Push dummy history entry to trap browser back button
+    window.history.pushState({ studentTestRunning: true }, '', window.location.href);
+
+    const handlePopState = () => {
+      if (isConfirmedExitRef.current) return;
+
+      // Keep trapped on the test runner URL
+      window.history.pushState({ studentTestRunning: true }, '', window.location.href);
+
+      // Open the Exit Warning Alert Modal
+      setIsExitModalOpen(true);
+    };
+
+    const handleBeforeUnload = (e) => {
+      if (!isFinished && !isConfirmedExitRef.current) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isLoading, isFinished, test]);
 
   // Auto-save active test progress to localStorage continuously
   useEffect(() => {
@@ -362,6 +400,7 @@ export default function TakeTest() {
     try {
       const response = await api.post(`/student/tests/${testId}/submit`, { answers });
       if (response.data.success) {
+        isConfirmedExitRef.current = true;
         localStorage.removeItem(`student_test_progress_${testId}`);
         setIsFinished(true);
         setResult(response.data.result);
@@ -390,8 +429,19 @@ export default function TakeTest() {
   };
 
   const handleAutoSubmit = () => {
+    isConfirmedExitRef.current = true;
     toast.error("Time's up! Auto-submitting test...", { duration: 4000 });
     submitTest();
+  };
+
+  const handleConfirmExit = () => {
+    isConfirmedExitRef.current = true;
+    setIsExitModalOpen(false);
+    try {
+      localStorage.removeItem(`student_test_progress_${testId}`);
+    } catch (e) {}
+    toast.error('Test cancel ho gaya hai.', { id: 'student-test-cancelled' });
+    navigate('/dashboard/tests');
   };
 
   if (isLoading) {
@@ -916,6 +966,83 @@ export default function TakeTest() {
           )}
         </div>
       </main>
+
+      {/* Exit / Back Warning Alert Modal */}
+      <AnimatePresence>
+        {isExitModalOpen && (
+          <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsExitModalOpen(false)}
+              className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm"
+            />
+
+            {/* Modal Dialog Card */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+              className={`relative w-full max-w-md rounded-3xl shadow-2xl overflow-hidden z-10 border ${
+                isDarkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+              }`}
+            >
+              {/* Warning Header & Icon */}
+              <div className="p-6 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-rose-500/10 text-rose-500 border border-rose-500/20 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-rose-500/10">
+                  <AlertTriangle className="w-8 h-8 animate-pulse text-rose-500" />
+                </div>
+
+                <h3 className="text-lg font-black tracking-tight">
+                  Test Chhodna Chahte Hain?
+                </h3>
+                <p className="text-xs font-bold text-rose-500 uppercase tracking-widest mt-1">
+                  ⚠️ Dhyan Dein: Test Submit Nahi Hoga!
+                </p>
+
+                <div className={`mt-4 p-3.5 rounded-2xl text-left border ${
+                  isDarkMode ? 'bg-slate-800/60 border-slate-700/60 text-slate-300' : 'bg-rose-50/60 border-rose-200/60 text-slate-700'
+                }`}>
+                  <p className="text-xs leading-relaxed font-medium">
+                    Aapka test abhi <strong>in-progress</strong> hai. Agar aap abhi back karte hain ya page chhodte hain:
+                  </p>
+                  <ul className="mt-2 space-y-1.5 text-[11px] font-semibold text-rose-600 dark:text-rose-400 list-disc list-inside">
+                    <li>Aapka test submit <strong>NAHI</strong> hoga.</li>
+                    <li>Aapka test turant <strong>CANCEL</strong> ho jayega.</li>
+                    <li>Saare chune huye answers discard ho jayenge.</li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className={`p-4 border-t flex flex-col sm:flex-row-reverse items-center gap-2.5 ${
+                isDarkMode ? 'bg-slate-900/80 border-slate-800' : 'bg-slate-50 border-slate-100'
+              }`}>
+                {/* Keep Testing (Primary Recommendation) */}
+                <button
+                  type="button"
+                  onClick={() => setIsExitModalOpen(false)}
+                  className="w-full sm:w-auto flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md shadow-emerald-500/20 transition-all active:scale-[0.98] cursor-pointer"
+                >
+                  Nahi, Test Continue Karein
+                </button>
+
+                {/* Confirm Cancel & Exit */}
+                <button
+                  type="button"
+                  onClick={handleConfirmExit}
+                  className="w-full sm:w-auto py-2.5 px-4 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-all border border-rose-200 dark:border-rose-900/60 cursor-pointer"
+                >
+                  Haan, Test Cancel Karein
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
