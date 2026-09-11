@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { BookOpen, ArrowRight, ShieldCheck, Zap, Users, Monitor, Award, Menu, X, Facebook, Youtube, Instagram, Trophy, Clock, ClipboardList, Medal, ChevronDown, User, Book, Activity, LogOut, TrendingUp, GraduationCap, Rocket, Star, Briefcase, FileText, Shield, Download, Calculator, Keyboard, ExternalLink } from 'lucide-react';
 import Footer from '../../components/Footer';
 import Logo from '../../components/Logo';
+import WelcomeModal from '../../components/public/WelcomeModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
@@ -29,6 +30,8 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState(0);
   const [prevTab, setPrevTab] = useState(0);
   const [customServices, setCustomServices] = useState([]);
+  const [welcomePopupData, setWelcomePopupData] = useState(null);
+  const [isWelcomeModalOpen, setIsWelcomeModalOpen] = useState(false);
 
   const govServicesList = [
     { name: "SSC Job Alerts", tagline: "SSC CGL, CHSL, MTS recruitment", icon: Briefcase, link: "https://ssc.gov.in" },
@@ -129,6 +132,10 @@ export default function Home() {
         if (data.courses) setCourses(data.courses);
         if (data.services) setCustomServices(data.services);
         if (data.showStats !== undefined) setShowStats(data.showStats);
+        if (data.welcomePopup) {
+          setWelcomePopupData(data.welcomePopup);
+          checkAndShowWelcomeModal(data.welcomePopup);
+        }
       }
     } catch (e) {
       console.warn('Cache load error', e);
@@ -173,6 +180,10 @@ export default function Home() {
         if (res.data.courses) setCourses(res.data.courses || []);
         if (res.data.services) setCustomServices(res.data.services || []);
         if (res.data.showStats !== undefined) setShowStats(res.data.showStats);
+        if (res.data.welcomePopup) {
+          setWelcomePopupData(res.data.welcomePopup);
+          checkAndShowWelcomeModal(res.data.welcomePopup);
+        }
 
         localStorage.setItem('ng_home_bundle_cache', JSON.stringify({
           tests: res.data.tests || [],
@@ -180,7 +191,8 @@ export default function Home() {
           stats: res.data.stats,
           courses: res.data.courses || [],
           services: res.data.services || [],
-          showStats: res.data.showStats
+          showStats: res.data.showStats,
+          welcomePopup: res.data.welcomePopup || null
         }));
       }
     } catch (err) {
@@ -190,7 +202,36 @@ export default function Home() {
       fetchStats();
       fetchCourses();
       fetchCustomServices();
+      fetchWelcomePopup();
     }
+  };
+
+  const checkAndShowWelcomeModal = (popup) => {
+    if (!popup || !popup.enabled || !popup.imageUrl) return;
+
+    if (popup.showOncePerSession) {
+      const dismissed = sessionStorage.getItem('ng_welcome_popup_dismissed');
+      if (dismissed === 'true') return;
+    }
+
+    setTimeout(() => {
+      setIsWelcomeModalOpen(true);
+    }, 650);
+  };
+
+  const handleCloseWelcomeModal = () => {
+    setIsWelcomeModalOpen(false);
+    sessionStorage.setItem('ng_welcome_popup_dismissed', 'true');
+  };
+
+  const fetchWelcomePopup = async () => {
+    try {
+      const res = await axios.get(`${API_BASE}/public/welcome-popup`);
+      if (res.data.success && res.data.welcomePopup) {
+        setWelcomePopupData(res.data.welcomePopup);
+        checkAndShowWelcomeModal(res.data.welcomePopup);
+      }
+    } catch (e) {}
   };
 
   const fetchStats = async () => {
@@ -1457,6 +1498,11 @@ export default function Home() {
       </div>
 
       </div>
+      <WelcomeModal
+        isOpen={isWelcomeModalOpen}
+        onClose={handleCloseWelcomeModal}
+        data={welcomePopupData}
+      />
       <Footer />
     </div>
   );

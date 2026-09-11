@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Eye, EyeOff, Database, FileText, Save, Loader2, Info, Plus, Trash2, Edit, ExternalLink, Image, Globe, Tag, Keyboard } from 'lucide-react';
+import { Settings, Eye, EyeOff, Database, FileText, Save, Loader2, Info, Plus, Trash2, Edit, ExternalLink, Image, Globe, Tag, Keyboard, Upload, Sparkles } from 'lucide-react';
 import api from '../../lib/axios';
 import toast from 'react-hot-toast';
+import WelcomeModal from '../../components/public/WelcomeModal';
 
 export default function SuperAdminControls() {
   const [activeTab, setActiveTab] = useState('settings'); // 'settings' or 'services'
@@ -17,11 +18,24 @@ export default function SuperAdminControls() {
         successRate: 95,
         certificatesCount: 24
       }
+    },
+    welcomePopup: {
+      enabled: false,
+      imageUrl: '',
+      title: '',
+      link: '',
+      showOncePerSession: true
     }
   });
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Welcome Popup Image State
+  const [welcomeImageFile, setWelcomeImageFile] = useState(null);
+  const [welcomeImagePreview, setWelcomeImagePreview] = useState('');
+  const [isUploadingWelcomeImage, setIsUploadingWelcomeImage] = useState(false);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 
   // Services Tab State
   const [services, setServices] = useState([]);
@@ -125,6 +139,9 @@ export default function SuperAdminControls() {
       const response = await api.get('/superadmin/web-controls');
       if (response.data.success && response.data.settings) {
         setSettings(response.data.settings);
+        if (response.data.settings.welcomePopup?.imageUrl) {
+          setWelcomeImagePreview(response.data.settings.welcomePopup.imageUrl);
+        }
       }
     } catch (error) {
       console.error(error);
@@ -182,10 +199,111 @@ export default function SuperAdminControls() {
     }));
   };
 
+  const handleToggleWelcomePopup = () => {
+    setSettings(prev => ({
+      ...prev,
+      welcomePopup: {
+        ...prev.welcomePopup,
+        enabled: !prev.welcomePopup?.enabled
+      }
+    }));
+  };
+
+  const handleWelcomePopupFieldChange = (field, value) => {
+    setSettings(prev => ({
+      ...prev,
+      welcomePopup: {
+        ...prev.welcomePopup,
+        [field]: value
+      }
+    }));
+  };
+
+  const handleWelcomeImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select a valid image file');
+        return;
+      }
+      setWelcomeImageFile(file);
+      setWelcomeImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleSaveWelcomePopup = async (e) => {
+    if (e) e.preventDefault();
+    setIsUploadingWelcomeImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('enabled', settings.welcomePopup?.enabled ?? false);
+      formData.append('title', settings.welcomePopup?.title || '');
+      formData.append('link', settings.welcomePopup?.link || '');
+      formData.append('showOncePerSession', settings.welcomePopup?.showOncePerSession ?? true);
+      formData.append('imageUrl', settings.welcomePopup?.imageUrl || '');
+
+      if (welcomeImageFile) {
+        formData.append('image', welcomeImageFile);
+      }
+
+      const response = await api.post('/superadmin/welcome-popup', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      if (response.data.success) {
+        toast.success('Welcome Popup saved successfully!');
+        setSettings(prev => ({
+          ...prev,
+          welcomePopup: response.data.welcomePopup
+        }));
+        setWelcomeImageFile(null);
+        if (response.data.welcomePopup?.imageUrl) {
+          setWelcomeImagePreview(response.data.welcomePopup.imageUrl);
+        }
+      } else {
+        toast.error(response.data.message || 'Failed to save welcome popup');
+      }
+    } catch (err) {
+      console.error('Save Welcome Popup Error:', err);
+      toast.error('Error saving welcome popup');
+    } finally {
+      setIsUploadingWelcomeImage(false);
+    }
+  };
+
+  const handleRemoveWelcomeImage = async () => {
+    if (!window.confirm('Are you sure you want to remove this welcome image?')) return;
+    try {
+      const res = await api.delete('/superadmin/welcome-popup');
+      if (res.data.success) {
+        toast.success('Welcome popup image removed');
+        setSettings(prev => ({
+          ...prev,
+          welcomePopup: {
+            ...prev.welcomePopup,
+            enabled: false,
+            imageUrl: '',
+            title: '',
+            link: ''
+          }
+        }));
+        setWelcomeImageFile(null);
+        setWelcomeImagePreview('');
+      }
+    } catch (err) {
+      toast.error('Failed to remove image');
+    }
+  };
+
   const handleSaveSettings = async (e) => {
     e.preventDefault();
     setIsSaving(true);
     try {
+      // If a new image file is chosen, save welcome popup with file
+      if (welcomeImageFile) {
+        await handleSaveWelcomePopup();
+      }
+
       const response = await api.post('/superadmin/web-controls', settings);
       if (response.data.success) {
         toast.success('Webpage settings saved successfully');
@@ -574,6 +692,250 @@ export default function SuperAdminControls() {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Welcome Popup Image & Banner Card */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-50 rounded-lg text-purple-600 border border-purple-100">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Welcome Popup Image (स्वागत बैनर)</h3>
+                  <p className="text-[11px] text-slate-500">Jab koi user website visit karega to usse ye welcome popup show hoga. SuperAdmin yahan se image upload ya badal sakta hai.</p>
+                </div>
+              </div>
+              {/* Show/Hide Switch Toggle */}
+              <div className="flex items-center gap-3">
+                <span className={`text-xs font-bold transition-colors duration-200 ${
+                  settings.welcomePopup?.enabled ? 'text-emerald-600' : 'text-slate-400'
+                }`}>
+                  {settings.welcomePopup?.enabled ? 'Active / Showing' : 'Disabled'}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleToggleWelcomePopup}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    settings.welcomePopup?.enabled ? 'bg-emerald-500' : 'bg-slate-200'
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                      settings.welcomePopup?.enabled ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Disabled status banner */}
+              {!settings.welcomePopup?.enabled && (
+                <div className="p-3 bg-slate-100 border border-slate-200 rounded-xl flex items-start gap-2.5 text-slate-600">
+                  <Info className="w-4 h-4 mt-0.5 shrink-0 text-slate-500" />
+                  <p className="text-xs font-medium leading-relaxed">
+                    Welcome Popup abhi <strong>Disabled</strong> hai. Toggle ko 'Active' karein aur image upload karke save karein taaki public webpage par show ho sake.
+                  </p>
+                </div>
+              )}
+
+              {/* Image Upload & Preview Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Upload Zone */}
+                <div className="space-y-2">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">
+                    Upload Welcome Image (PNG, JPG, WebP)
+                  </label>
+                  <div className="border-2 border-dashed border-slate-200 hover:border-indigo-400 rounded-2xl p-5 text-center transition-colors bg-slate-50/50 hover:bg-indigo-50/30 flex flex-col items-center justify-center min-h-[220px]">
+                    <input
+                      type="file"
+                      id="welcome-image-upload"
+                      accept="image/*"
+                      onChange={handleWelcomeImageChange}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="welcome-image-upload"
+                      className="cursor-pointer flex flex-col items-center justify-center w-full h-full"
+                    >
+                      <div className="p-3 bg-indigo-50 rounded-full text-indigo-600 mb-3 group-hover:scale-110 transition-transform">
+                        <Upload className="w-6 h-6" />
+                      </div>
+                      <p className="text-xs font-bold text-slate-700">
+                        {welcomeImageFile ? welcomeImageFile.name : 'Click here or drag to select new image'}
+                      </p>
+                      <p className="text-[10px] text-slate-400 mt-1">
+                        Recommended: 800x600px ya 1000x800px (Max 5MB)
+                      </p>
+                    </label>
+
+                    {welcomeImageFile && (
+                      <div className="mt-3 flex items-center gap-2">
+                        <span className="text-[11px] bg-indigo-100 text-indigo-700 font-semibold px-2.5 py-1 rounded-full">
+                          New file selected: {(welcomeImageFile.size / 1024).toFixed(0)} KB
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setWelcomeImageFile(null);
+                            setWelcomeImagePreview(settings.welcomePopup?.imageUrl || '');
+                          }}
+                          className="text-[11px] text-rose-500 hover:underline font-bold cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Live Preview Box */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">
+                      Current Image Preview
+                    </label>
+                    {welcomeImagePreview && (
+                      <button
+                        type="button"
+                        onClick={handleRemoveWelcomeImage}
+                        className="text-[11px] text-rose-600 hover:text-rose-700 font-bold flex items-center gap-1 cursor-pointer"
+                      >
+                        <Trash2 className="w-3 h-3" /> Remove Image
+                      </button>
+                    )}
+                  </div>
+                  <div className="border border-slate-200 rounded-2xl bg-slate-900/5 p-2 flex items-center justify-center min-h-[220px] overflow-hidden relative group">
+                    {welcomeImagePreview ? (
+                      <img
+                        src={welcomeImagePreview}
+                        alt="Welcome Popup Preview"
+                        className="max-h-[200px] w-auto object-contain rounded-xl shadow-sm"
+                      />
+                    ) : (
+                      <div className="text-center p-6 text-slate-400">
+                        <Image className="w-10 h-10 mx-auto mb-2 opacity-40" />
+                        <p className="text-xs font-semibold">No welcome image uploaded yet</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">Nayi image select karke upload karein</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Metadata Fields */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                {/* Title */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">
+                    Popup Title / Header (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Welcome to NextGen Academy / Special Offer"
+                    value={settings.welcomePopup?.title || ''}
+                    onChange={(e) => handleWelcomePopupFieldChange('title', e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  />
+                </div>
+
+                {/* Redirect Link */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">
+                    Redirect URL / Action Link (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. /practice-tests or /signup"
+                    value={settings.welcomePopup?.link || ''}
+                    onChange={(e) => handleWelcomePopupFieldChange('link', e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  />
+                  <p className="text-[10px] text-slate-400 ml-1">Image click hone par user is link par chala jayega.</p>
+                </div>
+              </div>
+
+              {/* Frequency Rule */}
+              <div className="space-y-2 pt-2 border-t border-slate-100">
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">
+                  Display Frequency (User ko kab dikhana hai?)
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleWelcomePopupFieldChange('showOncePerSession', true)}
+                    className={`p-3 rounded-xl border text-left transition-all flex items-center gap-3 cursor-pointer ${
+                      settings.welcomePopup?.showOncePerSession !== false
+                        ? 'border-indigo-500 bg-indigo-50/40 ring-1 ring-indigo-500 text-indigo-900'
+                        : 'border-slate-200 hover:bg-slate-50 text-slate-600'
+                    }`}
+                  >
+                    <div className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center ${
+                      settings.welcomePopup?.showOncePerSession !== false ? 'border-indigo-600 bg-indigo-600' : 'border-slate-300'
+                    }`}>
+                      {settings.welcomePopup?.showOncePerSession !== false && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                    </div>
+                    <div>
+                      <h5 className="text-xs font-bold">Once Per Session (Recommended)</h5>
+                      <p className="text-[10px] text-slate-500">User ko session me ek baar dikhega, bar-bar pareshan nahi karega.</p>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleWelcomePopupFieldChange('showOncePerSession', false)}
+                    className={`p-3 rounded-xl border text-left transition-all flex items-center gap-3 cursor-pointer ${
+                      settings.welcomePopup?.showOncePerSession === false
+                        ? 'border-indigo-500 bg-indigo-50/40 ring-1 ring-indigo-500 text-indigo-900'
+                        : 'border-slate-200 hover:bg-slate-50 text-slate-600'
+                    }`}
+                  >
+                    <div className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center ${
+                      settings.welcomePopup?.showOncePerSession === false ? 'border-indigo-600 bg-indigo-600' : 'border-slate-300'
+                    }`}>
+                      {settings.welcomePopup?.showOncePerSession === false && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                    </div>
+                    <div>
+                      <h5 className="text-xs font-bold">Every Visit</h5>
+                      <p className="text-[10px] text-slate-500">Har page reload ya visit par popup dikhega.</p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Actions: Save Welcome Popup & Test Preview */}
+              <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  disabled={!welcomeImagePreview}
+                  onClick={() => setIsPreviewModalOpen(true)}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  <Eye className="w-4 h-4" />
+                  <span>Preview Popup Modal</span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isUploadingWelcomeImage}
+                  onClick={handleSaveWelcomePopup}
+                  className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-100 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  {isUploadingWelcomeImage ? (
+                    <>
+                      <Loader2 className="animate-spin w-4 h-4 text-white" />
+                      <span>Uploading & Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      <span>Save Welcome Popup</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -1067,6 +1429,17 @@ export default function SuperAdminControls() {
           </div>
         </div>
       )}
+
+      {/* Live Preview Modal for SuperAdmin */}
+      <WelcomeModal
+        isOpen={isPreviewModalOpen}
+        onClose={() => setIsPreviewModalOpen(false)}
+        data={{
+          imageUrl: welcomeImagePreview,
+          title: settings.welcomePopup?.title || '',
+          link: settings.welcomePopup?.link || ''
+        }}
+      />
     </div>
   );
 }
