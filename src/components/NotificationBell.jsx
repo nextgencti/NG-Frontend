@@ -135,6 +135,18 @@ export default function NotificationBell() {
   // Get matching icon based on notification type
   const getNotificationIcon = (type) => {
     switch (type) {
+      case 'fee_receipt':
+        return (
+          <div className="w-7.5 h-7.5 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+            <Check className="w-4 h-4" />
+          </div>
+        );
+      case 'fee_reminder':
+        return (
+          <div className="w-7.5 h-7.5 rounded-lg bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 shrink-0">
+            <Bell className="w-4 h-4" />
+          </div>
+        );
       case 'course':
         return (
           <div className="w-7.5 h-7.5 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-[#4F46E5] shrink-0">

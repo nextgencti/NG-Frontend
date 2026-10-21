@@ -47,7 +47,9 @@ import {
   Sparkles,
   Layers,
   HelpCircle,
-  BadgePercent
+  BadgePercent,
+  Loader2,
+  BellRing
 } from 'lucide-react';
 import api from '../../lib/axios';
 import toast from 'react-hot-toast';
@@ -494,7 +496,11 @@ export default function AdminFinance() {
       });
 
       if (res.data.success) {
-        toast.success('Payment recorded and receipt generated!');
+        if (res.data.emailDispatched) {
+          toast.success(`Payment recorded & receipt emailed to ${res.data.studentEmail} ✉️`);
+        } else {
+          toast.success('Payment recorded and receipt generated!');
+        }
         fetchData();
         if (selectedStudent360 && selectedStudent360.id === quickPayStudent.id) {
           fetchStudent360(quickPayStudent.id);
@@ -516,6 +522,51 @@ export default function AdminFinance() {
       toast.error(err.response?.data?.message || 'Payment submission failed');
     } finally {
       setSubmittingQuickPay(false);
+    }
+  };
+
+  // ─── FEE REMINDER METHODS ───
+  const [sendingReminderId, setSendingReminderId] = useState(null);
+  const [bulkReminderLoading, setBulkReminderLoading] = useState(false);
+
+  const handleSendReminder = async (student) => {
+    if (!student || !student.id) return;
+    setSendingReminderId(student.id);
+    try {
+      const res = await api.post(`/admin/finance/send-reminder/${student.id}`);
+      if (res.data.success) {
+        toast.success(res.data.message || `Fee reminder email & notification sent to ${student.name}!`);
+      } else {
+        toast.error(res.data.message || 'Failed to send reminder');
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to send fee reminder');
+    } finally {
+      setSendingReminderId(null);
+    }
+  };
+
+  const handleBulkReminders = async () => {
+    const dueCount = students.filter(s => s.status === 'active' && s.totalDue > 0).length;
+    if (dueCount === 0) {
+      toast.success('All active students have cleared fees. No reminders needed!');
+      return;
+    }
+    const confirmSend = window.confirm(`Send automated fee reminder email & in-app alert to all ${dueCount} student(s) with dues?`);
+    if (!confirmSend) return;
+
+    setBulkReminderLoading(true);
+    try {
+      const res = await api.post('/admin/finance/send-bulk-reminders');
+      if (res.data.success) {
+        toast.success(res.data.message || `Fee reminders dispatched to ${res.data.sentCount} student(s)!`);
+      } else {
+        toast.error(res.data.message || 'Failed to send bulk reminders');
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to send bulk reminders');
+    } finally {
+      setBulkReminderLoading(false);
     }
   };
 
@@ -857,34 +908,52 @@ _Thank you for your timely payment!_
                 </select>
               </div>
 
-              {/* Status Filter Segmented Controls */}
-              <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl w-full lg:w-auto overflow-x-auto border border-slate-200/60">
-                {[
-                  { id: 'all', label: 'All Active', count: activeStudentsCount },
-                  { id: 'due', label: 'Due Balances', count: dueStudentsCount },
-                  { id: 'delinquent', label: 'Defaulters', count: delinquentStudentsCount },
-                  { id: 'clear', label: 'Cleared', count: clearedStudentsCount },
-                  { id: 'leave', label: 'On Leave', count: leaveStudentsCount },
-                  { id: 'old', label: 'Old (Online Only)', count: oldStudentsCount },
-                  { id: 'inactive', label: 'Inactive Accounts', count: inactiveStudentsCount }
-                ].map(f => (
+              {/* Status Filter Segmented Controls & Bulk Actions */}
+              <div className="flex flex-wrap items-center justify-between gap-3 w-full lg:w-auto">
+                <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl w-full lg:w-auto overflow-x-auto border border-slate-200/60">
+                  {[
+                    { id: 'all', label: 'All Active', count: activeStudentsCount },
+                    { id: 'due', label: 'Due Balances', count: dueStudentsCount },
+                    { id: 'delinquent', label: 'Defaulters', count: delinquentStudentsCount },
+                    { id: 'clear', label: 'Cleared', count: clearedStudentsCount },
+                    { id: 'leave', label: 'On Leave', count: leaveStudentsCount },
+                    { id: 'old', label: 'Old (Online Only)', count: oldStudentsCount },
+                    { id: 'inactive', label: 'Inactive Accounts', count: inactiveStudentsCount }
+                  ].map(f => (
+                    <button
+                      key={f.id}
+                      onClick={() => setStatusFilter(f.id)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                        statusFilter === f.id
+                          ? 'bg-white text-primary-600 font-extrabold shadow-sm'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      <span>{f.label}</span>
+                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                        statusFilter === f.id ? 'bg-primary-50 text-primary-700' : 'bg-slate-200/70 text-slate-500'
+                      }`}>
+                        {f.count}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+
+                {dueStudentsCount > 0 && (
                   <button
-                    key={f.id}
-                    onClick={() => setStatusFilter(f.id)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
-                      statusFilter === f.id
-                        ? 'bg-white text-primary-600 font-extrabold shadow-sm'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
+                    onClick={handleBulkReminders}
+                    disabled={bulkReminderLoading}
+                    className="px-3.5 py-1.5 bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600 text-white font-extrabold rounded-xl text-xs transition-all flex items-center gap-1.5 shadow-sm cursor-pointer whitespace-nowrap"
+                    title="Send automated email and in-app fee reminders to all students with dues"
                   >
-                    <span>{f.label}</span>
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                      statusFilter === f.id ? 'bg-primary-50 text-primary-700' : 'bg-slate-200/70 text-slate-500'
-                    }`}>
-                      {f.count}
-                    </span>
+                    {bulkReminderLoading ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Mail className="w-3.5 h-3.5" />
+                    )}
+                    <span>Notify Due Students ({dueStudentsCount})</span>
                   </button>
-                ))}
+                )}
               </div>
             </div>
 
@@ -1055,6 +1124,22 @@ _Thank you for your timely payment!_
                               >
                                 360° Ledger
                               </button>
+
+                              {/* Send Due Reminder Button */}
+                              {student.totalDue > 0 && (
+                                <button
+                                  onClick={() => handleSendReminder(student)}
+                                  disabled={sendingReminderId === student.id}
+                                  className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-lg transition-all cursor-pointer"
+                                  title="Send Fee Due Reminder Email & In-App Alert"
+                                >
+                                  {sendingReminderId === student.id ? (
+                                    <Loader2 className="w-4 h-4 animate-spin text-rose-600" />
+                                  ) : (
+                                    <Mail className="w-4 h-4" />
+                                  )}
+                                </button>
+                              )}
 
                               {/* Configure */}
                               <button
@@ -1437,6 +1522,21 @@ _Thank you for your timely payment!_
                   </div>
 
                   <div className="flex items-center gap-3">
+                    {(selectedStudent360.totalDue > 0 || selectedStudent360.feeStatus?.totalDue > 0) && (
+                      <button
+                        onClick={() => handleSendReminder(selectedStudent360)}
+                        disabled={sendingReminderId === selectedStudent360.id}
+                        className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl text-xs font-bold flex items-center gap-2 border border-rose-200 transition-all cursor-pointer shadow-sm"
+                        title="Send Fee Due Reminder Email & In-App Alert"
+                      >
+                        {sendingReminderId === selectedStudent360.id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Mail className="w-3.5 h-3.5" />
+                        )}
+                        <span>Send Fee Reminder</span>
+                      </button>
+                    )}
                     <button
                       onClick={() => handleOpenConfig(selectedStudent360)}
                       className="px-3.5 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-2 border border-slate-200 transition-all cursor-pointer shadow-sm"

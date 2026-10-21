@@ -68,15 +68,21 @@ export default function StudentOverview() {
   });
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [feeInfo, setFeeInfo] = useState(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const [coursesRes, attendanceRes, testsRes] = await Promise.all([
+        const [coursesRes, attendanceRes, testsRes, financeRes] = await Promise.all([
           api.get('/student/courses'),
           api.get('/student/activity'),
-          api.get('/student/tests')
+          api.get('/student/tests'),
+          api.get('/student/finance').catch(() => ({ data: { success: false } }))
         ]);
+
+        if (financeRes && financeRes.data && financeRes.data.success) {
+          setFeeInfo(financeRes.data);
+        }
 
         const courses = coursesRes.data.success ? coursesRes.data.courses : [];
         const activeCourses = courses.length;
@@ -367,6 +373,48 @@ export default function StudentOverview() {
           </p>
         </div>
       </div>
+
+      {/* In-App Tuition Fee Due Alert Notification Banner */}
+      {feeInfo && feeInfo.summary && Number(feeInfo.summary.outstanding) > 0 && (
+        <motion.div
+          variants={itemVariants}
+          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-rose-500/10 via-amber-500/10 to-indigo-500/10 border-2 border-rose-300/80 p-4 sm:p-5 shadow-sm backdrop-blur-md"
+        >
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-rose-500 to-amber-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-rose-500/25">
+                <BellRing className="w-5 h-5 animate-bounce" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 uppercase tracking-wider border border-rose-200">
+                    Tuition Fee Due Notice
+                  </span>
+                  {feeInfo.nextPayment?.monthName && (
+                    <span className="text-xs font-bold text-slate-500">
+                      Period: {feeInfo.nextPayment.monthName}
+                    </span>
+                  )}
+                </div>
+                <h3 className="text-base font-extrabold text-slate-900 mt-1">
+                  Outstanding Balance: <span className="text-rose-600 font-black">₹{Number(feeInfo.summary.outstanding).toLocaleString('en-IN')}</span>
+                </h3>
+                <p className="text-xs text-slate-600 font-medium mt-0.5">
+                  Your monthly course tuition fee is due. Please clear your balance at the institute cashier desk or online to maintain uninterrupted access.
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => navigate('/student/fees')}
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-700 hover:to-amber-700 text-white font-extrabold text-xs tracking-wide shadow-md shadow-rose-500/20 hover:shadow-lg transition-all shrink-0 cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              <span>View Fee Details & Receipts</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </motion.div>
+      )}
 
       {/* Grid: 3-column content (Left 2 columns, Right 1 column) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
