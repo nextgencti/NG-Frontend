@@ -49,7 +49,8 @@ import {
   HelpCircle,
   BadgePercent,
   Loader2,
-  BellRing
+  BellRing,
+  Trash2
 } from 'lucide-react';
 import api from '../../lib/axios';
 import toast from 'react-hot-toast';
@@ -215,6 +216,10 @@ export default function AdminFinance() {
   const [attendanceStats, setAttendanceStats] = useState({ total: 0, present: 0, absent: 0, leave: 0, unmarked: 0 });
   const [loadingAttendance, setLoadingAttendance] = useState(false);
   const [savingAttendance, setSavingAttendance] = useState(false);
+
+  // Fee Transaction Deletion State
+  const [deleteConfirmTxn, setDeleteConfirmTxn] = useState(null);
+  const [deletingTxn, setDeletingTxn] = useState(false);
 
   // Sync tab with URL param
   useEffect(() => {
@@ -570,6 +575,32 @@ export default function AdminFinance() {
     }
   };
 
+  // ─── FEE TRANSACTION DELETION (REVERT BALANCE) ───
+  const handleDeleteTransaction = async () => {
+    if (!deleteConfirmTxn) return;
+    setDeletingTxn(true);
+    try {
+      const res = await api.delete(`/admin/finance/transactions/${deleteConfirmTxn.id}`);
+      if (res.data.success) {
+        toast.success(res.data.message || 'Fee transaction deleted and student balance reverted successfully!');
+        setTransactions(prev => prev.filter(t => t.id !== deleteConfirmTxn.id));
+        setStudent360Txns(prev => prev.filter(t => t.id !== deleteConfirmTxn.id));
+        fetchData();
+        if (selectedStudent360 && (selectedStudent360.id === deleteConfirmTxn.studentId || selectedStudent360.studentId === deleteConfirmTxn.studentId)) {
+          fetchStudent360(selectedStudent360.id || selectedStudent360.studentId);
+        }
+        setDeleteConfirmTxn(null);
+      } else {
+        toast.error(res.data.message || 'Failed to delete fee transaction');
+      }
+    } catch (error) {
+      console.error('Delete transaction error:', error);
+      toast.error(error.response?.data?.message || 'Server error while deleting fee record');
+    } finally {
+      setDeletingTxn(false);
+    }
+  };
+
   // ─── EXPORT TO EXCEL (.CSV WITH UTF-8 BOM) ───
   const exportToExcel = (dataToExport) => {
     const list = dataToExport || filteredStudents;
@@ -702,7 +733,7 @@ _Thank you for your timely payment!_
   });
 
   return (
-    <div className="space-y-6 pb-16 max-w-7xl mx-auto font-sans antialiased text-slate-800">
+    <div className="space-y-6 pb-16 w-full max-w-[1650px] mx-auto px-2 sm:px-4 lg:px-6 font-sans antialiased text-slate-800">
       {/* Dynamic Print CSS */}
       <style dangerouslySetInnerHTML={{__html: `
         @media print {
@@ -875,42 +906,68 @@ _Thank you for your timely payment!_
 
           {/* Master Table Container */}
           <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-            {/* Filter and Search Bar */}
-            <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col lg:flex-row justify-between items-center gap-4 bg-slate-50/50">
-              <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
-                {/* Search */}
-                <div className="relative w-full sm:w-72">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search by name, roll no, phone..."
-                    className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all placeholder:text-slate-400 font-medium"
-                  />
-                  {searchQuery && (
-                    <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                      <X className="w-3.5 h-3.5" />
+            {/* Filter and Search Bar - 2 Tier Clean Layout */}
+            <div className="p-4 sm:p-5 border-b border-slate-200/80 bg-slate-50/60 space-y-3.5">
+              {/* Tier 1: Search, Course Selector, and Action Buttons */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full md:w-auto">
+                  {/* Search Bar */}
+                  <div className="relative w-full sm:w-80">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search by student name, roll no, phone..."
+                      className="w-full pl-9.5 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all placeholder:text-slate-400 font-medium shadow-2xs"
+                    />
+                    {searchQuery && (
+                      <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Course Filter */}
+                  <select
+                    value={courseFilter}
+                    onChange={(e) => setCourseFilter(e.target.value)}
+                    className="px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 shadow-2xs cursor-pointer"
+                  >
+                    <option value="all">All Courses ({courses.length})</option>
+                    {courses.map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+
+                  <span className="text-xs text-slate-500 font-medium hidden xl:inline-block pl-1">
+                    Showing <strong className="text-slate-800">{filteredStudents.length}</strong> of {students.length} students
+                  </span>
+                </div>
+
+                {/* Top Right Quick Actions */}
+                <div className="flex items-center gap-2 self-end md:self-auto shrink-0">
+                  {dueStudentsCount > 0 && (
+                    <button
+                      onClick={handleBulkReminders}
+                      disabled={bulkReminderLoading}
+                      className="px-4 py-2 bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600 text-white font-bold rounded-xl text-xs transition-all flex items-center gap-2 shadow-sm cursor-pointer whitespace-nowrap active:scale-95 disabled:opacity-50"
+                      title="Send automated email and in-app fee reminders to all students with dues"
+                    >
+                      {bulkReminderLoading ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <BellRing className="w-3.5 h-3.5" />
+                      )}
+                      <span>Notify Due Students ({dueStudentsCount})</span>
                     </button>
                   )}
                 </div>
-
-                {/* Course Filter */}
-                <select
-                  value={courseFilter}
-                  onChange={(e) => setCourseFilter(e.target.value)}
-                  className="w-full sm:w-48 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-                >
-                  <option value="all">All Courses</option>
-                  {courses.map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
               </div>
 
-              {/* Status Filter Segmented Controls & Bulk Actions */}
-              <div className="flex flex-wrap items-center justify-between gap-3 w-full lg:w-auto">
-                <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl w-full lg:w-auto overflow-x-auto border border-slate-200/60">
+              {/* Tier 2: Dedicated Full-Width Segmented Status Filter Tabs */}
+              <div className="pt-1 border-t border-slate-200/60">
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
                   {[
                     { id: 'all', label: 'All Active', count: activeStudentsCount },
                     { id: 'due', label: 'Due Balances', count: dueStudentsCount },
@@ -918,42 +975,31 @@ _Thank you for your timely payment!_
                     { id: 'clear', label: 'Cleared', count: clearedStudentsCount },
                     { id: 'leave', label: 'On Leave', count: leaveStudentsCount },
                     { id: 'old', label: 'Old (Online Only)', count: oldStudentsCount },
-                    { id: 'inactive', label: 'Inactive Accounts', count: inactiveStudentsCount }
-                  ].map(f => (
-                    <button
-                      key={f.id}
-                      onClick={() => setStatusFilter(f.id)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
-                        statusFilter === f.id
-                          ? 'bg-white text-primary-600 font-extrabold shadow-sm'
-                          : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      <span>{f.label}</span>
-                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                        statusFilter === f.id ? 'bg-primary-50 text-primary-700' : 'bg-slate-200/70 text-slate-500'
-                      }`}>
-                        {f.count}
-                      </span>
-                    </button>
-                  ))}
+                    { id: 'inactive', label: 'Inactive / Blocked', count: inactiveStudentsCount }
+                  ].map(f => {
+                    const isSelected = statusFilter === f.id;
+                    return (
+                      <button
+                        key={f.id}
+                        onClick={() => setStatusFilter(f.id)}
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-2 border ${
+                          isSelected
+                            ? 'bg-white text-primary-700 font-extrabold shadow-xs border-primary-200/80 ring-1 ring-primary-500/20'
+                            : 'bg-white/60 hover:bg-white text-slate-600 hover:text-slate-900 border-slate-200/70'
+                        }`}
+                      >
+                        <span>{f.label}</span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-extrabold ${
+                          isSelected 
+                            ? 'bg-primary-50 text-primary-700 border border-primary-200/60' 
+                            : 'bg-slate-100 text-slate-500'
+                        }`}>
+                          {f.count}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
-
-                {dueStudentsCount > 0 && (
-                  <button
-                    onClick={handleBulkReminders}
-                    disabled={bulkReminderLoading}
-                    className="px-3.5 py-1.5 bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600 text-white font-extrabold rounded-xl text-xs transition-all flex items-center gap-1.5 shadow-sm cursor-pointer whitespace-nowrap"
-                    title="Send automated email and in-app fee reminders to all students with dues"
-                  >
-                    {bulkReminderLoading ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Mail className="w-3.5 h-3.5" />
-                    )}
-                    <span>Notify Due Students ({dueStudentsCount})</span>
-                  </button>
-                )}
               </div>
             </div>
 
@@ -970,7 +1016,7 @@ _Thank you for your timely payment!_
                     <th className="p-3.5 whitespace-nowrap">Total Paid</th>
                     <th className="p-3.5 whitespace-nowrap">Total Due</th>
                     <th className="p-3.5 text-center whitespace-nowrap">Status</th>
-                    <th className="p-3.5 pr-6 text-right whitespace-nowrap">Actions</th>
+                    <th className="p-3.5 pr-6 text-right whitespace-nowrap sticky right-0 bg-slate-50/95 backdrop-blur-sm z-10 shadow-[-8px_0_12px_-4px_rgba(0,0,0,0.06)]">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
@@ -1099,7 +1145,7 @@ _Thank you for your timely payment!_
                           </td>
 
                           {/* Row Actions */}
-                          <td className="p-3.5 pr-6 text-right whitespace-nowrap">
+                          <td className="p-3.5 pr-6 text-right whitespace-nowrap sticky right-0 bg-white group-hover:bg-slate-50/95 transition-colors z-10 shadow-[-8px_0_12px_-4px_rgba(0,0,0,0.06)]">
                             <div className="flex items-center justify-end gap-1.5">
                               {/* Collect Fee Button */}
                               <button
@@ -1737,12 +1783,21 @@ _Thank you for your timely payment!_
                               {t.monthsPaid?.map(formatMonth).join(', ') || 'N/A'}
                             </td>
                             <td className="py-3 text-right">
-                              <button
-                                onClick={() => setSelectedTxn(t)}
-                                className="px-3 py-1 bg-primary-50 hover:bg-primary-100 text-primary-700 rounded-lg text-xs font-bold transition-all cursor-pointer"
-                              >
-                                Print Slip
-                              </button>
+                              <div className="flex items-center justify-end gap-1.5">
+                                <button
+                                  onClick={() => setSelectedTxn(t)}
+                                  className="px-3 py-1 bg-primary-50 hover:bg-primary-100 text-primary-700 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                                >
+                                  Print Slip
+                                </button>
+                                <button
+                                  onClick={() => setDeleteConfirmTxn(t)}
+                                  className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 hover:text-rose-700 border border-rose-200 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                                  title="Delete Fee Record & Revert Balance"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -1989,12 +2044,21 @@ _Thank you for your timely payment!_
                       <td className="py-3 font-extrabold text-emerald-600">₹{t.amount.toLocaleString('en-IN')}</td>
                       <td className="py-3">{t.paymentMethod}</td>
                       <td className="py-3 pr-4 text-right">
-                        <button
-                          onClick={() => setSelectedTxn(t)}
-                          className="px-3 py-1 bg-primary-50 hover:bg-primary-100 text-primary-700 rounded-lg text-xs font-bold transition-all cursor-pointer"
-                        >
-                          Print Slip
-                        </button>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => setSelectedTxn(t)}
+                            className="px-3 py-1 bg-primary-50 hover:bg-primary-100 text-primary-700 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                          >
+                            Print Slip
+                          </button>
+                          <button
+                            onClick={() => setDeleteConfirmTxn(t)}
+                            className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 hover:text-rose-700 border border-rose-200 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                            title="Delete Fee Record & Revert Balance"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -2323,6 +2387,91 @@ _Thank you for your timely payment!_
           document.body
         );
       })()}
+      {/* ─── MODAL: DELETE FEE TRANSACTION CONFIRMATION ─── */}
+      {deleteConfirmTxn && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-2xl border border-rose-100 w-full max-w-md shadow-2xl p-6 space-y-4">
+            <div className="flex items-start gap-3.5">
+              <div className="w-11 h-11 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-base font-extrabold text-slate-900">
+                  Delete Fee Record?
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Are you sure you want to delete this payment receipt? This action will automatically revert the student's fee balance.
+                </p>
+              </div>
+            </div>
+
+            {/* Details Box */}
+            <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 space-y-2 text-xs">
+              <div className="flex justify-between items-center text-slate-600">
+                <span>Receipt No:</span>
+                <strong className="font-mono font-bold text-slate-900">#{deleteConfirmTxn.receiptNo || deleteConfirmTxn.id}</strong>
+              </div>
+              <div className="flex justify-between items-center text-slate-600">
+                <span>Student:</span>
+                <strong className="font-bold text-slate-900">{deleteConfirmTxn.studentName || selectedStudent360?.name || 'N/A'}</strong>
+              </div>
+              <div className="flex justify-between items-center text-slate-600">
+                <span>Amount to Revert:</span>
+                <strong className="font-extrabold text-rose-600 text-sm">₹{Number(deleteConfirmTxn.amount || 0).toLocaleString('en-IN')}</strong>
+              </div>
+              {deleteConfirmTxn.date && (
+                <div className="flex justify-between items-center text-slate-600">
+                  <span>Payment Date:</span>
+                  <span className="font-medium text-slate-700">{deleteConfirmTxn.date}</span>
+                </div>
+              )}
+              {deleteConfirmTxn.monthsPaid && deleteConfirmTxn.monthsPaid.length > 0 && (
+                <div className="flex justify-between items-center text-slate-600">
+                  <span>Settled Months:</span>
+                  <span className="font-medium text-slate-700">{deleteConfirmTxn.monthsPaid.map(formatMonth).join(', ')}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="p-3 bg-rose-50 border border-rose-200/80 rounded-xl text-[11px] text-rose-700 flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+              <span>
+                <strong>Note:</strong> Reverting this record will deduct <strong>₹{Number(deleteConfirmTxn.amount || 0).toLocaleString('en-IN')}</strong> from student's paid records and restore the dues in their ledger.
+              </span>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmTxn(null)}
+                disabled={deletingTxn}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteTransaction}
+                disabled={deletingTxn}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs transition-all flex items-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
+              >
+                {deletingTxn ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Reverting & Deleting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Confirm Delete</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
