@@ -18,6 +18,20 @@ export default function ProtectedRoute({ requiredRole = null, children }) {
     return <Navigate to="/" replace />;
   }
 
+  // Enforce inactive/suspended account block (No offline and No online access)
+  if (currentUser?.role === 'student' && (currentUser?.status === 'inactive' || currentUser?.status === 'rejected')) {
+    if (pathname !== '/inactive-account') {
+      return <Navigate to="/inactive-account" replace />;
+    }
+  }
+
+  // Prevent active or old students from seeing inactive screen
+  if (currentUser?.role === 'student' && currentUser?.status !== 'inactive' && currentUser?.status !== 'rejected') {
+    if (pathname === '/inactive-account') {
+      return <Navigate to="/dashboard" replace />;
+    }
+  }
+
   // Enforce pending account approval block
   if (currentUser?.role === 'student' && currentUser?.status === 'pending') {
     // Only allow them to complete profile or see the pending screen
@@ -26,7 +40,7 @@ export default function ProtectedRoute({ requiredRole = null, children }) {
     }
   }
 
-  // Prevent active students from seeing pending screen
+  // Prevent active or old students from seeing pending screen
   if (currentUser?.role === 'student' && currentUser?.status !== 'pending') {
     if (pathname === '/pending-approval') {
        return <Navigate to="/dashboard" replace />;

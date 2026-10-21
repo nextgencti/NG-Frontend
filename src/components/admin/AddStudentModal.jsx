@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Upload, User, Mail, Phone, BookOpen, MapPin, Calendar, CreditCard, Clock, FileText, Printer, Users, IndianRupee, Lock } from 'lucide-react';
+import { X, Upload, User, Mail, Phone, BookOpen, MapPin, Calendar, CreditCard, Clock, FileText, Printer, Users, IndianRupee, Lock, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../../lib/axios';
 import { useAuth } from '../../context/AuthContext';
@@ -43,6 +43,7 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded, stude
   const [loading, setLoading] = useState(false);
   const [courses, setCourses] = useState([]);
   const [focusedField, setFocusedField] = useState(null);
+  const [showPassword, setShowPassword] = useState(true);
 
   const generateRandomPassword = () => {
     const randomDigits = Math.floor(100000 + Math.random() * 900000);
@@ -71,6 +72,8 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded, stude
       fetchCourses();
       
       if (student) {
+        // Pre-fill existing student password or institutional default
+        const existingPassword = student.password || (student.phone ? `NG@${student.phone.slice(-6)}` : generateRandomPassword());
         setFormData({
           name: student.name || '',
           email: student.email || '',
@@ -90,9 +93,10 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded, stude
           admissionTakenBy: student.admissionTakenBy || currentUser?.name || currentUser?.fullName || '',
           receiptNumber: student.receiptNumber || '',
           feeModel: student.feeModel || 'fixed',
-          password: student.password || ''
+          password: existingPassword
         });
         setPreviewUrl(student.photoURL || null);
+        setShowPassword(true);
       } else {
         // Reset form to default on open and auto-generate password
         setFormData({
@@ -101,6 +105,7 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded, stude
           password: generateRandomPassword()
         });
         setPreviewUrl(null);
+        setShowPassword(true);
       }
       setProfilePic(null);
     }
@@ -250,7 +255,7 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded, stude
                     <input 
                       type="text" 
                       name="name" 
-                      required 
+                      required={!student} 
                       value={formData.name} 
                       onChange={handleChange} 
                       onFocus={() => setFocusedField('name')}
@@ -258,7 +263,7 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded, stude
                       className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-accent-500/20 transition-all font-semibold" 
                     />
                     <label className={getLabelClass(formData.name, focusedField === 'name')}>
-                      Full Name *
+                      Full Name {student ? '' : '*'}
                     </label>
                   </div>
                   
@@ -267,7 +272,7 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded, stude
                     <input 
                       type="email" 
                       name="email" 
-                      required 
+                      required={!student} 
                       value={formData.email} 
                       onChange={handleChange} 
                       onFocus={() => setFocusedField('email')}
@@ -275,7 +280,7 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded, stude
                       className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-accent-500/20 transition-all font-semibold" 
                     />
                     <label className={getLabelClass(formData.email, focusedField === 'email')}>
-                      Email Address *
+                      Email Address {student ? '' : '*'}
                     </label>
                   </div>
 
@@ -283,29 +288,41 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded, stude
                     <div className="flex-1 relative group">
                       <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-accent-600 transition-colors pointer-events-none" />
                       <input 
-                        type="text" 
+                        type={showPassword ? "text" : "password"} 
                         name="password" 
-                        required 
+                        required={!student} 
                         value={formData.password} 
                         onChange={handleChange}
                         onFocus={() => setFocusedField('password')}
                         onBlur={() => setFocusedField(null)}
-                        className="w-full pl-11 pr-12 py-3 bg-transparent border-none text-xs text-slate-900 focus:outline-none font-semibold" 
+                        className="w-full pl-11 pr-12 py-3 bg-transparent border-none text-xs text-slate-900 focus:outline-none font-semibold font-mono tracking-wide" 
                       />
                       <label className={getLabelClass(formData.password, focusedField === 'password')}>
-                        Login Password *
+                        Login Password {student ? '' : '*'}
                       </label>
                     </div>
-                    {!student && (
+                    <div className="flex items-center gap-1 mr-2.5 shrink-0 z-10">
                       <button
                         type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, password: generateRandomPassword() }))}
-                        className="mr-3 px-2.5 py-1 text-[9px] font-black text-[#4F46E5] hover:text-[#3B32B3] bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-all shadow-sm shrink-0 uppercase tracking-widest active:scale-95 cursor-pointer"
-                        title="Regenerate Password"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-white rounded-lg transition-all cursor-pointer"
+                        title={showPassword ? "Hide Password" : "Show Password"}
+                      >
+                        {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newPass = generateRandomPassword();
+                          setFormData(prev => ({ ...prev, password: newPass }));
+                          setShowPassword(true);
+                        }}
+                        className="px-2.5 py-1 text-[9px] font-black text-[#4F46E5] hover:text-[#3B32B3] bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-all shadow-sm shrink-0 uppercase tracking-widest active:scale-95 cursor-pointer"
+                        title="Auto Generate New Password"
                       >
                         Auto
                       </button>
-                    )}
+                    </div>
                   </div>
 
                   <div className="relative group">
@@ -313,7 +330,7 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded, stude
                     <input 
                       type="tel" 
                       name="phone" 
-                      required 
+                      required={!student} 
                       value={formData.phone} 
                       onChange={handleChange} 
                       onFocus={() => setFocusedField('phone')}
@@ -321,7 +338,7 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded, stude
                       className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-accent-500/20 transition-all font-semibold" 
                     />
                     <label className={getLabelClass(formData.phone, focusedField === 'phone')}>
-                      Phone Number *
+                      Phone Number {student ? '' : '*'}
                     </label>
                   </div>
 
@@ -414,7 +431,7 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded, stude
                   <MapPin className="absolute left-4 top-3.5 w-4 h-4 text-slate-400 group-focus-within:text-accent-600 transition-colors" />
                   <textarea 
                     name="address" 
-                    required 
+                    required={!student} 
                     value={formData.address} 
                     onChange={handleChange} 
                     onFocus={() => setFocusedField('address')}
@@ -423,7 +440,7 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded, stude
                     className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-accent-500/20 transition-all font-semibold resize-none" 
                   />
                   <label className={getLabelClass(formData.address, focusedField === 'address', true)}>
-                    Student Address *
+                    Student Address {student ? '' : '*'}
                   </label>
                 </div>
               </div>
@@ -437,7 +454,7 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded, stude
                     <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-accent-600 transition-colors pointer-events-none" />
                     <select 
                       name="courseId" 
-                      required 
+                      required={!student} 
                       value={formData.courseId} 
                       onChange={handleCourseChange} 
                       onFocus={() => setFocusedField('courseId')}
@@ -460,7 +477,7 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded, stude
                       })()}
                     </select>
                     <label className={getLabelClass(formData.courseId, focusedField === 'courseId')}>
-                      Select Course *
+                      Select Course {student ? '' : '*'}
                     </label>
                   </div>
 
@@ -546,7 +563,7 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded, stude
                     <input 
                       type="date" 
                       name="admissionDate" 
-                      required 
+                      required={!student} 
                       value={formData.admissionDate} 
                       onChange={handleChange} 
                       onFocus={() => setFocusedField('admissionDate')}
@@ -629,7 +646,7 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded, stude
                   <div className="absolute inset-0 bg-slate-900/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <Upload className="w-5 h-5 text-white" />
                   </div>
-                  <input type="file" required={!student} accept="image/*" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                  <input type="file" required={false} accept="image/*" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                 </div>
                 <p className="text-[9px] text-slate-400 mt-3 text-center">Click block to upload photo.<br/>Supports JPG, PNG (Max 2MB).</p>
               </div>

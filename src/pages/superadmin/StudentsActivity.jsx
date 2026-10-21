@@ -17,9 +17,17 @@ import {
   Inbox,
   Award,
   Globe,
-  Monitor,
   CalendarDays,
-  Compass
+  Compass,
+  Mail,
+  Send,
+  BellRing,
+  AlertCircle,
+  Sparkles,
+  SendHorizontal,
+  RefreshCw,
+  Zap,
+  Monitor
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../lib/axios';
@@ -62,8 +70,18 @@ export default function StudentsActivity() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
+  // Inactivity Reminders Tab State
+  const [activeTab, setActiveTab] = useState('feed'); // 'feed' | 'inactive'
+  const [inactiveStudents, setInactiveStudents] = useState([]);
+  const [isInactiveLoading, setIsInactiveLoading] = useState(false);
+  const [isSendingReminders, setIsSendingReminders] = useState(false);
+  const [sendingSingleId, setSendingSingleId] = useState(null);
+  const [inactiveDaysFilter, setInactiveDaysFilter] = useState(7);
+  const [inactiveSearchQuery, setInactiveSearchQuery] = useState('');
+
   useEffect(() => {
     fetchActivities();
+    fetchInactiveStudents(7);
   }, []);
 
   useEffect(() => {
@@ -212,10 +230,87 @@ export default function StudentsActivity() {
     }
   };
 
+  const fetchInactiveStudents = async (days = inactiveDaysFilter) => {
+    setIsInactiveLoading(true);
+    try {
+      const response = await api.get(`/superadmin/inactivity-reminders/preview?days=${days}`);
+      if (response.data.success) {
+        setInactiveStudents(response.data.students || []);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to load inactive students list');
+    } finally {
+      setIsInactiveLoading(false);
+    }
+  };
+
+  const handleSendAllReminders = async () => {
+    const eligibleCount = inactiveStudents.filter(s => s.canSendReminder).length;
+    if (eligibleCount === 0) {
+      toast('No eligible inactive students to remind right now (all were reminded recently).', { icon: 'ℹ️' });
+      return;
+    }
+    setIsSendingReminders(true);
+    try {
+      const response = await api.post('/superadmin/inactivity-reminders/send', {
+        daysThreshold: inactiveDaysFilter
+      });
+      if (response.data.success) {
+        toast.success(response.data.message || 'Reminder emails sent successfully!');
+        fetchInactiveStudents(inactiveDaysFilter);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.message || 'Failed to send reminder emails');
+    } finally {
+      setIsSendingReminders(false);
+    }
+  };
+
+  const handleSendSingleReminder = async (student) => {
+    if (!student.email) {
+      toast.error('Student does not have an email address');
+      return;
+    }
+    setSendingSingleId(student.id);
+    try {
+      const response = await api.post('/superadmin/inactivity-reminders/send', {
+        studentIds: [student.id],
+        daysThreshold: inactiveDaysFilter
+      });
+      if (response.data.success) {
+        toast.success(`Reminder email sent to ${student.name || 'student'}!`);
+        fetchInactiveStudents(inactiveDaysFilter);
+      }
+    } catch (error) {
+      toast.error('Failed to send reminder email');
+    } finally {
+      setSendingSingleId(null);
+    }
+  };
+
+  const filteredInactiveStudents = useMemo(() => {
+    return inactiveStudents.filter(s => {
+      const q = inactiveSearchQuery.toLowerCase();
+      const matchesSearch = 
+        s.name?.toLowerCase().includes(q) ||
+        s.email?.toLowerCase().includes(q) ||
+        s.rollNumber?.toLowerCase().includes(q) ||
+        s.courseName?.toLowerCase().includes(q);
+      return matchesSearch;
+    });
+  }, [inactiveStudents, inactiveSearchQuery]);
+
+  const eligibleInactiveCount = useMemo(() => {
+    return inactiveStudents.filter(s => s.canSendReminder).length;
+  }, [inactiveStudents]);
+
   // Helper to format timestamp
   const formatDateTime = (dateStr) => {
     if (!dateStr) return 'N/A';
     const dateObj = new Date(dateStr);
+    if (isNaN(dateObj.getTime())) return 'N/A';
     
     const day = dateObj.getDate();
     const monthNames = [
@@ -238,6 +333,7 @@ export default function StudentsActivity() {
   const getRelativeTime = (dateStr) => {
     if (!dateStr) return '';
     const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return '';
     const now = new Date();
     const diffMs = now - date;
     const diffMins = Math.floor(diffMs / 60000);
@@ -496,9 +592,48 @@ export default function StudentsActivity() {
         })}
       </div>
 
-      {/* Main Container - Filter and Timeline list */}
-      <motion.div 
-        variants={itemVariants}
+      {/* ─── TAB SWITCHER ─── */}
+      <div className="flex items-center gap-3 border-b border-slate-200/80 pb-2">
+        <button
+          onClick={() => setActiveTab('feed')}
+          className={`flex items-center gap-2.5 px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
+            activeTab === 'feed'
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25 scale-[1.02]'
+              : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100/70'
+          }`}
+        >
+          <Activity className="w-4 h-4" />
+          Live Activity Feed
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">
+            {activities.length}
+          </span>
+        </button>
+
+        <button
+          onClick={() => {
+            setActiveTab('inactive');
+            if (inactiveStudents.length === 0) fetchInactiveStudents(inactiveDaysFilter);
+          }}
+          className={`flex items-center gap-2.5 px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
+            activeTab === 'inactive'
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25 scale-[1.02]'
+              : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100/70'
+          }`}
+        >
+          <Mail className="w-4 h-4" />
+          7-Day Inactivity Reminders
+          {inactiveStudents.length > 0 && (
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${activeTab === 'inactive' ? 'bg-white text-indigo-700' : 'bg-amber-100 text-amber-800'}`}>
+              {inactiveStudents.length}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* ─── TAB 1: LIVE ACTIVITY FEED ─── */}
+      {activeTab === 'feed' && (
+        <motion.div 
+          variants={itemVariants}
         className="bg-white/70 backdrop-blur-2xl border border-white/60 rounded-[32px] shadow-[0_12px_36px_rgba(0,0,0,0.02)] p-6 space-y-6 hover:shadow-[0_15px_40px_rgba(0,0,0,0.06)] hover:border-white transition-all duration-300"
       >
         {/* Filters Header Bar */}
@@ -637,6 +772,248 @@ export default function StudentsActivity() {
           </div>
         )}
       </motion.div>
+      )}
+
+      {/* ─── TAB 2: 7-DAY INACTIVITY REMINDERS MANAGER ─── */}
+      {activeTab === 'inactive' && (
+        <motion.div 
+          variants={itemVariants}
+          className="space-y-6"
+        >
+          {/* Automated Scheduler Status Card */}
+          <div className="bg-gradient-to-r from-indigo-900 via-indigo-950 to-slate-900 text-white rounded-[28px] p-6 sm:p-7 shadow-xl shadow-indigo-950/20 relative overflow-hidden border border-indigo-800/40">
+            <div className="absolute right-0 top-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
+            
+            <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+              <div className="space-y-2 max-w-2xl">
+                <div className="flex items-center gap-2">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                  </span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400">
+                    Automated Daily Scheduler Active
+                  </span>
+                  <span className="text-indigo-300 text-[10px] font-bold bg-indigo-800/60 px-2 py-0.5 rounded-full border border-indigo-700/50">
+                    10:00 AM IST Daily
+                  </span>
+                </div>
+
+                <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                  7-Day Inactivity Email Reminders
+                </h3>
+
+                <p className="text-xs sm:text-sm text-indigo-200/90 leading-relaxed font-medium">
+                  NextGen server automatically scans enrolled students every morning. Any student without study logs or portal activity for 7+ days receives a friendly, branded encouragement email to get back on track.
+                </p>
+              </div>
+
+              {/* Quick Action Button */}
+              <div className="shrink-0 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+                <button
+                  onClick={handleSendAllReminders}
+                  disabled={isSendingReminders || eligibleInactiveCount === 0}
+                  className={`px-6 py-3.5 rounded-2xl font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2.5 shadow-lg ${
+                    eligibleInactiveCount > 0 && !isSendingReminders
+                      ? 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-emerald-500/30 active:scale-95 cursor-pointer'
+                      : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+                  }`}
+                >
+                  {isSendingReminders ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Sending Reminders...</span>
+                    </>
+                  ) : (
+                    <>
+                      <SendHorizontal className="w-4 h-4" />
+                      <span>Send Reminders to All ({eligibleInactiveCount})</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Inactive Students Table Container */}
+          <div className="bg-white/70 backdrop-blur-2xl border border-white/60 rounded-[32px] shadow-[0_12px_36px_rgba(0,0,0,0.02)] p-6 space-y-6">
+            {/* Toolbar */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search inactive students by name, email, roll no..."
+                  value={inactiveSearchQuery}
+                  onChange={(e) => setInactiveSearchQuery(e.target.value)}
+                  className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none text-slate-900 placeholder:text-slate-400"
+                />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Filter className="w-3.5 h-3.5 text-slate-400" />
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Inactivity:</span>
+                <select
+                  value={inactiveDaysFilter}
+                  onChange={(e) => {
+                    const days = parseInt(e.target.value);
+                    setInactiveDaysFilter(days);
+                    fetchInactiveStudents(days);
+                  }}
+                  className="px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-indigo-500 transition-all text-slate-700 cursor-pointer shadow-sm"
+                >
+                  <option value={7}>7+ Days (Standard)</option>
+                  <option value={14}>14+ Days (Two Weeks)</option>
+                  <option value={30}>30+ Days (One Month)</option>
+                </select>
+
+                <button
+                  onClick={() => fetchInactiveStudents(inactiveDaysFilter)}
+                  className="p-2.5 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-900 border border-slate-200 rounded-xl transition-all cursor-pointer shadow-sm"
+                  title="Refresh Inactive Students"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isInactiveLoading ? 'animate-spin text-indigo-600' : ''}`} />
+                </button>
+              </div>
+            </div>
+
+            {/* Inactive Students Table */}
+            {isInactiveLoading ? (
+              <div className="flex flex-col items-center justify-center py-24 gap-4">
+                <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Analyzing Student Activity Timestamps...</p>
+              </div>
+            ) : filteredInactiveStudents.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-100 text-[10px] font-black uppercase tracking-wider text-slate-400">
+                      <th className="py-3 px-4">Student</th>
+                      <th className="py-3 px-4">Course</th>
+                      <th className="py-3 px-4">Inactivity</th>
+                      <th className="py-3 px-4">Last Activity</th>
+                      <th className="py-3 px-4">Reminder Status</th>
+                      <th className="py-3 px-4 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50 text-xs">
+                    {filteredInactiveStudents.map((s) => {
+                      const isSingleSending = sendingSingleId === s.id;
+                      
+                      // Inactivity badge colors based on duration
+                      let badgeColor = 'bg-amber-50 text-amber-700 border-amber-200';
+                      if (s.daysInactive >= 30) {
+                        badgeColor = 'bg-rose-50 text-rose-700 border-rose-200';
+                      } else if (s.daysInactive >= 14) {
+                        badgeColor = 'bg-orange-50 text-orange-700 border-orange-200';
+                      }
+
+                      return (
+                        <tr key={s.id} className="hover:bg-slate-50/60 transition-colors group">
+                          {/* Student Info */}
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 font-black text-xs flex items-center justify-center shrink-0 uppercase">
+                                {s.name ? s.name.charAt(0) : 'S'}
+                              </div>
+                              <div>
+                                <h4 className="font-extrabold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                                  {s.name}
+                                </h4>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  {s.rollNumber && s.rollNumber !== 'N/A' && (
+                                    <span className="text-[9px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded">
+                                      {s.rollNumber}
+                                    </span>
+                                  )}
+                                  <span className="text-[10px] font-semibold text-slate-400 truncate max-w-[140px]">
+                                    {s.email}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Course */}
+                          <td className="py-3.5 px-4 font-bold text-slate-700">
+                            {s.courseName}
+                          </td>
+
+                          {/* Days Inactive */}
+                          <td className="py-3.5 px-4">
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[10px] font-black uppercase tracking-wider ${badgeColor}`}>
+                              <Clock className="w-3 h-3" />
+                              {s.daysInactive} Days Inactive
+                            </span>
+                          </td>
+
+                          {/* Last Activity Date */}
+                          <td className="py-3.5 px-4">
+                            <span className="font-semibold text-slate-600 block">
+                              {formatDateTime(s.lastActiveDate)}
+                            </span>
+                            <span className="text-[9px] font-bold text-slate-400 block mt-0.5">
+                              {getRelativeTime(s.lastActiveDate)}
+                            </span>
+                          </td>
+
+                          {/* Reminder Status */}
+                          <td className="py-3.5 px-4">
+                            {s.lastReminderSentDate ? (
+                              <div className="space-y-0.5">
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-md">
+                                  <CheckCircle2 className="w-3 h-3 text-indigo-600" />
+                                  Sent Recently
+                                </span>
+                                <span className="text-[9px] text-slate-400 block">
+                                  {getRelativeTime(s.lastReminderSentDate)}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">
+                                Never Sent
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Action Button */}
+                          <td className="py-3.5 px-4 text-right">
+                            <button
+                              onClick={() => handleSendSingleReminder(s)}
+                              disabled={isSingleSending || !s.email}
+                              className={`px-3 py-1.5 rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all inline-flex items-center gap-1.5 ${
+                                s.canSendReminder
+                                  ? 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 active:scale-95 cursor-pointer shadow-sm'
+                                  : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200 cursor-pointer'
+                              }`}
+                              title={s.canSendReminder ? 'Send reminder email now' : 'Re-send reminder'}
+                            >
+                              {isSingleSending ? (
+                                <Loader2 className="w-3 h-3 animate-spin text-indigo-600" />
+                              ) : (
+                                <Send className="w-3 h-3 text-indigo-600" />
+                              )}
+                              <span>Send</span>
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="p-16 text-center border border-dashed border-slate-200 rounded-[2rem] bg-slate-50/50">
+                <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-4" />
+                <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">Great News! No Inactive Students</h4>
+                <p className="text-slate-400 mt-1 max-w-sm mx-auto font-medium text-xs leading-relaxed">
+                  All active enrolled students have been practicing within the selected {inactiveDaysFilter}-day window.
+                </p>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      )}
 
       {/* ─── DETAILED STUDENT ANALYTICS CENTER POPUP MODAL ─── */}
       <AnimatePresence>
@@ -693,21 +1070,31 @@ export default function StudentsActivity() {
                       <div className="flex items-center gap-4 z-10 min-w-0">
                         {/* Photo */}
                         <div className="w-14 h-14 rounded-2xl bg-white/10 border-2 border-white/20 flex items-center justify-center overflow-hidden shrink-0 shadow-inner">
-                          {detailedData.student.photoURL ? (
+                          {detailedData.student?.photoURL ? (
                             <img src={detailedData.student.photoURL} alt="Student" className="w-full h-full object-cover" />
                           ) : (
                             <span className="text-lg font-black text-indigo-200">
-                              {detailedData.student.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                              {(detailedData.student?.name || 'S')
+                                .split(' ')
+                                .filter(Boolean)
+                                .map(n => n[0])
+                                .join('')
+                                .substring(0, 2)
+                                .toUpperCase()}
                             </span>
                           )}
                         </div>
 
                         <div className="min-w-0">
-                          <h3 className="font-black text-base uppercase tracking-wide truncate leading-tight">{detailedData.student.name}</h3>
+                          <h3 className="font-black text-base uppercase tracking-wide truncate leading-tight">
+                            {detailedData.student?.name || 'Unknown Student'}
+                          </h3>
                           <span className="inline-block mt-1 text-[8.5px] font-mono font-bold text-indigo-200 bg-white/10 border border-white/15 px-2 py-0.5 rounded leading-none">
-                            Roll No: {detailedData.student.rollNumber}
+                            Roll No: {detailedData.student?.rollNumber || 'N/A'}
                           </span>
-                          <p className="text-[9px] text-indigo-200 mt-1 truncate font-medium">{detailedData.student.email}</p>
+                          <p className="text-[9px] text-indigo-200 mt-1 truncate font-medium">
+                            {detailedData.student?.email || 'N/A'}
+                          </p>
                         </div>
                       </div>
 
@@ -799,14 +1186,14 @@ export default function StudentsActivity() {
                         <div>
                           <span className="text-[7.5px] font-black text-indigo-600 uppercase tracking-widest block leading-none">Last Login Time</span>
                           <span className="text-xs font-black text-slate-700 mt-1.5 block leading-none">
-                            {formatDateTime(detailedData.student.lastLogin)}
+                            {formatDateTime(detailedData.student?.lastLogin)}
                           </span>
                         </div>
                       </div>
                       
-                      {detailedData.student.lastLogin && (
+                      {detailedData.student?.lastLogin && (
                         <div className="px-3.5 py-1.5 bg-white border border-indigo-100/60 rounded-xl text-[9px] font-black uppercase text-indigo-700 tracking-wider shadow-sm shrink-0">
-                          Active {getRelativeTime(detailedData.student.lastLogin)}
+                          Active {getRelativeTime(detailedData.student?.lastLogin)}
                         </div>
                       )}
                     </div>

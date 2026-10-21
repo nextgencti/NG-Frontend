@@ -70,6 +70,17 @@ export const AuthProvider = ({ children }) => {
       .catch((error) => {
         console.error("[AUTH] Background Firebase init error:", error);
       });
+
+    // ── PHASE 3: Listen for session expiration events from Axios interceptor ──
+    const handleExpired = () => {
+      setCurrentUser(null);
+      setIsSuperAdminVerified(false);
+      setIsAdminVerified(false);
+      toast.error('Session expire ho gaya hai. Kripya dobara login karein.', { id: 'session-expired' });
+    };
+
+    window.addEventListener('auth:session_expired', handleExpired);
+    return () => window.removeEventListener('auth:session_expired', handleExpired);
   }, []);
 
   // Login with Google — uses activeAuth & activeProvider with fallback to imported instances

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Users, BookOpen, CreditCard, TrendingUp, CalendarCheck, ArrowRight } from 'lucide-react';
 import api from '../../lib/axios';
 
 export default function AdminOverview() {
+  const navigate = useNavigate();
   const [statsData, setStatsData] = useState(() => {
     try {
       const cached = localStorage.getItem('admin_stats');
@@ -156,12 +158,13 @@ export default function AdminOverview() {
             </div>
             <div className="p-4 space-y-2.5">
               {[
-                { label: 'Add New Course', icon: BookOpen, color: 'text-[#4F46E5]', bg: 'bg-[#EEF2FF]' },
-                { label: 'Add New Student', icon: Users, iconColor: 'text-[#0EA5E9]', bg: 'bg-[#F0F9FF]' },
-                { label: 'Take Attendance', icon: CalendarCheck, iconColor: 'text-[#16A34A]', bg: 'bg-[#F0FDF4]' },
+                { label: 'Add New Course', icon: BookOpen, color: 'text-[#4F46E5]', bg: 'bg-[#EEF2FF]', path: '/admin/courses' },
+                { label: 'Add New Student', icon: Users, iconColor: 'text-[#0EA5E9]', bg: 'bg-[#F0F9FF]', path: '/admin/students' },
+                { label: 'Take Attendance', icon: CalendarCheck, iconColor: 'text-[#16A34A]', bg: 'bg-[#F0FDF4]', path: '/admin/finance?tab=attendance' },
               ].map((action, idx) => (
                 <button 
                   key={idx} 
+                  onClick={() => navigate(action.path)}
                   className="w-full flex items-center justify-between p-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 hover:border-[#4F46E5]/30 transition-all group text-left cursor-pointer"
                 >
                   <div className="flex items-center gap-2.5">

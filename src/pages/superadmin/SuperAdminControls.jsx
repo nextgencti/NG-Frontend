@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Eye, EyeOff, Database, FileText, Save, Loader2, Info, Plus, Trash2, Edit, ExternalLink, Image, Globe, Tag, Keyboard, Upload, Sparkles } from 'lucide-react';
+import { 
+  Settings, Eye, EyeOff, Database, FileText, Save, Loader2, Info, Plus, 
+  Trash2, Edit, ExternalLink, Image, Globe, Tag, Keyboard, Upload, Sparkles,
+  HardDrive, CheckCircle2, AlertCircle, RefreshCw, Layers, Zap, ShieldCheck, Clock
+} from 'lucide-react';
 import api from '../../lib/axios';
 import toast from 'react-hot-toast';
 import WelcomeModal from '../../components/public/WelcomeModal';
@@ -71,6 +75,12 @@ export default function SuperAdminControls() {
     text: ''
   });
 
+  // Database & Storage Management State
+  const [dbStats, setDbStats] = useState(null);
+  const [isDbStatsLoading, setIsDbStatsLoading] = useState(false);
+  const [activeMaintenanceTask, setActiveMaintenanceTask] = useState(null);
+  const [dbSearchQuery, setDbSearchQuery] = useState('');
+
   useEffect(() => {
     fetchSettings();
   }, []);
@@ -80,8 +90,93 @@ export default function SuperAdminControls() {
       fetchServices();
     } else if (activeTab === 'typing') {
       fetchTypingParagraphs();
+    } else if (activeTab === 'database') {
+      fetchDbStats();
     }
   }, [activeTab]);
+
+  const fetchDbStats = async () => {
+    setIsDbStatsLoading(true);
+    try {
+      const response = await api.get('/superadmin/database-stats');
+      if (response.data.success) {
+        setDbStats(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to load database stats:', error);
+      toast.error('Failed to load database storage metrics');
+    } finally {
+      setIsDbStatsLoading(false);
+    }
+  };
+
+  const handlePurgeActivity = async (days = 30) => {
+    if (!window.confirm(`Kya aap ${days} din se purani sabhi student activities ko delete karna chahte hain?`)) return;
+    setActiveMaintenanceTask('purge-activity');
+    try {
+      const response = await api.post('/superadmin/database-maintenance/purge-activity', { days });
+      if (response.data.success) {
+        toast.success(response.data.message);
+        if (response.data.stats) setDbStats(response.data.stats);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to purge old activity records');
+    } finally {
+      setActiveMaintenanceTask(null);
+    }
+  };
+
+  const handleDeduplicateTests = async () => {
+    if (!window.confirm('Kya aap sabhi students ke duplicate purane test attempts ko delete karke sirf latest attempt rakhna chahte hain?')) return;
+    setActiveMaintenanceTask('dedup-tests');
+    try {
+      const response = await api.post('/superadmin/database-maintenance/deduplicate-test-results');
+      if (response.data.success) {
+        toast.success(response.data.message);
+        if (response.data.stats) setDbStats(response.data.stats);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to deduplicate test results');
+    } finally {
+      setActiveMaintenanceTask(null);
+    }
+  };
+
+  const handlePurgePublicTests = async (days = 15) => {
+    if (!window.confirm(`Kya aap ${days} din se purane public guest test records ko delete karna chahte hain?`)) return;
+    setActiveMaintenanceTask('purge-public');
+    try {
+      const response = await api.post('/superadmin/database-maintenance/purge-public-results', { days });
+      if (response.data.success) {
+        toast.success(response.data.message);
+        if (response.data.stats) setDbStats(response.data.stats);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to purge public test records');
+    } finally {
+      setActiveMaintenanceTask(null);
+    }
+  };
+
+  const handleRunAllMaintenance = async () => {
+    if (!window.confirm('Full Database Optimization chalayein? Isse 30D activity, duplicate test attempts aur 15D guest tests sabhi clean ho jayenge.')) return;
+    setActiveMaintenanceTask('run-all');
+    try {
+      const response = await api.post('/superadmin/database-maintenance/run-all');
+      if (response.data.success) {
+        toast.success(response.data.message);
+        if (response.data.stats) setDbStats(response.data.stats);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to run full maintenance');
+    } finally {
+      setActiveMaintenanceTask(null);
+    }
+  };
 
   const fetchTypingParagraphs = async () => {
     setIsTypingLoading(true);
@@ -511,6 +606,20 @@ export default function SuperAdminControls() {
           <div className="flex items-center gap-2">
             <Keyboard className="w-4 h-4" />
             <span>Typing Test</span>
+          </div>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('database')}
+          className={`pb-2 px-2 text-xs font-black uppercase tracking-wider transition-all border-b-2 cursor-pointer ${
+            activeTab === 'database'
+              ? 'border-indigo-600 text-indigo-600'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <Database className="w-4 h-4" />
+            <span>Database & Storage</span>
           </div>
         </button>
       </div>
@@ -1117,6 +1226,325 @@ export default function SuperAdminControls() {
                     </button>
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : activeTab === 'database' ? (
+        <div className="space-y-6 animate-in fade-in duration-300">
+          {/* Top Storage Quota Banner Card */}
+          <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-slate-800">
+            <div className="absolute top-0 right-0 w-72 h-72 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-60 h-60 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="relative z-10 space-y-6">
+              {/* Header row */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center text-indigo-300 shadow-inner">
+                    <Database className="w-6 h-6 text-indigo-400" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-base font-black uppercase tracking-wider text-white">MongoDB Atlas Storage Tracker</h3>
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        Healthy
+                      </span>
+                    </div>
+                    <p className="text-xs text-indigo-200/70 font-medium mt-0.5">
+                      Real-time database footprint monitoring & automatic storage optimization
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={fetchDbStats}
+                    disabled={isDbStatsLoading}
+                    className="px-3 py-2 bg-white/10 hover:bg-white/20 active:scale-95 text-white rounded-xl text-xs font-bold transition-all border border-white/15 flex items-center gap-2 cursor-pointer"
+                    title="Refresh database metrics"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isDbStatsLoading ? 'animate-spin text-indigo-300' : ''}`} />
+                    <span>Refresh</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleRunAllMaintenance}
+                    disabled={activeMaintenanceTask !== null}
+                    className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 active:scale-95 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-lg shadow-indigo-500/25 flex items-center gap-2 cursor-pointer"
+                  >
+                    {activeMaintenanceTask === 'run-all' ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Zap className="w-3.5 h-3.5 text-amber-300" />
+                    )}
+                    <span>Optimize DB Now</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Quota Progress Bar */}
+              {dbStats?.summary && (
+                <div className="space-y-2 bg-black/25 p-5 rounded-2xl border border-white/10">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs font-bold gap-1">
+                    <div className="flex items-center gap-2 text-indigo-200">
+                      <HardDrive className="w-4 h-4 text-indigo-400" />
+                      <span>Cluster Storage Usage ({dbStats.summary.quotaPercent}% Used)</span>
+                    </div>
+                    <div className="text-[11px] font-mono font-semibold text-slate-300">
+                      <span className="text-white font-bold">{dbStats.summary.totalUsedMB} MB</span> of {dbStats.summary.atlasQuotaMB} MB Quota
+                      <span className="text-emerald-400 ml-2 font-bold">({dbStats.summary.freeQuotaMB} MB Free)</span>
+                    </div>
+                  </div>
+
+                  <div className="h-3 w-full bg-white/10 rounded-full overflow-hidden p-0.5 border border-white/10">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        dbStats.summary.quotaPercent > 80
+                          ? 'bg-rose-500'
+                          : dbStats.summary.quotaPercent > 50
+                          ? 'bg-amber-500'
+                          : 'bg-gradient-to-r from-emerald-400 to-indigo-400'
+                      }`}
+                      style={{ width: `${Math.min(100, Math.max(2, dbStats.summary.quotaPercent))}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* 4 Metric Counter Badges */}
+              {dbStats?.summary && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-indigo-300/80 block">Data Size</span>
+                    <span className="text-lg font-black text-white font-mono mt-1 block">{dbStats.summary.dataSizeMB} MB</span>
+                    <span className="text-[8px] text-slate-400 uppercase tracking-wider block mt-0.5">Actual Documents Content</span>
+                  </div>
+
+                  <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-indigo-300/80 block">Disk Storage</span>
+                    <span className="text-lg font-black text-white font-mono mt-1 block">{dbStats.summary.storageSizeMB} MB</span>
+                    <span className="text-[8px] text-slate-400 uppercase tracking-wider block mt-0.5">Physical Allocated Space</span>
+                  </div>
+
+                  <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-indigo-300/80 block">Index Size</span>
+                    <span className="text-lg font-black text-white font-mono mt-1 block">{dbStats.summary.indexSizeMB} MB</span>
+                    <span className="text-[8px] text-slate-400 uppercase tracking-wider block mt-0.5">Fast Lookup Indexes</span>
+                  </div>
+
+                  <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-indigo-300/80 block">Active Documents</span>
+                    <span className="text-lg font-black text-emerald-400 font-mono mt-1 block">
+                      {dbStats.summary.totalDocuments?.toLocaleString()}
+                    </span>
+                    <span className="text-[8px] text-slate-400 uppercase tracking-wider block mt-0.5">Across {dbStats.summary.collectionsCount} Collections</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Active Retention Policies & Manual Actions Banner */}
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+              <div>
+                <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  Active Data Retention & Auto-Clean Policies
+                </h4>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Rules that prevent unnecessary bloated documents from piling up in the database.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+                <Clock className="w-3.5 h-3.5 text-indigo-600" />
+                <span>Daily Auto-Cron: 03:00 AM IST</span>
+              </div>
+            </div>
+
+            {/* Policy Badges Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-100/80 flex items-start justify-between">
+                <div>
+                  <span className="text-[9px] font-black uppercase tracking-widest text-indigo-700 block">Student Activity</span>
+                  <p className="text-xs font-extrabold text-slate-800 mt-1">30 Days Auto-TTL</p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">MongoDB auto-deletes heartbeats older than 30 days.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handlePurgeActivity(30)}
+                  disabled={activeMaintenanceTask !== null}
+                  className="px-2.5 py-1.5 bg-white hover:bg-indigo-100 border border-indigo-200 text-indigo-700 rounded-xl text-[10px] font-bold transition-all shadow-sm cursor-pointer shrink-0"
+                >
+                  {activeMaintenanceTask === 'purge-activity' ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Purge'}
+                </button>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-100/80 flex items-start justify-between">
+                <div>
+                  <span className="text-[9px] font-black uppercase tracking-widest text-amber-700 block">Test Results</span>
+                  <p className="text-xs font-extrabold text-slate-800 mt-1">Latest Attempt Only</p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">Stores only last attempt + tracks total attempts & best score.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleDeduplicateTests}
+                  disabled={activeMaintenanceTask !== null}
+                  className="px-2.5 py-1.5 bg-white hover:bg-amber-100 border border-amber-200 text-amber-700 rounded-xl text-[10px] font-bold transition-all shadow-sm cursor-pointer shrink-0"
+                >
+                  {activeMaintenanceTask === 'dedup-tests' ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Deduplicate'}
+                </button>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-100/80 flex items-start justify-between">
+                <div>
+                  <span className="text-[9px] font-black uppercase tracking-widest text-emerald-700 block">Guest Public Tests</span>
+                  <p className="text-xs font-extrabold text-slate-800 mt-1">15 Days Auto-TTL</p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">Unregistered visitor test attempts purged after 15 days.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handlePurgePublicTests(15)}
+                  disabled={activeMaintenanceTask !== null}
+                  className="px-2.5 py-1.5 bg-white hover:bg-emerald-100 border border-emerald-200 text-emerald-700 rounded-xl text-[10px] font-bold transition-all shadow-sm cursor-pointer shrink-0"
+                >
+                  {activeMaintenanceTask === 'purge-public' ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Purge'}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Collection-wise Storage Table */}
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-indigo-600" />
+                  Collection Storage Breakdown ({dbStats?.collections?.length || 0} Collections)
+                </h4>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Detailed view of data size, disk space, and document count per MongoDB collection.
+                </p>
+              </div>
+
+              <div className="w-full sm:w-64">
+                <input
+                  type="text"
+                  value={dbSearchQuery}
+                  onChange={(e) => setDbSearchQuery(e.target.value)}
+                  placeholder="Filter collections..."
+                  className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                />
+              </div>
+            </div>
+
+            {isDbStatsLoading && !dbStats ? (
+              <div className="py-20 flex flex-col items-center justify-center gap-3">
+                <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Analyzing MongoDB Collections...</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-100 text-[10px] font-black uppercase tracking-wider text-slate-400">
+                      <th className="py-3 px-4">Collection Name</th>
+                      <th className="py-3 px-4">Policy / Status</th>
+                      <th className="py-3 px-4 text-right">Documents</th>
+                      <th className="py-3 px-4 text-right">Data Size</th>
+                      <th className="py-3 px-4 text-right">Storage</th>
+                      <th className="py-3 px-4 text-right">Avg Object</th>
+                      <th className="py-3 px-4 text-right">% of DB</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50 text-xs">
+                    {(dbStats?.collections || [])
+                      .filter(c => c.name.toLowerCase().includes(dbSearchQuery.toLowerCase()))
+                      .map((c) => {
+                        let policyTag = null;
+                        if (c.name === 'student_activity') {
+                          policyTag = (
+                            <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wide bg-indigo-50 text-indigo-700 border border-indigo-200">
+                              30D Auto-TTL
+                            </span>
+                          );
+                        } else if (c.name === 'test_results') {
+                          policyTag = (
+                            <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wide bg-amber-50 text-amber-700 border border-amber-200">
+                              Latest Only
+                            </span>
+                          );
+                        } else if (c.name === 'public_test_results') {
+                          policyTag = (
+                            <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wide bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              15D Auto-TTL
+                            </span>
+                          );
+                        } else {
+                          policyTag = (
+                            <span className="px-2 py-0.5 rounded-md text-[9px] font-semibold text-slate-400 bg-slate-100">
+                              Standard
+                            </span>
+                          );
+                        }
+
+                        return (
+                          <tr key={c.name} className="hover:bg-slate-50/60 transition-colors">
+                            {/* Collection Name */}
+                            <td className="py-3 px-4 font-bold text-slate-800 flex items-center gap-2">
+                              <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                              <span className="font-mono">{c.name}</span>
+                            </td>
+
+                            {/* Policy / Status */}
+                            <td className="py-3 px-4">
+                              {policyTag}
+                            </td>
+
+                            {/* Documents count */}
+                            <td className="py-3 px-4 text-right font-mono font-bold text-slate-700">
+                              {c.count.toLocaleString()}
+                            </td>
+
+                            {/* Data Size */}
+                            <td className="py-3 px-4 text-right font-mono text-slate-600">
+                              {c.sizeMB >= 1 ? `${c.sizeMB} MB` : `${c.sizeKB} KB`}
+                            </td>
+
+                            {/* Storage Size */}
+                            <td className="py-3 px-4 text-right font-mono text-slate-600">
+                              {c.storageMB >= 1 ? `${c.storageMB} MB` : `${c.storageKB} KB`}
+                            </td>
+
+                            {/* Avg Object Size */}
+                            <td className="py-3 px-4 text-right font-mono text-slate-500 text-[11px]">
+                              {c.avgObjSizeBytes > 1024
+                                ? `${(c.avgObjSizeBytes / 1024).toFixed(1)} KB`
+                                : `${c.avgObjSizeBytes} B`}
+                            </td>
+
+                            {/* % of Database bar */}
+                            <td className="py-3 px-4 text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <span className="font-mono text-[10px] font-bold text-slate-500">
+                                  {c.percentOfDb}%
+                                </span>
+                                <div className="w-12 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                  <div
+                                    className="h-full bg-indigo-600 rounded-full"
+                                    style={{ width: `${Math.min(100, c.percentOfDb)}%` }}
+                                  />
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>

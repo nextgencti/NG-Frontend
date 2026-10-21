@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -25,7 +25,15 @@ export default function Login() {
   
   const inputRefs = useRef([]);
   const navigate = useNavigate();
+  const location = useLocation();
   const { loginWithGoogle, loginWithEmailAndPassword, setCurrentUser } = useAuth();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('expired') === 'true') {
+      toast.error('Aapka login session expire ho gaya tha. Kripya dobara login karein.', { id: 'session-expired-notice' });
+    }
+  }, [location.search]);
 
   useEffect(() => {
     if (activeTab === 'forgot-otp' && inputRefs.current[0]) {

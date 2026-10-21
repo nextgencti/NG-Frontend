@@ -19,7 +19,8 @@ const RouteSuspense = ({ children }) => {
                            location.pathname.includes('/admin') || 
                            location.pathname.includes('/superadmin') ||
                            location.pathname.includes('/complete-profile') ||
-                           location.pathname.includes('/pending-approval');
+                           location.pathname.includes('/pending-approval') ||
+                           location.pathname.includes('/inactive-account');
 
   return (
     <Suspense fallback={isDashboardRoute ? <PageSkeleton /> : <HomeSkeleton />}>
@@ -33,6 +34,7 @@ const Login = lazy(() => import('./pages/Login'));
 const VerifyOTP = lazy(() => import('./pages/VerifyOTP'));
 const CompleteProfile = lazy(() => import('./pages/CompleteProfile'));
 const PendingApproval = lazy(() => import('./pages/student/PendingApproval'));
+const InactiveAccount = lazy(() => import('./pages/student/InactiveAccount'));
 
 // Public Pages (Lazy)
 const Home = lazy(() => import('./pages/public/Home'));
@@ -164,6 +166,7 @@ function App() {
             <Route element={<ProtectedRoute />}>
               <Route path="/complete-profile" element={<CompleteProfile />} />
               <Route path="/pending-approval" element={<PendingApproval />} />
+              <Route path="/inactive-account" element={<InactiveAccount />} />
               
               {/* Student Dashboard Routes */}
               <Route path="/dashboard" element={
